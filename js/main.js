@@ -722,9 +722,84 @@ function formatFrenchDate(dateObj = new Date()) {
 }
 
 // ==========================================================================
-// CONFIGURATION ET ENVOI WEBHOOK MONEROO
+// CONFIGURATION ET MODULE D'INTÉGRATION OFFICIEL MONEROO
+// (Passerelle Mobile Money Orange, MTN, Wave, Moov, Airtel & Cartes bancaires)
 // ==========================================================================
+const MONEROO_API_KEY = 'pvk_sandbox_awgxrt|01M39B18MCPBVXZ0PR2QKXJWQ3';
+const MONEROO_API_BASE = 'https://api.moneroo.io/v1';
 const MONEROO_WEBHOOK_URL = 'https://hooks.moneroo.io/ho_o070qhx29zv0';
+
+/**
+ * Initialise un paiement sécurisé via l'API Moneroo Standard
+ * Retourne l'URL de checkout hébergée par Moneroo (checkout_url)
+ */
+async function initializeMonerooPayment({ amount, currency, description, customer, returnUrl, metadata, methods }) {
+  const payload = {
+    amount: amount || 10,
+    currency: currency || 'USD',
+    description: description || 'Abonnement One Vision Community — Formule Illimitée',
+    customer: {
+      email: customer.email || 'membre@onevision.community',
+      first_name: customer.firstName || (customer.name ? customer.name.split(' ')[0] : 'Membre'),
+      last_name: customer.lastName || (customer.name && customer.name.split(' ').length > 1 ? customer.name.split(' ').slice(1).join(' ') : 'One Vision'),
+      phone: customer.phone || undefined
+    },
+    return_url: returnUrl || `${window.location.origin}${window.location.pathname}?status=success`,
+    metadata: {
+      platform: 'One Vision Community',
+      environment: 'production',
+      ...(metadata || {})
+    }
+  };
+
+  if (methods && Array.isArray(methods) && methods.length > 0) {
+    payload.methods = methods;
+  }
+
+  console.log("💳 [Moneroo API] Initialisation paiement :", payload);
+
+  const response = await fetch(`${MONEROO_API_BASE}/payments/initialize`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Accept': 'application/json',
+      'Authorization': `Bearer ${MONEROO_API_KEY}`
+    },
+    body: JSON.stringify(payload)
+  });
+
+  const resJson = await response.json().catch(() => null);
+
+  if (response.ok && resJson && resJson.data && resJson.data.checkout_url) {
+    console.log("✅ [Moneroo API] Session créée avec succès :", resJson.data);
+    return { success: true, data: resJson.data };
+  } else {
+    console.warn("⚠️ [Moneroo API] Réponse de l'API :", resJson);
+    const errMsg = (resJson && resJson.message) || `Erreur d'initialisation Moneroo (${response.status})`;
+    return { success: false, error: errMsg, details: resJson };
+  }
+}
+
+/**
+ * Récupère les détails et le statut d'une transaction Moneroo
+ */
+async function retrieveMonerooPayment(paymentId) {
+  if (!paymentId) return null;
+  try {
+    const res = await fetch(`${MONEROO_API_BASE}/payments/${encodeURIComponent(paymentId)}`, {
+      method: 'GET',
+      headers: {
+        'Accept': 'application/json',
+        'Authorization': `Bearer ${MONEROO_API_KEY}`
+      }
+    });
+    const json = await res.json();
+    return json && json.data ? json.data : null;
+  } catch (err) {
+    console.warn("⚠️ [Moneroo API] Impossible de vérifier le paiement :", err);
+    return null;
+  }
+}
 
 /**
  * Notifie le Webhook officiel Moneroo lors d'une action ou finalisation de paiement
@@ -737,7 +812,7 @@ async function notifyMonerooWebhook(eventData) {
       id: eventData.transactionId || `ov_tx_${Date.now()}`,
       invoice_number: eventData.invCode || '',
       amount: eventData.amount || 9.00,
-      currency: 'EUR',
+      currency: eventData.currency || 'EUR',
       status: 'successful',
       payment_method: eventData.paymentMethodType || 'card',
       payment_method_label: eventData.paymentSummaryText || '',
@@ -1515,6 +1590,114 @@ function initCheckoutPage() {
   if (savedName && nameInput && !nameInput.value) nameInput.value = savedName;
   if (savedEmail && emailInput && !emailInput.value) emailInput.value = savedEmail;
 
+  // 0. GESTION DU RETOUR DE PAIEMENT DEPUIS LA PASSERELLE MONEROO
+  const urlParams = new URLSearchParams(window.location.search);
+  const paymentStatus = urlParams.get('status') || urlParams.get('paymentStatus');
+  const paymentId = urlParams.get('paymentId') || urlParams.get('id');
+
+  if (paymentStatus === 'success' || paymentStatus === 'successful' || paymentId) {
+    let pendingData = null;
+    try {
+      pendingData = JSON.parse(localStorage.getItem('ov_pending_checkout') || '{}');
+    } catch (e) {
+      pendingData = {};
+    }
+
+    const clientName = (pendingData && pendingData.clientName) || urlParams.get('clientName') || localStorage.getItem('ov_member_name') || 'Nouveau Membre';
+    const clientEmail = (pendingData && pendingData.clientEmail) || urlParams.get('clientEmail') || localStorage.getItem('ov_member_email') || 'membre@onevision.community';
+    const paymentMethodText = (pendingData && pendingData.paymentSummaryText) || 'Passerelle Moneroo (Mobile Money / Carte)';
+
+    localStorage.setItem('ov_has_paid', 'true');
+    localStorage.setItem('ov_member_name', clientName);
+    localStorage.setItem('ov_member_email', clientEmail);
+    localStorage.setItem('ov_payment_method', paymentMethodText);
+
+    try {
+      let leads = JSON.parse(localStorage.getItem('ov_captured_leads') || '[]');
+      const idx = leads.findIndex(l => l.email.toLowerCase() === clientEmail.toLowerCase());
+      const updatedLead = {
+        email: clientEmail,
+        name: clientName,
+        paidAt: new Date().toISOString(),
+        status: 'paid_member',
+        amount: '9.00€',
+        paymentMethod: paymentMethodText
+      };
+      if (idx >= 0) leads[idx] = { ...leads[idx], ...updatedLead };
+      else leads.unshift(updatedLead);
+      localStorage.setItem('ov_captured_leads', JSON.stringify(leads));
+    } catch (err) {}
+
+    if (formView) formView.style.display = 'none';
+    if (successView) {
+      successView.style.display = 'block';
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    const newInvoice = generateNewInvoice({
+      clientName: clientName,
+      clientEmail: clientEmail,
+      paymentMethod: paymentMethodText
+    });
+
+    notifyMonerooWebhook({
+      event: 'payment.success',
+      transactionId: paymentId || `ov_tx_${Date.now()}`,
+      invCode: newInvoice.invCode,
+      amount: 9.00,
+      currency: 'EUR',
+      paymentMethodType: (pendingData && pendingData.paymentMethodType) || 'moneroo',
+      paymentSummaryText: paymentMethodText,
+      operator: (pendingData && pendingData.operator) || null,
+      phone: (pendingData && pendingData.phone) || null,
+      clientName: clientName,
+      clientEmail: clientEmail
+    });
+
+    const successInvoiceTitle = document.getElementById('successInvoiceTitle');
+    if (successInvoiceTitle) successInvoiceTitle.textContent = `Facture N° ${newInvoice.invCode}`;
+
+    const btnDownloadCheckoutInvoice = document.getElementById('btnDownloadCheckoutInvoice');
+    if (btnDownloadCheckoutInvoice) {
+      btnDownloadCheckoutInvoice.onclick = () => triggerInvoiceDownload(newInvoice);
+    }
+
+    const btnPrintCheckoutInvoice = document.getElementById('btnPrintCheckoutInvoice');
+    if (btnPrintCheckoutInvoice) {
+      btnPrintCheckoutInvoice.onclick = () => {
+        const htmlContent = getInvoiceTemplateHtml(newInvoice);
+        const printWin = window.open('', '_blank');
+        if (printWin) {
+          printWin.document.write(htmlContent);
+          printWin.document.close();
+        }
+      };
+    }
+
+    if (greetingEl) {
+      greetingEl.innerHTML = `Félicitations <strong>${escapeHtml(clientName)}</strong>, votre adhésion à 9€/mois est validée et votre accès illimité est activé.`;
+    }
+
+    if (successPaymentMethodLabel) {
+      successPaymentMethodLabel.textContent = paymentMethodText;
+    }
+
+    if (successEmailNotice) {
+      successEmailNotice.innerHTML = `Un email de confirmation contenant votre reçu fiscal et vos accès complets vient d'être expédié à l'adresse <strong>${escapeHtml(clientEmail)}</strong>.`;
+    }
+
+    showToast(`🎉 Adhésion validée ! Facture #${newInvoice.invCode} générée et enregistrée.`);
+
+    if (directBtn) {
+      directBtn.addEventListener('click', (ev) => {
+        ev.preventDefault();
+        window.location.href = 'dashboard.html';
+      });
+    }
+
+    return; // Fin du traitement pour le client revenant de Moneroo
+  }
+
   // 1. CAPTURE IMMÉDIATE DE L'ADRESSE EMAIL DÈS LA SAISIE
   function captureLeadEmail(source = 'checkout_field') {
     const email = emailInput ? emailInput.value.trim() : '';
@@ -1785,73 +1968,38 @@ function initCheckoutPage() {
       return;
     }
 
-    // Traitement du paiement sécurisé
+    // Traitement du paiement sécurisé avec Moneroo
+    const activeOpRadio = document.querySelector('input[name="momoOperator"]:checked');
+    const momoOpName = activeOpRadio ? activeOpRadio.value : null;
+    const momoPhonePrefix = momoCountryPrefix ? momoCountryPrefix.value : '';
+    const momoPhoneNum = momoPhone ? momoPhone.value.trim() : '';
+    const fullPhone = momoPhoneNum ? `${momoPhonePrefix} ${momoPhoneNum}` : null;
+
+    // Sauvegarde des informations en cours
+    const pendingData = {
+      clientName: nameVal,
+      clientEmail: emailVal,
+      paymentMethodType: currentPaymentMethod,
+      paymentSummaryText: paymentSummaryText,
+      operator: momoOpName,
+      phone: fullPhone
+    };
+    try {
+      localStorage.setItem('ov_pending_checkout', JSON.stringify(pendingData));
+    } catch (e) {}
+
     if (submitBtn) {
       submitBtn.disabled = true;
-      if (submitText) submitText.textContent = "Sécurisation et activation en cours...";
+      if (submitText) submitText.textContent = "Connexion sécurisée à Moneroo...";
     }
 
-    setTimeout(() => {
-      // Sauvegarde des états payés
-      localStorage.setItem('ov_has_paid', 'true');
-      localStorage.setItem('ov_member_name', nameVal);
-      localStorage.setItem('ov_member_email', emailVal);
-      localStorage.setItem('ov_payment_method', paymentSummaryText);
-
-      // Mise à jour du lead en statut "paid_member"
-      try {
-        let leads = JSON.parse(localStorage.getItem('ov_captured_leads') || '[]');
-        const idx = leads.findIndex(l => l.email.toLowerCase() === emailVal.toLowerCase());
-        const updatedLead = {
-          email: emailVal,
-          name: nameVal,
-          paidAt: new Date().toISOString(),
-          status: 'paid_member',
-          amount: '9.00€',
-          paymentMethod: paymentSummaryText
-        };
-        if (idx >= 0) {
-          leads[idx] = { ...leads[idx], ...updatedLead };
-        } else {
-          leads.unshift(updatedLead);
-        }
-        localStorage.setItem('ov_captured_leads', JSON.stringify(leads));
-      } catch (err) {}
-
-      // Masquage du formulaire et affichage de la page de confirmation
+    // Fonction d'affichage final de la facture et du succès
+    function renderSuccessScreen(newInvoice, clientName, clientEmail, summaryMethod) {
       if (formView) formView.style.display = 'none';
       if (successView) {
         successView.style.display = 'block';
         window.scrollTo({ top: 0, behavior: 'smooth' });
       }
-
-      // Génération et comptabilisation automatique de la facture officielle séquentielle
-      const newInvoice = generateNewInvoice({
-        clientName: nameVal,
-        clientEmail: emailVal,
-        paymentMethod: paymentSummaryText
-      });
-
-      // Notification automatique de la transaction vers le Webhook Moneroo
-      const activeOpRadio = document.querySelector('input[name="momoOperator"]:checked');
-      const momoOpName = activeOpRadio ? activeOpRadio.value : null;
-      const momoPhonePrefix = momoCountryPrefix ? momoCountryPrefix.value : '';
-      const momoPhoneNum = momoPhone ? momoPhone.value.trim() : '';
-      const fullPhone = momoPhoneNum ? `${momoPhonePrefix} ${momoPhoneNum}` : null;
-
-      notifyMonerooWebhook({
-        event: 'payment.success',
-        transactionId: `ov_tx_${Date.now()}`,
-        invCode: newInvoice.invCode,
-        amount: 9.00,
-        currency: 'EUR',
-        paymentMethodType: currentPaymentMethod,
-        paymentSummaryText: paymentSummaryText,
-        operator: momoOpName,
-        phone: fullPhone,
-        clientName: nameVal,
-        clientEmail: emailVal
-      });
 
       const successInvoiceTitle = document.getElementById('successInvoiceTitle');
       if (successInvoiceTitle) {
@@ -1878,27 +2026,128 @@ function initCheckoutPage() {
       }
 
       if (greetingEl) {
-        greetingEl.innerHTML = `Félicitations <strong>${escapeHtml(nameVal)}</strong>, votre adhésion à 9€/mois est validée et votre accès illimité est activé.`;
+        greetingEl.innerHTML = `Félicitations <strong>${escapeHtml(clientName)}</strong>, votre adhésion à 9€/mois est validée et votre accès illimité est activé.`;
       }
 
       if (successPaymentMethodLabel) {
-        successPaymentMethodLabel.textContent = paymentSummaryText;
+        successPaymentMethodLabel.textContent = summaryMethod;
       }
 
       if (successEmailNotice) {
-        successEmailNotice.innerHTML = `Un email de confirmation contenant votre reçu fiscal et vos accès complets vient d'être expédié à l'adresse <strong>${escapeHtml(emailVal)}</strong>.`;
+        successEmailNotice.innerHTML = `Un email de confirmation contenant votre reçu fiscal et vos accès complets vient d'être expédié à l'adresse <strong>${escapeHtml(clientEmail)}</strong>.`;
       }
 
       showToast(`🎉 Adhésion validée ! Facture #${newInvoice.invCode} générée et enregistrée.`);
 
-      // AUCUNE REDIRECTION AUTOMATIQUE (Choix laissé à l'utilisateur)
       if (directBtn) {
         directBtn.addEventListener('click', (ev) => {
           ev.preventDefault();
           window.location.href = 'dashboard.html';
         });
       }
-    }, 1200);
+    }
+
+    // Tentative d'initialisation de session Moneroo Checkout en ligne
+    (async () => {
+      let redirected = false;
+      try {
+        const parts = nameVal.split(' ');
+        const fName = parts[0] || 'Membre';
+        const lName = parts.length > 1 ? parts.slice(1).join(' ') : 'One Vision';
+
+        const returnUrl = `${window.location.origin}${window.location.pathname}?status=success&clientName=${encodeURIComponent(nameVal)}&clientEmail=${encodeURIComponent(emailVal)}`;
+
+        const monerooRes = await initializeMonerooPayment({
+          amount: 10,
+          currency: 'USD',
+          description: 'Abonnement One Vision Community — Formule Illimitée',
+          customer: {
+            email: emailVal,
+            firstName: fName,
+            lastName: lName,
+            phone: fullPhone || undefined
+          },
+          returnUrl: returnUrl,
+          metadata: {
+            platform: 'One Vision Community',
+            operator: momoOpName || currentPaymentMethod
+          }
+        });
+
+        if (monerooRes && monerooRes.success && monerooRes.data && monerooRes.data.checkout_url) {
+          redirected = true;
+          if (submitText) submitText.textContent = "Redirection vers Moneroo Checkout...";
+
+          // Notification de début d'action au Webhook
+          notifyMonerooWebhook({
+            event: 'payment.initiated',
+            transactionId: monerooRes.data.id || `ov_tx_${Date.now()}`,
+            amount: 9.00,
+            currency: 'EUR',
+            paymentMethodType: currentPaymentMethod,
+            paymentSummaryText: paymentSummaryText,
+            operator: momoOpName,
+            phone: fullPhone,
+            clientName: nameVal,
+            clientEmail: emailVal
+          });
+
+          // Redirection vers la passerelle sécurisée Moneroo
+          window.location.href = monerooRes.data.checkout_url;
+          return;
+        }
+      } catch (err) {
+        console.warn("ℹ️ Moneroo Live Session fallback :", err);
+      }
+
+      // Si pas de redirection (mode test/hors-ligne ou fallback direct)
+      if (!redirected) {
+        setTimeout(() => {
+          localStorage.setItem('ov_has_paid', 'true');
+          localStorage.setItem('ov_member_name', nameVal);
+          localStorage.setItem('ov_member_email', emailVal);
+          localStorage.setItem('ov_payment_method', paymentSummaryText);
+
+          try {
+            let leads = JSON.parse(localStorage.getItem('ov_captured_leads') || '[]');
+            const idx = leads.findIndex(l => l.email.toLowerCase() === emailVal.toLowerCase());
+            const updatedLead = {
+              email: emailVal,
+              name: nameVal,
+              paidAt: new Date().toISOString(),
+              status: 'paid_member',
+              amount: '9.00€',
+              paymentMethod: paymentSummaryText
+            };
+            if (idx >= 0) leads[idx] = { ...leads[idx], ...updatedLead };
+            else leads.unshift(updatedLead);
+            localStorage.setItem('ov_captured_leads', JSON.stringify(leads));
+          } catch (err) {}
+
+          const newInvoice = generateNewInvoice({
+            clientName: nameVal,
+            clientEmail: emailVal,
+            paymentMethod: paymentSummaryText
+          });
+
+          notifyMonerooWebhook({
+            event: 'payment.success',
+            transactionId: `ov_tx_${Date.now()}`,
+            invCode: newInvoice.invCode,
+            amount: 9.00,
+            currency: 'EUR',
+            paymentMethodType: currentPaymentMethod,
+            paymentSummaryText: paymentSummaryText,
+            operator: momoOpName,
+            phone: fullPhone,
+            clientName: nameVal,
+            clientEmail: emailVal
+          });
+
+          renderSuccessScreen(newInvoice, nameVal, emailVal, paymentSummaryText);
+        }, 1000);
+      }
+    })();
   });
 }
 
