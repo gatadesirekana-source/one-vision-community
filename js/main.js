@@ -721,6 +721,69 @@ function formatFrenchDate(dateObj = new Date()) {
   return `${day} ${month} ${year}`;
 }
 
+// ==========================================================================
+// CONFIGURATION ET ENVOI WEBHOOK MONEROO
+// ==========================================================================
+const MONEROO_WEBHOOK_URL = 'https://hooks.moneroo.io/ho_o070qhx29zv0';
+
+/**
+ * Notifie le Webhook officiel Moneroo lors d'une action ou finalisation de paiement
+ */
+async function notifyMonerooWebhook(eventData) {
+  const payload = {
+    event: eventData.event || 'payment.success',
+    timestamp: new Date().toISOString(),
+    data: {
+      id: eventData.transactionId || `ov_tx_${Date.now()}`,
+      invoice_number: eventData.invCode || '',
+      amount: eventData.amount || 9.00,
+      currency: 'EUR',
+      status: 'successful',
+      payment_method: eventData.paymentMethodType || 'card',
+      payment_method_label: eventData.paymentSummaryText || '',
+      operator: eventData.operator || null,
+      phone: eventData.phone || null,
+      customer: {
+        name: eventData.clientName || '',
+        email: eventData.clientEmail || '',
+        phone: eventData.phone || ''
+      },
+      metadata: {
+        platform: 'One Vision Community',
+        product: 'Abonnement One Vision Community — Formule Illimitée',
+        invoice_code: eventData.invCode || '',
+        environment: 'production'
+      }
+    }
+  };
+
+  console.log("📡 [Moneroo Webhook] Envoi de l'événement vers Moneroo :", MONEROO_WEBHOOK_URL, payload);
+
+  try {
+    await fetch(MONEROO_WEBHOOK_URL, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json'
+      },
+      body: JSON.stringify(payload)
+    });
+  } catch (err) {
+    try {
+      await fetch(MONEROO_WEBHOOK_URL, {
+        method: 'POST',
+        mode: 'no-cors',
+        headers: {
+          'Content-Type': 'text/plain'
+        },
+        body: JSON.stringify(payload)
+      });
+    } catch (e) {
+      console.warn("⚠️ [Moneroo Webhook] Note de délivrance :", e);
+    }
+  }
+}
+
 const INVOICE_REGISTRY_KEY = 'ov_invoices_registry';
 const INVOICE_COUNTER_KEY = 'ov_invoices_counter';
 
@@ -803,7 +866,7 @@ function getInvoiceTemplateHtml(invoiceDataOrName, invCodeParam, dateLabelParam,
   const paymentMethod = inv.paymentMethod || localStorage.getItem('ov_payment_method') || 'Carte Bancaire (•••• 4242)';
 
   const isMobileMoney = paymentMethod.toLowerCase().includes('mobile money') || paymentMethod.toLowerCase().includes('orange') || paymentMethod.toLowerCase().includes('wave') || paymentMethod.toLowerCase().includes('mtn');
-  const paymentGateway = isMobileMoney ? 'Paiement Mobile Sécurisé (Mobile Money)' : 'Stripe Payments Europe';
+  const paymentGateway = isMobileMoney ? 'Paiement Mobile Sécurisé (Moneroo / Mobile Money)' : 'Stripe Payments Europe';
 
   const itemTitle = inv.serviceTitle || 'Abonnement One Vision Community — Formule Illimitée';
   const itemDesc = inv.serviceDesc || "Accès illimité aux Sessions Live Mastermind, salons d'entraide, replays HD et outils business.";
@@ -1767,6 +1830,27 @@ function initCheckoutPage() {
         clientName: nameVal,
         clientEmail: emailVal,
         paymentMethod: paymentSummaryText
+      });
+
+      // Notification automatique de la transaction vers le Webhook Moneroo
+      const activeOpRadio = document.querySelector('input[name="momoOperator"]:checked');
+      const momoOpName = activeOpRadio ? activeOpRadio.value : null;
+      const momoPhonePrefix = momoCountryPrefix ? momoCountryPrefix.value : '';
+      const momoPhoneNum = momoPhone ? momoPhone.value.trim() : '';
+      const fullPhone = momoPhoneNum ? `${momoPhonePrefix} ${momoPhoneNum}` : null;
+
+      notifyMonerooWebhook({
+        event: 'payment.success',
+        transactionId: `ov_tx_${Date.now()}`,
+        invCode: newInvoice.invCode,
+        amount: 9.00,
+        currency: 'EUR',
+        paymentMethodType: currentPaymentMethod,
+        paymentSummaryText: paymentSummaryText,
+        operator: momoOpName,
+        phone: fullPhone,
+        clientName: nameVal,
+        clientEmail: emailVal
       });
 
       const successInvoiceTitle = document.getElementById('successInvoiceTitle');
