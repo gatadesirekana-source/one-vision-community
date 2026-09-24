@@ -30,9 +30,9 @@
         <a href="index.php" class="btn btn-secondary" style="font-size:0.9rem;padding:0.55rem 1.1rem;">
           ← Retour à l'accueil
         </a>
-        <button class="btn btn-primary open-checkout-btn">
+        <a href="checkout.php" class="btn btn-primary open-checkout-btn">
           <span>Rejoindre pour 9€/mois</span>
-        </button>
+        </a>
       </div>
     </div>
   </header>

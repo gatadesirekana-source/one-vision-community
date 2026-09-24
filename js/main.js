@@ -469,6 +469,10 @@ function initCheckoutModal() {
   }
 
   const openModal = (mode = 'join') => {
+    if (mode === 'join') {
+      window.location.href = getAppUrl('checkout.html');
+      return;
+    }
     setMode(mode);
     modal.classList.add('open');
     modal.setAttribute('aria-hidden', 'false');
@@ -483,6 +487,12 @@ function initCheckoutModal() {
 
   // Synchronisation dynamique de l'interface : Nouveau visiteur vs Membre ayant déjà payé
   function updateMemberUI() {
+    // En environnement PHP, l'état de session est géré directement par le serveur
+    const isPhp = window.location.pathname.endsWith('.php') || !window.location.pathname.includes('.html');
+    if (isPhp) {
+      return;
+    }
+
     const hasPaid = localStorage.getItem('ov_has_paid') === 'true';
 
     // 1. Bouton En-tête (Header)
@@ -510,7 +520,7 @@ function initCheckoutModal() {
     }
 
     // 2. Bouton Hero VSL
-    const heroBtn = document.querySelector('.hero-actions button');
+    const heroBtn = document.querySelector('.hero-actions button, .hero-actions a');
     if (heroBtn) {
       if (hasPaid) {
         heroBtn.className = 'btn btn-primary btn-lg btn-pulse open-dashboard-link';
@@ -533,7 +543,7 @@ function initCheckoutModal() {
     }
 
     // 3. Bouton Formule Tarif Unique (Section Comparatif)
-    const pricingBtn = document.querySelector('.comparison-card button');
+    const pricingBtn = document.querySelector('.comparison-card button, .comparison-card a');
     if (pricingBtn) {
       if (hasPaid) {
         pricingBtn.className = 'btn btn-primary open-dashboard-link';
@@ -599,12 +609,8 @@ function initCheckoutModal() {
 
     if (targetJoin) {
       e.preventDefault();
-      const hasPaid = localStorage.getItem('ov_has_paid') === 'true';
-      if (hasPaid) {
-        window.location.href = getAppUrl('dashboard.html');
-      } else {
-        window.location.href = getAppUrl('checkout.html');
-      }
+      // Redirection inconditionnelle vers la page de paiement
+      window.location.href = getAppUrl('checkout.html');
       return;
     }
 

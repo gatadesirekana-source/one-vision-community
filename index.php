@@ -56,13 +56,13 @@ $livesCount = (int)$db->query("SELECT COUNT(*) FROM lives")->fetchColumn();
       <!-- Actions : CTA Direct pour 9€/mois -->
       <div class="nav-actions">
         <!-- CTA Direct : Rejoindre pour 9€/mois -->
-        <button class="btn btn-primary open-checkout-btn">
+        <a href="checkout.php" class="btn btn-primary open-checkout-btn">
           <span>Rejoindre pour 9€/mois</span>
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
             <line x1="5" y1="12" x2="19" y2="12"></line>
             <polyline points="12 5 19 12 12 19"></polyline>
           </svg>
-        </button>
+        </a>
       </div>
     </div>
   </header>
@@ -146,13 +146,13 @@ $livesCount = (int)$db->query("SELECT COUNT(*) FROM lives")->fetchColumn();
 
       <!-- Actions de conversion (CTA sous la vidéo VSL) -->
       <div class="hero-actions">
-        <button class="btn btn-primary btn-lg btn-pulse open-checkout-btn">
+        <a href="checkout.php" class="btn btn-primary btn-lg btn-pulse open-checkout-btn">
           <span>Rejoindre One Vision Community — 9€/mois</span>
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
             <line x1="5" y1="12" x2="19" y2="12"></line>
             <polyline points="12 5 19 12 12 19"></polyline>
           </svg>
-        </button>
+        </a>
 
         <!-- 1. Zéro engagement directement sous le bouton -->
         <div class="hero-reassurance-row">
@@ -496,9 +496,9 @@ $livesCount = (int)$db->query("SELECT COUNT(*) FROM lives")->fetchColumn();
             </li>
           </ul>
           <div style="margin-top:2rem;">
-            <button class="btn btn-primary open-checkout-btn" style="width:100%;">
+            <a href="checkout.php" class="btn btn-primary open-checkout-btn" style="width:100%; display:inline-flex; align-items:center; justify-content:center; text-decoration:none;">
               Rejoindre pour 9€/mois
-            </button>
+            </a>
           </div>
         </div>
       </div>
