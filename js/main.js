@@ -1911,23 +1911,24 @@ function initCheckoutPage() {
     captureLeadEmail('checkout_submit_attempt');
 
     // Validation conditionnelle selon la méthode de paiement choisie
-    let paymentSummaryText = "Carte Bancaire Sécurisée";
+    let paymentSummaryText = "Carte Bancaire (Moneroo Checkout)";
     if (currentPaymentMethod === 'card') {
       const cardVal = cardInput ? cardInput.value.replace(/\s/g, '') : '';
       const expVal = expInput ? expInput.value.trim() : '';
       const cvcVal = cvcInput ? cvcInput.value.trim() : '';
 
-      if (!cardVal || cardVal.length < 16) {
+      // Si l'utilisateur a commencé à saisir sa carte, on valide la cohérence
+      if (cardVal && cardVal.length < 16) {
         showError('cardError', cardInput);
         hasError = true;
       } else {
         hideError('cardError', cardInput);
       }
 
-      if (!expVal || expVal.length < 5 || !expVal.includes('/')) {
+      if (expVal && (expVal.length < 5 || !expVal.includes('/'))) {
         showError('expError', expInput);
         hasError = true;
-      } else {
+      } else if (expVal) {
         const parts = expVal.split('/');
         const month = parseInt(parts[0], 10);
         if (isNaN(month) || month < 1 || month > 12) {
@@ -1936,16 +1937,20 @@ function initCheckoutPage() {
         } else {
           hideError('expError', expInput);
         }
+      } else {
+        hideError('expError', expInput);
       }
 
-      if (!cvcVal || cvcVal.length < 3) {
+      if (cvcVal && cvcVal.length < 3) {
         showError('cvcError', cvcInput);
         hasError = true;
       } else {
         hideError('cvcError', cvcInput);
       }
 
-      paymentSummaryText = `Carte Bancaire (•••• ${cardVal.slice(-4) || '4242'})`;
+      paymentSummaryText = cardVal && cardVal.length >= 16 
+        ? `Carte Bancaire (•••• ${cardVal.slice(-4)})` 
+        : "Carte Bancaire Sécurisée (Moneroo)";
     } else {
       // Mobile Money validation
       const momoPhoneVal = momoPhone ? momoPhone.value.replace(/\s/g, '') : '';
