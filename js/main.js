@@ -823,6 +823,27 @@ async function retrieveMonerooPayment(paymentId) {
 }
 
 /**
+ * Authentifie et vérifie le paiement via l'endpoint officiel Moneroo /payments/{paymentId}/verify
+ */
+async function verifyMonerooPayment(paymentId) {
+  if (!paymentId) return null;
+  try {
+    const res = await fetch(`${MONEROO_API_BASE}/payments/${encodeURIComponent(paymentId)}/verify`, {
+      method: 'GET',
+      headers: {
+        'Accept': 'application/json',
+        'Authorization': `Bearer ${MONEROO_API_KEY}`
+      }
+    });
+    const json = await res.json();
+    return json && json.data ? json.data : null;
+  } catch (err) {
+    console.warn("⚠️ [Moneroo API] Erreur lors de la vérification de transaction :", err);
+    return null;
+  }
+}
+
+/**
  * Notifie le Webhook officiel Moneroo lors d'une action ou finalisation de paiement
  */
 async function notifyMonerooWebhook(eventData) {
@@ -1613,10 +1634,13 @@ function initCheckoutPage() {
 
   // 0. GESTION DU RETOUR DE PAIEMENT DEPUIS LA PASSERELLE MONEROO
   const urlParams = new URLSearchParams(window.location.search);
-  const paymentStatus = urlParams.get('status') || urlParams.get('paymentStatus');
-  const paymentId = urlParams.get('paymentId') || urlParams.get('id');
+  const rawStatus = urlParams.get('status') || urlParams.get('paymentStatus') || urlParams.get('monerooPaymentStatus') || '';
+  const paymentStatus = rawStatus.toLowerCase();
+  const paymentId = urlParams.get('paymentId') || urlParams.get('id') || urlParams.get('monerooPaymentId');
 
-  if (paymentStatus === 'success' || paymentStatus === 'successful' || paymentId) {
+  if (paymentStatus === 'cancelled' || paymentStatus === 'failed') {
+    showToast(`⚠️ Le paiement Moneroo a été annulé ou a échoué. Vous pouvez réessayer.`);
+  } else if (paymentStatus === 'success' || paymentStatus === 'successful' || (paymentId && !['cancelled', 'failed'].includes(paymentStatus))) {
     let pendingData = null;
     try {
       pendingData = JSON.parse(localStorage.getItem('ov_pending_checkout') || '{}');
