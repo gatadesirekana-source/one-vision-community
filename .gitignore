@@ -7,7 +7,17 @@ desktop.ini
 *.log
 npm-debug.log*
 
-# Editor directories and files
+# Database
+*.sqlite
+*.sqlite3
+*.db
+database/*.sqlite
+
+# Local secrets & configs
+includes/config.local.php
+.env
+.env.*
+
 .vscode/
 .idea/
 *.suo

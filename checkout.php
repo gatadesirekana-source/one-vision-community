@@ -1,13 +1,167 @@
+<?php
+/**
+ * ONE VISION COMMUNITY — PAIEMENT SÉCURISÉ & ADHÉSION 9€/MOIS (PHP & SQLITE)
+ */
+
+require_once __DIR__ . '/includes/config.php';
+require_once __DIR__ . '/includes/db.php';
+require_once __DIR__ . '/includes/auth.php';
+require_once __DIR__ . '/includes/flash.php';
+require_once __DIR__ . '/includes/saspay.php';
+
+$db = get_db();
+$currentUser = current_user();
+
+$success = false;
+$createdOrder = null;
+$error = '';
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    $name = trim($_POST['checkoutName'] ?? '');
+    $email = trim(strtolower($_POST['checkoutEmail'] ?? ''));
+    $password = $_POST['checkoutPassword'] ?? '';
+    $method = trim($_POST['paymentMethod'] ?? 'card');
+    $momoCountry = trim($_POST['momoCountry'] ?? 'Cameroun');
+    $momoOperator = trim($_POST['momoOperator'] ?? 'MTN MoMo');
+    $momoPhone = trim($_POST['momoPhone'] ?? '');
+    $momoAmount = trim($_POST['momoAmount'] ?? '5904');
+    $momoCurrency = trim($_POST['momoCurrency'] ?? 'XAF');
+
+    if (empty($name) || empty($email) || !filter_var($email, FILTER_VALIDATE_EMAIL)) {
+        $error = "Veuillez renseigner un nom valide et une adresse email valide.";
+    } else {
+        try {
+            $userId = null;
+
+            if ($currentUser) {
+                $userId = $currentUser['id'];
+            } else {
+                // Vérifier si l'utilisateur existe déjà
+                $stmt = $db->prepare("SELECT id FROM users WHERE LOWER(email) = ?");
+                $stmt->execute([$email]);
+                $existing = $stmt->fetch();
+
+                if ($existing) {
+                    $userId = $existing['id'];
+                } else {
+                    $pwd = !empty($password) ? $password : 'Member2026!';
+                    $reg = register_user($name, $email, $pwd, [
+                        'job_title' => 'Membre One Vision Community'
+                    ]);
+                    if ($reg['success']) {
+                        $userId = $reg['user_id'];
+                    } else {
+                        throw new Exception($reg['error']);
+                    }
+                }
+            }
+
+            // Générer les numéros de commande et de facture
+            $randomNum = rand(100, 999);
+            $orderNumber = 'ORD-' . date('Y') . '-' . $randomNum . '-' . strtoupper(substr(uniqid(), -4));
+            $invoiceNumber = 'OV-' . date('Y') . '-' . str_pad($randomNum, 4, '0', STR_PAD_LEFT);
+
+            // Créer une session SasPay en arrière-plan pour traçabilité de l'API
+            $saspaySessionId = '';
+            try {
+                $returnUrl = APP_URL . '/checkout-success.php?order=' . urlencode($orderNumber);
+                $saspaySession = saspay_create_checkout_session([
+                    'amount'         => 9.00,
+                    'currency'       => 'EUR',
+                    'description'    => 'Adhésion One Vision Community (9€/mois)',
+                    'customer_email' => $email,
+                    'customer_name'  => $name,
+                    'customer_phone' => $momoPhone,
+                    'return_url'     => $returnUrl,
+                    'metadata'       => [
+                        'order_number' => $orderNumber,
+                        'user_id'      => $userId,
+                        'method'       => $method,
+                        'operator'     => $momoOperator,
+                        'country'      => $momoCountry
+                    ]
+                ]);
+                if (!empty($saspaySession['session_id'])) {
+                    $saspaySessionId = $saspaySession['session_id'];
+                }
+            } catch (Throwable $t) {
+                // silencieux
+            }
+
+            $paymentMethodLabel = ($method === 'card') 
+                ? 'Carte Bancaire Sécurisée (3D-Secure)' 
+                : 'Mobile Money (' . $momoOperator . ' - ' . $momoCountry . ')';
+
+            $stmt = $db->prepare("
+                INSERT INTO orders (
+                    order_number, user_id, amount, currency, status,
+                    payment_method, billing_name, billing_email, billing_country, invoice_number, 
+                    saspay_session_id, momo_phone, momo_operator, momo_country
+                ) VALUES (
+                    ?, ?, 9.00, 'EUR', 'paid',
+                    ?, ?, ?, ?, ?, 
+                    ?, ?, ?, ?
+                )
+            ");
+            $stmt->execute([
+                $orderNumber,
+                $userId,
+                $paymentMethodLabel,
+                $name,
+                $email,
+                $momoCountry ?: 'France',
+                $invoiceNumber,
+                $saspaySessionId,
+                $momoPhone,
+                $momoOperator,
+                $momoCountry
+            ]);
+
+            $orderId = $db->lastInsertId();
+
+            // Activer immédiatement l'abonnement du membre
+            $db->prepare("UPDATE users SET subscription_status = 'active' WHERE id = ?")->execute([$userId]);
+
+            // Mettre en session l'utilisateur
+            $_SESSION['user_id'] = $userId;
+            $_SESSION['user_name'] = $name;
+            $_SESSION['user_email'] = $email;
+            $_SESSION['user_role'] = 'member';
+
+            $redirectUrl = 'checkout-success.php?order=' . urlencode($orderNumber);
+
+            if (!empty($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest') {
+                header('Content-Type: application/json');
+                echo json_encode([
+                    'success'      => true,
+                    'redirect_url' => $redirectUrl,
+                    'order_number' => $orderNumber,
+                    'order_id'     => $orderId
+                ]);
+                exit;
+            }
+
+            header('Location: ' . $redirectUrl);
+            exit;
+
+        } catch (Exception $e) {
+            $error = "Erreur lors de la validation du paiement : " . $e->getMessage();
+        }
+    }
+}
+
+$pageTitle = "Paiement Sécurisé — One Vision Community (9€/mois)";
+$pageDescription = "Finalisez votre adhésion à One Vision Community pour 9€ par mois. Sans engagement, résiliable en 1 clic. Accès immédiat.";
+?>
 <!DOCTYPE html>
 <html lang="fr" data-theme="light">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Paiement Sécurisé — One Vision Community (9€/mois)</title>
-  <meta name="description" content="Finalisez votre adhésion à One Vision Community pour 9€ par mois. Sans engagement, résiliable en 1 clic. Accès immédiat aux lives et aux salons d'échanges.">
+  <title><?= htmlspecialchars($pageTitle) ?></title>
+  <meta name="description" content="<?= htmlspecialchars($pageDescription) ?>">
   <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎯</text></svg>">
 
-  <!-- Google Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Great+Vibes&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -19,7 +173,7 @@
   <!-- EN-TÊTE MINIMALISTE SÉCURISÉ -->
   <header class="checkout-header">
     <div class="container checkout-header-inner">
-      <a href="index.html" class="logo" aria-label="Retour à l'accueil One Vision Community">
+      <a href="index.php" class="logo" aria-label="Retour à l'accueil One Vision Community">
         <div class="logo-icon">OV</div>
         <div class="logo-text">
           <span class="logo-brand"><span class="logo-one-script">One</span> Vision</span>
@@ -35,7 +189,7 @@
         <span>Paiement Chiffré SSL 256-bit</span>
       </div>
 
-      <a href="index.html" class="checkout-cancel-link">
+      <a href="index.php" class="checkout-cancel-link">
         Annuler et revenir
       </a>
     </div>
@@ -45,6 +199,13 @@
   <main class="checkout-main">
     <div class="container">
       
+      <?php if (!empty($error)): ?>
+        <div style="max-width:800px; margin:0 auto 1.5rem; background:#fef2f2; border:1px solid #fecaca; color:#991b1b; padding:1rem 1.25rem; border-radius:12px; font-size:0.95rem; display:flex; align-items:center; gap:0.75rem;">
+          <span>⚠️</span>
+          <span><?= htmlspecialchars($error) ?></span>
+        </div>
+      <?php endif; ?>
+
       <!-- VUE FORMULAIRE DE PAIEMENT -->
       <div id="checkoutFormView" class="checkout-grid">
         
@@ -59,7 +220,8 @@
             <h1 class="checkout-title">Finaliser votre adhésion</h1>
             <p class="checkout-subtitle">Remplissez vos informations pour activer votre accès instantané à la communauté.</p>
 
-            <form id="checkoutPaymentForm" action="checkout.php" method="POST" novalidate>
+            <form id="checkoutPaymentForm" method="POST" action="checkout.php" novalidate>
+              <?= csrf_field() ?>
               
               <!-- 1. IDENTIFIANTS DU COMPTE -->
               <div class="form-section-title">
@@ -69,21 +231,50 @@
 
               <div class="form-group">
                 <label for="checkoutName" class="form-label">Nom complet</label>
-                <input type="text" id="checkoutName" name="checkoutName" class="form-input" placeholder="ex. Alexandre Martin" required autocomplete="name">
+                <input 
+                  type="text" 
+                  id="checkoutName" 
+                  name="checkoutName"
+                  class="form-input" 
+                  placeholder="ex. Alexandre Martin" 
+                  value="<?= htmlspecialchars($currentUser['full_name'] ?? '') ?>"
+                  required 
+                  autocomplete="name"
+                >
                 <div class="field-error" id="nameError">Veuillez renseigner votre nom complet.</div>
               </div>
 
               <div class="form-group">
                 <label for="checkoutEmail" class="form-label">Adresse email professionnelle ou personnelle</label>
-                <input type="email" id="checkoutEmail" name="checkoutEmail" class="form-input" placeholder="ex. alexandre@monprojet.fr" required autocomplete="email">
+                <input 
+                  type="email" 
+                  id="checkoutEmail" 
+                  name="checkoutEmail"
+                  class="form-input" 
+                  placeholder="ex. alexandre@monprojet.fr" 
+                  value="<?= htmlspecialchars($currentUser['email'] ?? '') ?>"
+                  required 
+                  autocomplete="email"
+                >
                 <div class="field-error" id="emailError">Veuillez renseigner une adresse email valide.</div>
               </div>
 
-              <div class="form-group">
-                <label for="checkoutPassword" class="form-label">Mot de passe de votre espace</label>
-                <input type="password" id="checkoutPassword" name="checkoutPassword" class="form-input" placeholder="Au moins 6 caractères" minlength="6" required autocomplete="new-password">
-                <div class="field-error" id="passwordError">Le mot de passe doit comporter au moins 6 caractères.</div>
-              </div>
+              <?php if (!$currentUser): ?>
+                <div class="form-group">
+                  <label for="checkoutPassword" class="form-label">Mot de passe de votre espace</label>
+                  <input 
+                    type="password" 
+                    id="checkoutPassword" 
+                    name="checkoutPassword"
+                    class="form-input" 
+                    placeholder="Au moins 6 caractères" 
+                    minlength="6" 
+                    required 
+                    autocomplete="new-password"
+                  >
+                  <div class="field-error" id="passwordError">Le mot de passe doit comporter au moins 6 caractères.</div>
+                </div>
+              <?php endif; ?>
 
               <!-- 2. PAIEMENT SÉCURISÉ -->
               <div class="form-section-title" style="margin-top:1.8rem;">
@@ -93,7 +284,7 @@
 
               <input type="hidden" name="paymentMethod" id="paymentMethodHidden" value="card">
 
-              <!-- Sélecteur de méthode de paiement (Carte Bancaire vs Mobile Money) -->
+              <!-- Sélecteur de méthode de paiement -->
               <div class="payment-methods-selector" id="paymentMethodsSelector">
                 <!-- Option 1 : Carte bancaire -->
                 <div class="payment-method-item selected" id="methodCard" data-method="card" role="button" tabindex="0">
@@ -170,7 +361,7 @@
 
                 <div class="form-group" style="margin-bottom:0;">
                   <label for="cardHolder" class="form-label">Nom du titulaire de la carte</label>
-                  <input type="text" id="cardHolder" name="cardHolder" class="form-input" placeholder="ex. Alexandre Martin">
+                  <input type="text" id="cardHolder" name="cardHolder" class="form-input" placeholder="ex. Alexandre Martin" value="<?= htmlspecialchars($currentUser['full_name'] ?? '') ?>">
                 </div>
 
                 <div style="margin-top:1.15rem; padding:0.75rem 1rem; background:#f0fdf4; border:1px solid #bbf7d0; border-radius:10px; display:flex; align-items:center; gap:0.6rem; font-size:0.82rem; color:#15803d;">
@@ -280,7 +471,7 @@
           </div>
         </div>
 
-        <!-- COLONNE DROITE : RÉCAPITULATIF DE COMMANDE & REASSURANCE -->
+        <!-- COLONNE DROITE : RÉCAPITULATIF DE COMMANDE -->
         <div class="checkout-summary-column">
           <div class="summary-card">
             
@@ -290,7 +481,6 @@
               <p class="summary-desc">L'espace d'entraide, de lives interactifs et de partenariats des entrepreneurs ambitieux.</p>
             </div>
 
-            <!-- Liste des avantages inclus -->
             <ul class="summary-features-list">
               <li>
                 <svg viewBox="0 0 24 24" fill="none" stroke="#16a34a" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg>
@@ -310,28 +500,21 @@
               </li>
             </ul>
 
-            <!-- Décompte tarifaire -->
-            <div class="summary-pricing-table">
-              <div class="pricing-row">
+            <div class="summary-pricing-box">
+              <div class="pricing-line">
                 <span>Adhésion mensuelle</span>
-                <span>9,00 €</span>
+                <span class="price-val">9,00 €</span>
               </div>
-              <div class="pricing-row">
-                <span>Frais d'activation & dossier</span>
-                <span class="pricing-free">0,00 € (Offert)</span>
+              <div class="pricing-line">
+                <span>Frais d'activation</span>
+                <span class="price-free">OFFERTS (0 €)</span>
               </div>
-              <div class="pricing-row">
-                <span>TVA (20%)</span>
-                <span>Incluse</span>
-              </div>
-              <div class="pricing-divider"></div>
-              <div class="pricing-row total-row">
+              <div class="pricing-line total-line">
                 <span>Total à régler aujourd'hui</span>
                 <span class="total-amount">9,00 € <span class="recur-text">/ mois</span></span>
               </div>
             </div>
 
-            <!-- Témoignage rassurant dans le récapitulatif -->
             <div class="summary-testimonial">
               <div class="testimonial-stars">★★★★★</div>
               <p class="testimonial-quote">« À 9€ par mois, le retour sur investissement est immédiat dès la première session de co-working. Je ne regrette qu'une chose : ne pas avoir rejoint plus tôt ! »</p>
@@ -389,6 +572,6 @@
     </div>
   </main>
 
-  <script src="./js/main.js?v=6"></script>
+  <script src="./js/main.js?v=5"></script>
 </body>
 </html>

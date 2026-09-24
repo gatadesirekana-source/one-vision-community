@@ -1,0 +1,412 @@
+<!DOCTYPE html>
+<html lang="fr" data-theme="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Politique de Confidentialité & RGPD — One Vision Community</title>
+  <meta name="description" content="Politique de protection des données et de confidentialité de One Vision Community. Respect strict du RGPD et sécurité totale de vos informations.">
+
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Great+Vibes&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+  <link rel="stylesheet" href="./css/style.css">
+</head>
+<body>
+
+  <!-- EN-TÊTE -->
+  <header class="header">
+    <div class="container nav-wrapper">
+      <a href="index.php" class="logo" aria-label="Accueil One Vision Community">
+        <div class="logo-icon">OV</div>
+        <div class="logo-text">
+          <span class="logo-brand"><span class="logo-one-script">One</span> Vision</span>
+          <span class="logo-sub">Community</span>
+        </div>
+      </a>
+
+      <div class="nav-actions">
+        <a href="index.php" class="btn btn-secondary" style="font-size:0.9rem;padding:0.55rem 1.1rem;">
+          ← Retour à l'accueil
+        </a>
+        <button class="btn btn-primary open-checkout-btn">
+          <span>Rejoindre pour 9€/mois</span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- HERO DE PAGE -->
+  <div class="page-hero">
+    <div class="container">
+      <span class="page-hero-badge">Conformité RGPD</span>
+      <h1 class="page-hero-title">Politique de Confidentialité</h1>
+      <p class="page-hero-subtitle">
+        Votre confiance est essentielle. Nous protégeons rigoureusement vos données personnelles et ne les revendons jamais à des tiers.
+      </p>
+    </div>
+  </div>
+
+  <!-- CONTENU DU DOCUMENT -->
+  <main class="legal-layout">
+    <div class="container">
+      <div class="legal-document">
+        <a href="index.php" class="back-home-link">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"></polyline></svg>
+          Retour à l'accueil
+        </a>
+
+        <div class="legal-alert">
+          <strong>Engagement de confidentialité :</strong> One Vision Community applique une politique stricte de minimisation des données. Nous collectons uniquement les informations indispensables au bon fonctionnement de votre abonnement et à votre participation aux ateliers.
+        </div>
+
+        <section class="legal-article">
+          <h3>Article 1 — Responsable du Traitement</h3>
+          <p>
+            Le responsable du traitement des données personnelles collectées sur le site <strong>One Vision Community</strong> est la société éditrice de One Vision Community, joignable directement à l’adresse électronique : <a href="mailto:support@onevisioncommunity.fr" style="color:#0f172a;font-weight:600;">support@onevisioncommunity.fr</a>.
+          </p>
+        </section>
+
+        <section class="legal-article">
+          <h3>Article 2 — Données Personnelles Collectées</h3>
+          <p>
+            Dans le cadre de l’utilisation de notre plateforme et de la gestion de votre abonnement à 9€/mois, nous collectons les catégories de données suivantes :
+          </p>
+          <ul>
+            <li><strong>Données d’identité et de profil :</strong> nom, prénom, adresse email professionnelle, intitulé de votre activité ou secteur de projet (facultatif).</li>
+            <li><strong>Données de facturation et de transaction :</strong> historique des paiements mensuels, date de souscription, reçu fiscal. Les coordonnées bancaires complètes sont traitées directement et de façon chiffrée par notre processeur de paiement certifié PCI-DSS (Stripe) et ne transitent jamais sur nos serveurs.</li>
+            <li><strong>Données techniques de connexion :</strong> adresse IP, logs de connexion et données d’usage strictement anonymisées visant à assurer la stabilité et la sécurité du service.</li>
+          </ul>
+        </section>
+
+        <section class="legal-article">
+          <h3>Article 3 — Finalités & Base Légale du Traitement</h3>
+          <p>Les données sont traitées pour les finalités suivantes :</p>
+          <ul>
+            <li><strong>Exécution du contrat d'abonnement (Base légale : Art. 6.1.b du RGPD) :</strong> création de votre compte membre, délivrance des accès aux salons de visio HD, replays et espaces d’échanges, gestion des prélèvements mensuels de 9€.</li>
+            <li><strong>Assistance & Service Client (Base légale : Art. 6.1.b du RGPD) :</strong> traitement de vos demandes d’assistance technique, questions sur les sessions live et demandes de résiliation.</li>
+            <li><strong>Obligations légales et comptables (Base légale : Art. 6.1.c du RGPD) :</strong> émission des factures et conservation des pièces justificatives conformément à la législation fiscale française.</li>
+          </ul>
+        </section>
+
+        <section class="legal-article">
+          <h3>Article 4 — Non-Cession & Destinataires des Données</h3>
+          <p>
+            <strong>Nous ne vendons, ne louons et ne cédons aucune de vos données personnelles à des annonceurs ou des tiers commerciaux.</strong>
+          </p>
+          <p>
+            Vos données ne sont transmises qu’à nos sous-traitants techniques strictement nécessaires à la fourniture du service :
+          </p>
+          <ul>
+            <li>Notre prestataire de paiement sécurisé (Stripe Payments Europe Ltd).</li>
+            <li>Notre infrastructure d’hébergement sécurisée située au sein de l’Union Européenne.</li>
+            <li>Notre outil d’envoi d’emails transactionnels (notifications de lives et reçus de paiement).</li>
+          </ul>
+        </section>
+
+        <section class="legal-article">
+          <h3>Article 5 — Durée de Conservation des Données</h3>
+          <p>
+            Vos données de compte sont conservées pendant toute la durée de votre adhésion active. En cas de résiliation de votre abonnement :
+          </p>
+          <ul>
+            <li>Vos accès communautaires sont immédiatement révoqués à l'issue de votre mensualité.</li>
+            <li>Vos données de profil sont archivées puis supprimées définitivement dans un délai maximum de 12 mois suivant votre départ.</li>
+            <li>Les données comptables et factures sont conservées pendant la durée légale obligatoire de 10 ans conformément au Code de commerce.</li>
+          </ul>
+        </section>
+
+        <section class="legal-article">
+          <h3>Article 6 — Sécurité de Vos Données</h3>
+          <p>
+            One Vision Community met en œuvre des mesures de sécurité techniques et organisationnelles de premier ordre : chiffrement complet des communications via le protocole HTTPS / TLS 1.3, sauvegardes quotidiennes chiffrées et restriction stricte des accès administratifs.
+          </p>
+        </section>
+
+        <section class="legal-article">
+          <h3>Article 7 — Vos Droits RGPD</h3>
+          <p>
+            Conformément au Règlement Général sur la Protection des Données (RGPD) et à la loi française « Informatique et Libertés », vous disposez des droits suivants concernant vos données :
+          </p>
+          <ul>
+            <li><strong>Droit d'accès et de rectification :</strong> vous pouvez consulter et mettre à jour vos coordonnées à tout moment.</li>
+            <li><strong>Droit à l'effacement (« droit à l'oubli ») :</strong> vous pouvez demander la suppression définitive de votre compte et de vos données associées.</li>
+            <li><strong>Droit à la limitation et à la portabilité :</strong> vous pouvez recevoir une copie exploitable de vos données.</li>
+          </ul>
+          <p>
+            Pour exercer l’un de ces droits, il vous suffit d'adresser un simple email à : <a href="mailto:support@onevisioncommunity.fr" style="color:#0f172a;font-weight:700;">support@onevisioncommunity.fr</a>. Votre demande sera traitée sous 48 heures ouvrées.
+          </p>
+          <p>
+            Si vous estimez, après nous avoir contactés, que vos droits ne sont pas respectés, vous disposez de la possibilité d’adresser une réclamation auprès de la CNIL (Commission Nationale de l’Informatique et des Libertés - www.cnil.fr).
+          </p>
+        </section>
+      </div>
+    </div>
+  </main>
+
+  <!-- PIED DE PAGE -->
+  <footer class="footer">
+    <div class="container">
+      <div class="footer-grid">
+        <div class="footer-brand">
+          <a href="index.php" class="logo" aria-label="One Vision Community">
+            <div class="logo-icon">OV</div>
+            <div class="logo-text">
+              <span class="logo-brand"><span class="logo-one-script">One</span> Vision</span>
+              <span class="logo-sub">Community</span>
+            </div>
+          </a>
+          <p>
+            La communauté en ligne des entrepreneurs et coachs qui s'entraident, collaborent sur leurs projets et participent à des lives chaque semaine pour 9€/mois.
+          </p>
+        </div>
+
+        <div class="footer-col">
+          <h5>Navigation</h5>
+          <ul class="footer-links">
+            <li><a href="index.html#fonctionnalites">Fonctionnalités</a></li>
+            <li><a href="index.html#lives">Programme des lives</a></li>
+            <li><a href="index.html#comparatif">Tarif unique (9€)</a></li>
+          </ul>
+        </div>
+
+        <div class="footer-col">
+          <h5>Ressources</h5>
+          <ul class="footer-links">
+            <li><a href="index.html#temoignages">Témoignages membres</a></li>
+            <li><a href="index.html#faq">Questions fréquentes</a></li>
+            <li><a href="javascript:void(0)" class="open-login-btn">Espace de connexion</a></li>
+            <li><a href="support.php">Support & Service Client</a></li>
+          </ul>
+        </div>
+
+        <div class="footer-col">
+          <h5>Légal</h5>
+          <ul class="footer-links">
+            <li><a href="conditions-generales.php">Conditions Générales</a></li>
+            <li><a href="politique-confidentialite.php" style="font-weight:700;color:var(--color-white);">Politique de Confidentialité</a></li>
+            <li><a href="mentions-legales.php">Mentions Légales</a></li>
+            <li><a href="gestion-cookies.php">Gestion des Cookies</a></li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="footer-bottom">
+        <div>© <?= date('Y') ?> One Vision Community. Tous droits réservés.</div>
+      </div>
+    </div>
+  </footer>
+
+  <!-- MODALE CHECKOUT & CONNEXION -->
+  <div id="checkoutModal" class="modal-backdrop" aria-hidden="true" role="dialog" aria-labelledby="modalTitle">
+    <div class="modal-card">
+      <button id="modalCloseBtn" class="modal-close-btn" aria-label="Fermer la modale">✕</button>
+      
+      <!-- VUE 1 : FORMULAIRE D'ADHÉSION 9€ (Mode Nouveau Visiteur) -->
+      <div id="viewJoin">
+        <div class="modal-header">
+          <div class="modal-header-top">
+            <h3 id="modalTitle" class="modal-title">Rejoindre la communauté</h3>
+            <span class="modal-price-pill">9€ <span>/mois</span></span>
+          </div>
+          <p class="modal-subtitle">Accès complet et immédiat • Sans engagement • Annulable en 1 clic</p>
+        </div>
+
+        <form id="checkoutForm">
+          <div class="form-group">
+            <label for="memberName" class="form-label">Nom complet</label>
+            <input type="text" id="memberName" class="form-input" placeholder="ex. Alexandre Martin" required autocomplete="name">
+          </div>
+
+          <div class="form-group">
+            <label for="memberEmail" class="form-label">Adresse email</label>
+            <input type="email" id="memberEmail" class="form-input" placeholder="ex. alexandre@monprojet.fr" required autocomplete="email">
+          </div>
+
+          <div class="form-group">
+            <label for="memberPassword" class="form-label">Mot de passe</label>
+            <input type="password" id="memberPassword" class="form-input" placeholder="Au moins 6 caractères" minlength="6" required autocomplete="new-password">
+          </div>
+
+          <button type="submit" class="btn btn-primary modal-submit-btn">
+            <span>Valider mon accès pour 9€</span>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+              <line x1="5" y1="12" x2="19" y2="12"></line>
+              <polyline points="12 5 19 12 12 19"></polyline>
+            </svg>
+          </button>
+
+          <div class="modal-footer-notes">
+            🔒 Paiement chiffré • Reçu fiscal par email • Résiliable en 1 clic
+          </div>
+
+          <div class="modal-switch-mode">
+            Vous avez déjà un compte ? <button type="button" id="switchToLoginBtn">Se connecter</button>
+          </div>
+        </form>
+      </div>
+
+      <!-- VUE 2 : ESPACE DE CONNEXION POUR MEMBRES EXISTANTS -->
+      <div id="viewLogin" style="display:none;">
+        <div class="modal-header">
+          <div class="modal-header-top">
+            <h3 class="modal-title">Espace Connexion</h3>
+            <span class="modal-badge-login">Membres</span>
+          </div>
+          <p class="modal-subtitle">Accédez à vos salons d'échanges, masterminds et replays HD.</p>
+        </div>
+
+        <form id="loginForm">
+          <div class="form-group">
+            <label for="loginEmail" class="form-label">Adresse email</label>
+            <input type="email" id="loginEmail" class="form-input" placeholder="ex. alexandre@monprojet.fr" required autocomplete="email">
+          </div>
+
+          <div class="form-group">
+            <div style="display:flex;justify-content:space-between;align-items:center;">
+              <label for="loginPassword" class="form-label">Mot de passe</label>
+              <a href="support.php" style="font-size:0.75rem;color:#64748b;text-decoration:underline;">Oublié ?</a>
+            </div>
+            <input type="password" id="loginPassword" class="form-input" placeholder="Votre mot de passe" required autocomplete="current-password">
+          </div>
+
+          <button type="submit" class="btn btn-primary modal-submit-btn">
+            <span>Me connecter à mon espace</span>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+              <polyline points="9 18 15 12 9 6"></polyline>
+            </svg>
+          </button>
+
+          <div class="modal-footer-notes">
+            ⚡ Connexion rapide et chiffrée • Accès immédiat aux salons 24/7
+          </div>
+
+          <div class="modal-switch-mode" id="loginSwitchMode">
+            Nouveau ici ? <button type="button" id="switchToJoinBtn">Rejoindre pour 9€/mois</button>
+          </div>
+        </form>
+      </div>
+
+      <!-- VUE 3 : ÉTAT DE SUCCÈS (ANIMÉ) -->
+      <div id="viewSuccess" style="display:none;">
+        <div class="modal-success-box">
+          <div class="modal-success-icon">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
+              <polyline points="20 6 9 17 4 12"></polyline>
+            </svg>
+          </div>
+          <h3 id="successTitle" style="font-size:1.35rem;font-weight:800;color:#0f172a;margin-bottom:0.4rem;">
+            Bienvenue dans One Vision Community !
+          </h3>
+          <p id="successDesc" style="font-size:0.875rem;color:#475569;line-height:1.55;margin-bottom:1.4rem;">
+            Votre accès à 9€/mois est validé. Vous pouvez dès maintenant rejoindre les salons et explorer les replays.
+          </p>
+          <button id="successActionBtn" class="btn btn-primary" style="width:100%;padding:0.85rem;">
+            <span>Entrer dans l'espace membre →</span>
+          </button>
+        </div>
+      </div>
+
+        <form id="checkoutForm">
+          <div class="form-group">
+            <label for="memberName" class="form-label">Nom complet</label>
+            <input type="text" id="memberName" class="form-input" placeholder="ex. Alexandre Martin" required autocomplete="name">
+          </div>
+
+          <div class="form-group">
+            <label for="memberEmail" class="form-label">Adresse email</label>
+            <input type="email" id="memberEmail" class="form-input" placeholder="ex. alexandre@monprojet.fr" required autocomplete="email">
+          </div>
+
+          <div class="form-group">
+            <label for="memberPassword" class="form-label">Mot de passe</label>
+            <input type="password" id="memberPassword" class="form-input" placeholder="Au moins 6 caractères" minlength="6" required autocomplete="new-password">
+          </div>
+
+          <div style="margin-top:1.15rem;">
+            <button type="submit" class="btn btn-primary" style="width:100%;padding:0.85rem;">
+              <span>Valider mon accès pour 9€</span>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                <line x1="5" y1="12" x2="19" y2="12"></line>
+                <polyline points="12 5 19 12 12 19"></polyline>
+              </svg>
+            </button>
+          </div>
+
+          <div class="modal-footer-notes">
+            🔒 Données chiffrées • Reçu fiscal envoyé par email • Résiliable en 1 clic
+          </div>
+
+          <div class="modal-switch-mode">
+            Vous avez déjà un compte ? <button type="button" id="switchToLoginBtn">Se connecter</button>
+          </div>
+        </form>
+      </div>
+
+      <!-- VUE 2 : ESPACE DE CONNEXION POUR MEMBRES EXISTANTS -->
+      <div id="viewLogin" style="display:none;">
+        <div class="modal-header">
+          <h3 class="modal-title">Connexion à votre espace membre</h3>
+          <p class="modal-subtitle">Accédez à vos salons d'échanges, masterminds et replays HD.</p>
+        </div>
+
+        <form id="loginForm">
+          <div class="form-group">
+            <label for="loginEmail" class="form-label">Adresse email</label>
+            <input type="email" id="loginEmail" class="form-input" placeholder="ex. alexandre@monprojet.fr" required autocomplete="email">
+          </div>
+
+          <div class="form-group">
+            <div style="display:flex;justify-content:space-between;align-items:center;">
+              <label for="loginPassword" class="form-label">Mot de passe</label>
+              <a href="support.php" style="font-size:0.75rem;color:#64748b;text-decoration:underline;">Oublié ?</a>
+            </div>
+            <input type="password" id="loginPassword" class="form-input" placeholder="Votre mot de passe" required autocomplete="current-password">
+          </div>
+
+          <div style="margin-top:1.15rem;">
+            <button type="submit" class="btn btn-primary" style="width:100%;padding:0.85rem;">
+              <span>Me connecter à mon espace</span>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                <polyline points="9 18 15 12 9 6"></polyline>
+              </svg>
+            </button>
+          </div>
+
+          <div class="modal-footer-notes">
+            ⚡ Connexion rapide et chiffrée • Accès immédiat aux salons 24/7
+          </div>
+
+          <div class="modal-switch-mode">
+            Nouveau ici ? <button type="button" id="switchToJoinBtn">Rejoindre pour 9€/mois</button>
+          </div>
+        </form>
+      </div>
+
+      <!-- VUE 3 : ÉTAT DE SUCCÈS (ANIMÉ) -->
+      <div id="viewSuccess" style="display:none;">
+        <div class="modal-success-box">
+          <div class="modal-success-icon">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
+              <polyline points="20 6 9 17 4 12"></polyline>
+            </svg>
+          </div>
+          <h3 id="successTitle" style="font-size:1.35rem;font-weight:800;color:#0f172a;margin-bottom:0.4rem;">
+            Bienvenue dans One Vision Community !
+          </h3>
+          <p id="successDesc" style="font-size:0.875rem;color:#475569;line-height:1.55;margin-bottom:1.4rem;">
+            Votre accès à 9€/mois est validé. Vous pouvez dès maintenant rejoindre les salons et explorer les replays.
+          </p>
+          <button id="successActionBtn" class="btn btn-primary" style="width:100%;padding:0.85rem;">
+            <span>Entrer dans l'espace membre →</span>
+          </button>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <script src="./js/main.js"></script>
+</body>
+</html>

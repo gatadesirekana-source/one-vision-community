@@ -555,6 +555,7 @@ h1, h2, h3, h4 {
 .text-gradient {
   background: linear-gradient(180deg, #0f172a 40%, #475569 100%);
   -webkit-background-clip: text;
+  background-clip: text;
   -webkit-text-fill-color: transparent;
 }
 
@@ -562,6 +563,7 @@ h1, h2, h3, h4 {
 [data-theme="dark"] .text-gradient {
   background: linear-gradient(180deg, #0f172a 40%, #475569 100%);
   -webkit-background-clip: text;
+  background-clip: text;
   -webkit-text-fill-color: transparent;
 }
 
@@ -3433,6 +3435,408 @@ input:checked + .slider:before {
   align-items: center;
   justify-content: center;
   cursor: help;
+}
+
+/* WIDGET EMBARQUÉ SASPAY (REPRODUCTION FIDÈLE DU WIDGET OFFICIEL) */
+.saspay-widget-card {
+  background: #ffffff;
+  border: 1px solid #e0e7ff;
+  border-radius: 20px;
+  padding: 1.5rem 1.65rem;
+  box-shadow: 0 10px 30px rgba(99, 102, 241, 0.07);
+  margin-bottom: 1.5rem;
+  transition: all 0.25s ease;
+}
+
+.saspay-widget-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-bottom: 1.15rem;
+  border-bottom: 1px solid #f1f5f9;
+  margin-bottom: 1.35rem;
+}
+
+.saspay-header-brand {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+}
+
+.saspay-brand-avatar {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
+  color: #ffffff;
+  font-weight: 800;
+  font-size: 1.05rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  letter-spacing: -0.02em;
+  box-shadow: 0 4px 12px rgba(79, 70, 229, 0.25);
+  flex-shrink: 0;
+}
+
+.saspay-brand-info {
+  display: flex;
+  flex-direction: column;
+}
+
+.saspay-brand-title {
+  font-size: 0.95rem;
+  font-weight: 800;
+  color: #0f172a;
+  line-height: 1.3;
+}
+
+.saspay-brand-sub {
+  font-size: 0.8rem;
+  color: #64748b;
+}
+
+.saspay-header-price {
+  font-size: 1.25rem;
+  font-weight: 800;
+  color: #0f172a;
+  letter-spacing: -0.02em;
+}
+
+.saspay-field-label {
+  display: block;
+  font-size: 0.84rem;
+  font-weight: 700;
+  color: #334155;
+  margin-bottom: 0.45rem;
+}
+
+.saspay-country-select-wrapper {
+  position: relative;
+  margin-bottom: 1.25rem;
+}
+
+.saspay-country-select {
+  width: 100%;
+  padding: 0.75rem 1rem;
+  border: 1.5px solid #e2e8f0;
+  border-radius: 12px;
+  font-size: 0.92rem;
+  font-weight: 600;
+  color: #0f172a;
+  background: #ffffff;
+  cursor: pointer;
+  appearance: none;
+  transition: border-color 0.2s;
+}
+
+.saspay-country-select:focus {
+  outline: none;
+  border-color: #6366f1;
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.15);
+}
+
+.saspay-select-arrow {
+  position: absolute;
+  right: 1rem;
+  top: 50%;
+  transform: translateY(-50%);
+  pointer-events: none;
+  font-size: 0.75rem;
+  color: #64748b;
+}
+
+/* Grille des moyens de paiement SasPay */
+.saspay-methods-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+  gap: 0.75rem;
+  margin-bottom: 1.25rem;
+}
+
+.saspay-method-card {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  padding: 0.75rem 0.85rem;
+  background: #ffffff;
+  border: 1.5px solid #e2e8f0;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  user-select: none;
+}
+
+.saspay-method-card:hover {
+  border-color: #cbd5e1;
+  background: #fafafa;
+}
+
+.saspay-method-card.active {
+  border-color: #6366f1;
+  background: #f5f3ff;
+  box-shadow: 0 4px 14px rgba(99, 102, 241, 0.12);
+}
+
+.saspay-method-icon {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.05rem;
+  flex-shrink: 0;
+  background: #f1f5f9;
+}
+
+.saspay-method-info {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.saspay-method-name {
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: #0f172a;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.saspay-method-fee {
+  font-size: 0.72rem;
+  color: #64748b;
+}
+
+/* Numéro de téléphone SasPay */
+.saspay-phone-wrapper {
+  display: flex;
+  align-items: stretch;
+  border: 1.5px solid #e2e8f0;
+  border-radius: 12px;
+  background: #ffffff;
+  overflow: hidden;
+  transition: border-color 0.2s;
+  margin-bottom: 1.35rem;
+}
+
+.saspay-phone-wrapper:focus-within {
+  border-color: #6366f1;
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.15);
+}
+
+.saspay-phone-prefix {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0 0.85rem;
+  background: #f8fafc;
+  border-right: 1.5px solid #e2e8f0;
+  font-size: 0.88rem;
+  font-weight: 700;
+  color: #334155;
+  white-space: nowrap;
+}
+
+.saspay-phone-input {
+  flex: 1;
+  border: none;
+  padding: 0.75rem 1rem;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: #0f172a;
+  outline: none;
+  background: transparent;
+}
+
+/* Récapitulatif frais SasPay */
+.saspay-breakdown-box {
+  background: #f8fafc;
+  border-radius: 12px;
+  padding: 1rem 1.15rem;
+  margin-bottom: 1.35rem;
+}
+
+.saspay-breakdown-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.85rem;
+  color: #64748b;
+  margin-bottom: 0.45rem;
+}
+
+.saspay-breakdown-row:last-child {
+  margin-bottom: 0;
+}
+
+.saspay-breakdown-total {
+  font-size: 0.98rem;
+  font-weight: 800;
+  color: #0f172a;
+  padding-top: 0.45rem;
+  border-top: 1px dashed #e2e8f0;
+  margin-top: 0.45rem;
+}
+
+/* Bouton principal violet SasPay */
+.saspay-btn-submit {
+  width: 100%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.65rem;
+  padding: 0.95rem 1.5rem;
+  background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
+  color: #ffffff;
+  font-size: 1rem;
+  font-weight: 800;
+  border: none;
+  border-radius: 14px;
+  cursor: pointer;
+  box-shadow: 0 8px 24px rgba(79, 70, 229, 0.28);
+  transition: all 0.2s ease;
+}
+
+.saspay-btn-submit:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 28px rgba(79, 70, 229, 0.35);
+  background: linear-gradient(135deg, #4f46e5 0%, #4338ca 100%);
+}
+
+.saspay-btn-submit:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.saspay-footer-badge {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.45rem;
+  margin-top: 1.15rem;
+  font-size: 0.78rem;
+  color: #64748b;
+  font-weight: 600;
+}
+
+.saspay-footer-logo {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  color: #4f46e5;
+  font-weight: 800;
+}
+
+/* MODALE DE TRAITEMENT ET VALIDATION INTERACTIVE DU PAIEMENT */
+.payment-processing-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.65);
+  backdrop-filter: blur(8px);
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1.5rem;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s ease;
+}
+
+.payment-processing-overlay.visible {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.payment-processing-card {
+  background: #ffffff;
+  border-radius: 24px;
+  padding: 2.75rem 2.25rem;
+  width: 100%;
+  max-width: 480px;
+  text-align: center;
+  box-shadow: 0 25px 60px rgba(0, 0, 0, 0.25);
+  transform: scale(0.95);
+  transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.payment-processing-overlay.visible .payment-processing-card {
+  transform: scale(1);
+}
+
+.processing-pulse-ring {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  margin: 0 auto 1.5rem;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #eff6ff;
+  border: 3px solid #bfdbfe;
+}
+
+.processing-pulse-ring::after {
+  content: '';
+  position: absolute;
+  inset: -8px;
+  border-radius: 50%;
+  border: 2px solid #3b82f6;
+  opacity: 0;
+  animation: pulseRing 1.8s infinite;
+}
+
+@keyframes pulseRing {
+  0% { transform: scale(0.85); opacity: 0.8; }
+  100% { transform: scale(1.35); opacity: 0; }
+}
+
+.processing-title {
+  font-size: 1.35rem;
+  font-weight: 800;
+  color: #0f172a;
+  margin-bottom: 0.5rem;
+}
+
+.processing-desc {
+  font-size: 0.9rem;
+  color: #64748b;
+  line-height: 1.55;
+  margin-bottom: 1.5rem;
+}
+
+.processing-device-alert {
+  background: #f0fdf4;
+  border: 1px solid #bbf7d0;
+  border-radius: 12px;
+  padding: 1rem 1.15rem;
+  margin-bottom: 1.5rem;
+  text-align: left;
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+}
+
+.processing-progress-bar-wrap {
+  width: 100%;
+  height: 6px;
+  background: #e2e8f0;
+  border-radius: 10px;
+  overflow: hidden;
+  margin-bottom: 1rem;
+}
+
+.processing-progress-bar-fill {
+  width: 0%;
+  height: 100%;
+  background: linear-gradient(90deg, #6366f1, #3b82f6);
+  border-radius: 10px;
+  transition: width 2.2s ease-in-out;
 }
 
 .checkout-submit-btn {
@@ -7300,6 +7704,7 @@ input:checked + .slider:before {
   flex: 1;
   display: -webkit-box;
   -webkit-line-clamp: 3;
+  line-clamp: 3;
   -webkit-box-orient: vertical;
   overflow: hidden;
 }

@@ -4,6 +4,11 @@
  * bascule de thème sombre/clair, onglets des sessions et modale 9€/mois.
  */
 
+function getAppUrl(path) {
+  const isPhp = window.location.pathname.endsWith('.php') || !window.location.pathname.includes('.html');
+  return isPhp ? path.replace(/\.html/g, '.php') : path;
+}
+
 document.addEventListener('DOMContentLoaded', () => {
   initThemeToggle();
   initHeroTitleRotator();
@@ -570,7 +575,7 @@ function initCheckoutModal() {
         const switchToJoinBtn = document.getElementById('switchToJoinBtn');
         if (switchToJoinBtn) {
           switchToJoinBtn.addEventListener('click', () => {
-            window.location.href = 'checkout.html';
+            window.location.href = getAppUrl('checkout.html');
           });
         }
       }
@@ -588,7 +593,7 @@ function initCheckoutModal() {
 
     if (targetDashboard) {
       e.preventDefault();
-      window.location.href = 'dashboard.html';
+      window.location.href = getAppUrl('dashboard.html');
       return;
     }
 
@@ -596,18 +601,22 @@ function initCheckoutModal() {
       e.preventDefault();
       const hasPaid = localStorage.getItem('ov_has_paid') === 'true';
       if (hasPaid) {
-        window.location.href = 'dashboard.html';
+        window.location.href = getAppUrl('dashboard.html');
       } else {
-        window.location.href = 'checkout.html';
+        window.location.href = getAppUrl('checkout.html');
       }
       return;
     }
 
     if (targetLogin) {
       e.preventDefault();
+      if (window.location.pathname.endsWith('.php')) {
+        window.location.href = 'login.php';
+        return;
+      }
       const hasPaid = localStorage.getItem('ov_has_paid') === 'true';
       if (hasPaid) {
-        window.location.href = 'dashboard.html';
+        window.location.href = getAppUrl('dashboard.html');
       } else {
         openModal('login');
       }
@@ -649,14 +658,16 @@ function initCheckoutModal() {
       if (memberName) localStorage.setItem('ov_member_name', memberName);
       if (memberEmail) localStorage.setItem('ov_member_email', memberEmail);
 
-      window.location.href = 'checkout.html';
+      window.location.href = getAppUrl('checkout.html');
     });
   }
 
-  // Soumission Connexion Membre -> Redirection directe vers dashboard.html
+  // Soumission Connexion Membre -> Redirection directe vers dashboard
   if (loginForm) {
     loginForm.addEventListener('submit', (e) => {
       e.preventDefault();
+      const emailInput = document.getElementById('loginEmail');
+      const passInput = document.getElementById('loginPassword');
       const submitBtn = loginForm.querySelector('button[type="submit"]');
       const originalText = submitBtn.innerHTML;
 
@@ -669,6 +680,25 @@ function initCheckoutModal() {
         Connexion en cours...
       `;
 
+      if (window.location.pathname.endsWith('.php')) {
+        const formData = new FormData();
+        formData.append('email', emailInput ? emailInput.value : '');
+        formData.append('password', passInput ? passInput.value : '');
+
+        fetch('login.php', {
+          method: 'POST',
+          body: formData
+        }).then(() => {
+          showToast("👋 Connexion réussie ! Redirection vers votre Dashboard...");
+          setTimeout(() => {
+            window.location.href = 'dashboard.php';
+          }, 500);
+        }).catch(() => {
+          window.location.href = 'login.php';
+        });
+        return;
+      }
+
       setTimeout(() => {
         submitBtn.disabled = false;
         submitBtn.innerHTML = originalText;
@@ -679,7 +709,7 @@ function initCheckoutModal() {
 
         showToast("👋 Connexion réussie ! Redirection vers votre Dashboard...");
         setTimeout(() => {
-          window.location.href = 'dashboard.html';
+          window.location.href = getAppUrl('dashboard.html');
         }, 600);
         loginForm.reset();
       }, 700);
@@ -689,7 +719,7 @@ function initCheckoutModal() {
   if (successActionBtn) {
     successActionBtn.addEventListener('click', () => {
       closeModal();
-      window.location.href = 'dashboard.html';
+      window.location.href = getAppUrl('dashboard.html');
     });
   }
 }
@@ -1421,6 +1451,7 @@ function initCheckoutPage() {
   // Sélecteur de méthode de paiement
   const methodCard = document.getElementById('methodCard');
   const methodMobileMoney = document.getElementById('methodMobileMoney');
+  const paymentMethodHidden = document.getElementById('paymentMethodHidden');
   const cardDetailsBox = document.getElementById('cardDetailsBox');
   const mobileMoneyDetailsBox = document.getElementById('mobileMoneyDetailsBox');
 
@@ -1428,117 +1459,291 @@ function initCheckoutPage() {
   const cardInput = document.getElementById('cardNumber');
   const expInput = document.getElementById('cardExp');
   const cvcInput = document.getElementById('cardCvc');
+  const cardHolderInput = document.getElementById('cardHolder');
 
-  // Champs Mobile Money
-  const momoCountryPrefix = document.getElementById('momoCountryPrefix');
-  const momoPhone = document.getElementById('momoPhone');
-  const momoOperatorCards = document.querySelectorAll('.momo-operator-card');
+  // Widget SasPay Mobile Money
+  const saspayCountrySelect = document.getElementById('saspayCountrySelect');
+  const saspayMethodsGrid = document.getElementById('saspayMethodsGrid');
+  const saspayPhonePrefix = document.getElementById('saspayPhonePrefix');
+  const saspayPhoneInput = document.getElementById('saspayPhoneInput');
+  const saspaySelectedOperator = document.getElementById('saspaySelectedOperator');
+  const saspayHeaderAmount = document.getElementById('saspayHeaderAmount');
+  const saspayBreakdownAmount = document.getElementById('saspayBreakdownAmount');
+  const saspayBreakdownFee = document.getElementById('saspayBreakdownFee');
+  const saspayBreakdownTotal = document.getElementById('saspayBreakdownTotal');
+  const momoAmountHidden = document.getElementById('momoAmountHidden');
+  const momoCurrencyHidden = document.getElementById('momoCurrencyHidden');
 
-  // Soumission et vues
+  // Modale de traitement
+  const processingModal = document.getElementById('paymentProcessingModal');
+  const processingTitle = document.getElementById('processingTitle');
+  const processingDesc = document.getElementById('processingDesc');
+  const processingDeviceAlert = document.getElementById('processingDeviceAlert');
+  const processingAlertMsg = document.getElementById('processingAlertMsg');
+  const processingProgressBar = document.getElementById('processingProgressBar');
+  const processingSpinnerIcon = document.getElementById('processingSpinnerIcon');
+
+  // Soumission
   const submitBtn = document.getElementById('submitPaymentBtn');
   const submitText = document.getElementById('submitPaymentText');
-  const formView = document.getElementById('checkoutFormView');
-  const successView = document.getElementById('checkoutSuccessView');
-  const greetingEl = document.getElementById('successMemberGreeting');
-  const successPaymentMethodLabel = document.getElementById('successPaymentMethodLabel');
-  const successEmailNotice = document.getElementById('successEmailNotice');
-  const directBtn = document.getElementById('goToDashboardDirectBtn');
 
   let currentPaymentMethod = 'card'; // 'card' ou 'mobile_money'
 
-  // Pré-remplissage si déjà sauvegardé
-  const savedName = localStorage.getItem('ov_member_name') || localStorage.getItem('ov_captured_name');
-  const savedEmail = localStorage.getItem('ov_member_email') || localStorage.getItem('ov_captured_email');
-  if (savedName && nameInput && !nameInput.value) nameInput.value = savedName;
-  if (savedEmail && emailInput && !emailInput.value) emailInput.value = savedEmail;
-
-  // 1. CAPTURE IMMÉDIATE DE L'ADRESSE EMAIL DÈS LA SAISIE
-  function captureLeadEmail(source = 'checkout_field') {
-    const email = emailInput ? emailInput.value.trim() : '';
-    const name = nameInput ? nameInput.value.trim() : '';
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!email || !emailRegex.test(email)) return;
-
-    localStorage.setItem('ov_captured_email', email);
-    if (name) localStorage.setItem('ov_captured_name', name);
-
-    let leads = [];
-    try {
-      leads = JSON.parse(localStorage.getItem('ov_captured_leads') || '[]');
-    } catch (e) {
-      leads = [];
-    }
-
-    const existingIndex = leads.findIndex(l => l.email.toLowerCase() === email.toLowerCase());
-    const leadRecord = {
-      email: email,
-      name: name || (existingIndex >= 0 ? leads[existingIndex].name : ''),
-      capturedAt: existingIndex >= 0 ? leads[existingIndex].capturedAt : new Date().toISOString(),
-      lastSeenAt: new Date().toISOString(),
-      status: 'email_captured',
-      source: source,
-      method: currentPaymentMethod
-    };
-
-    if (existingIndex >= 0) {
-      leads[existingIndex] = { ...leads[existingIndex], ...leadRecord };
-    } else {
-      leads.unshift(leadRecord);
-    }
-
-    localStorage.setItem('ov_captured_leads', JSON.stringify(leads));
-    console.log("📬 [One Vision Lead] Email capturé avec succès :", email);
-  }
-
-  // Écoute de l'email dès la saisie, modification ou perte de focus
-  if (emailInput) {
-    emailInput.addEventListener('input', () => {
-      hideError('emailError', emailInput);
-      captureLeadEmail('checkout_email_input');
-    });
-    emailInput.addEventListener('change', () => captureLeadEmail('checkout_email_change'));
-    emailInput.addEventListener('blur', () => captureLeadEmail('checkout_email_blur'));
-  }
-
-  if (nameInput) {
-    nameInput.addEventListener('input', () => {
-      hideError('nameError', nameInput);
-      if (emailInput && emailInput.value) captureLeadEmail('checkout_name_input');
-    });
-    nameInput.addEventListener('change', () => {
-      if (emailInput && emailInput.value) captureLeadEmail('checkout_name_change');
-    });
-  }
-
-  // Permet d'extraire les leads capturés depuis la console ou tout script
-  window.getCapturedLeads = function() {
-    try {
-      return JSON.parse(localStorage.getItem('ov_captured_leads') || '[]');
-    } catch(e) {
-      return [];
+  // Configuration exacte des pays et opérateurs SasPay (conforme à la capture d'écran)
+  const saspayCountries = {
+    "Cameroun": {
+      currency: "XAF",
+      amount: "5 904",
+      amountRaw: 5904,
+      fee: "+267 XAF",
+      feeRaw: 267,
+      total: "6 171 XAF",
+      prefix: "+237",
+      phonePlaceholder: "67 12 34 56 7",
+      operators: [
+        { id: "MTN MoMo", name: "MTN MoMo Cameroun", fee: "+267 XAF de frais", icon: "🟡" },
+        { id: "Orange Money", name: "Orange Money Cameroun", fee: "+267 XAF de frais", icon: "🟠" },
+        { id: "Crypto", name: "Crypto / Stablecoin", fee: "+0,63 USD de frais", icon: "🟣" }
+      ]
+    },
+    "Côte d'Ivoire": {
+      currency: "XOF",
+      amount: "5 900",
+      amountRaw: 5900,
+      fee: "+100 XOF",
+      feeRaw: 100,
+      total: "6 000 XOF",
+      prefix: "+225",
+      phonePlaceholder: "07 77 95 73 37",
+      operators: [
+        { id: "Wave", name: "Wave CI", fee: "0 XOF de frais", icon: "🔵" },
+        { id: "Orange Money", name: "Orange Money CI", fee: "+100 XOF de frais", icon: "🟠" },
+        { id: "MTN MoMo", name: "MTN MoMo CI", fee: "+100 XOF de frais", icon: "🟡" },
+        { id: "Moov Money", name: "Moov Money CI", fee: "+100 XOF de frais", icon: "🟢" }
+      ]
+    },
+    "Sénégal": {
+      currency: "XOF",
+      amount: "5 900",
+      amountRaw: 5900,
+      fee: "+100 XOF",
+      feeRaw: 100,
+      total: "6 000 XOF",
+      prefix: "+221",
+      phonePlaceholder: "77 123 45 67",
+      operators: [
+        { id: "Wave", name: "Wave Sénégal", fee: "0 XOF de frais", icon: "🔵" },
+        { id: "Orange Money", name: "Orange Money SN", fee: "+100 XOF de frais", icon: "🟠" },
+        { id: "Free Money", name: "Free Money SN", fee: "+100 XOF de frais", icon: "🔴" }
+      ]
+    },
+    "Bénin": {
+      currency: "XOF",
+      amount: "5 900",
+      amountRaw: 5900,
+      fee: "+100 XOF",
+      feeRaw: 100,
+      total: "6 000 XOF",
+      prefix: "+229",
+      phonePlaceholder: "97 12 34 56",
+      operators: [
+        { id: "MTN MoMo", name: "MTN MoMo Bénin", fee: "+100 XOF de frais", icon: "🟡" },
+        { id: "Moov Money", name: "Moov Money Bénin", fee: "+100 XOF de frais", icon: "🟢" }
+      ]
+    },
+    "Burkina Faso": {
+      currency: "XOF",
+      amount: "5 900",
+      amountRaw: 5900,
+      fee: "+100 XOF",
+      feeRaw: 100,
+      total: "6 000 XOF",
+      prefix: "+226",
+      phonePlaceholder: "70 12 34 56",
+      operators: [
+        { id: "Orange Money", name: "Orange Money BF", fee: "+100 XOF de frais", icon: "🟠" },
+        { id: "Moov Money", name: "Moov Money BF", fee: "+100 XOF de frais", icon: "🟢" }
+      ]
+    },
+    "Mali": {
+      currency: "XOF",
+      amount: "5 900",
+      amountRaw: 5900,
+      fee: "+100 XOF",
+      feeRaw: 100,
+      total: "6 000 XOF",
+      prefix: "+223",
+      phonePlaceholder: "70 12 34 56",
+      operators: [
+        { id: "Orange Money", name: "Orange Money Mali", fee: "+100 XOF de frais", icon: "🟠" },
+        { id: "Moov Money", name: "Moov Money Mali", fee: "+100 XOF de frais", icon: "🟢" }
+      ]
+    },
+    "Togo": {
+      currency: "XOF",
+      amount: "5 900",
+      amountRaw: 5900,
+      fee: "+100 XOF",
+      feeRaw: 100,
+      total: "6 000 XOF",
+      prefix: "+228",
+      phonePlaceholder: "90 12 34 56",
+      operators: [
+        { id: "T-Money", name: "T-Money Togo", fee: "+100 XOF de frais", icon: "🟡" },
+        { id: "Moov Money", name: "Moov Money Togo", fee: "+100 XOF de frais", icon: "🟢" }
+      ]
+    },
+    "Guinée": {
+      currency: "GNF",
+      amount: "84 000",
+      amountRaw: 84000,
+      fee: "+1 500 GNF",
+      feeRaw: 1500,
+      total: "85 500 GNF",
+      prefix: "+224",
+      phonePlaceholder: "620 12 34 56",
+      operators: [
+        { id: "Orange Money", name: "Orange Money GN", fee: "+1500 GNF de frais", icon: "🟠" },
+        { id: "MTN MoMo", name: "MTN MoMo GN", fee: "+1500 GNF de frais", icon: "🟡" }
+      ]
+    },
+    "RDC": {
+      currency: "USD",
+      amount: "9.80",
+      amountRaw: 9.80,
+      fee: "+0.20 USD",
+      feeRaw: 0.20,
+      total: "10.00 USD",
+      prefix: "+243",
+      phonePlaceholder: "81 234 5678",
+      operators: [
+        { id: "Vodacom M-Pesa", name: "Vodacom M-Pesa", fee: "+0,20 USD de frais", icon: "🔴" },
+        { id: "Airtel Money", name: "Airtel Money RDC", fee: "+0,20 USD de frais", icon: "🔴" },
+        { id: "Orange Money", name: "Orange Money RDC", fee: "+0,20 USD de frais", icon: "🟠" }
+      ]
+    },
+    "Congo": {
+      currency: "XAF",
+      amount: "5 904",
+      amountRaw: 5904,
+      fee: "+267 XAF",
+      feeRaw: 267,
+      total: "6 171 XAF",
+      prefix: "+242",
+      phonePlaceholder: "06 123 4567",
+      operators: [
+        { id: "MTN MoMo", name: "MTN MoMo Congo", fee: "+267 XAF de frais", icon: "🟡" },
+        { id: "Airtel Money", name: "Airtel Money Congo", fee: "+267 XAF de frais", icon: "🔴" }
+      ]
+    },
+    "Gabon": {
+      currency: "XAF",
+      amount: "5 904",
+      amountRaw: 5904,
+      fee: "+267 XAF",
+      feeRaw: 267,
+      total: "6 171 XAF",
+      prefix: "+241",
+      phonePlaceholder: "074 12 34 56",
+      operators: [
+        { id: "Airtel Money", name: "Airtel Money Gabon", fee: "+267 XAF de frais", icon: "🔴" },
+        { id: "Moov Money", name: "Moov Money Gabon", fee: "+267 XAF de frais", icon: "🟢" }
+      ]
+    },
+    "France": {
+      currency: "EUR",
+      amount: "9.00",
+      amountRaw: 9.00,
+      fee: "0.00 EUR",
+      feeRaw: 0.00,
+      total: "9.00 EUR",
+      prefix: "+33",
+      phonePlaceholder: "06 12 34 56 78",
+      operators: [
+        { id: "Orange Money", name: "Orange Money Europe", fee: "0,00 € de frais", icon: "🟠" },
+        { id: "Crypto", name: "Crypto / Stablecoin", fee: "0,00 € de frais", icon: "🟣" }
+      ]
     }
   };
 
-  // 2. GESTION DES MODES DE PAIEMENT (CARTE BANCAIRE VS MOBILE MONEY)
+  // 1. Rendu dynamique du widget SasPay en fonction du pays sélectionné
+  function updateSaspayWidget(countryKey) {
+    const data = saspayCountries[countryKey] || saspayCountries["Cameroun"];
+
+    if (saspayHeaderAmount) saspayHeaderAmount.textContent = `${data.amount} ${data.currency}`;
+    if (saspayPhonePrefix) saspayPhonePrefix.textContent = `📱 ${data.prefix}`;
+    if (saspayPhoneInput) saspayPhoneInput.placeholder = data.phonePlaceholder;
+
+    if (saspayBreakdownAmount) saspayBreakdownAmount.textContent = `${data.amount} ${data.currency}`;
+    if (saspayBreakdownFee) saspayBreakdownFee.textContent = data.fee;
+    if (saspayBreakdownTotal) saspayBreakdownTotal.textContent = data.total;
+
+    if (momoAmountHidden) momoAmountHidden.value = data.amountRaw;
+    if (momoCurrencyHidden) momoCurrencyHidden.value = data.currency;
+
+    // Rendu des boutons opérateurs
+    if (saspayMethodsGrid) {
+      saspayMethodsGrid.innerHTML = '';
+      data.operators.forEach((op, index) => {
+        const card = document.createElement('div');
+        card.className = `saspay-method-card ${index === 0 ? 'active' : ''}`;
+        card.dataset.operator = op.id;
+        card.innerHTML = `
+          <div class="saspay-method-icon">${op.icon}</div>
+          <div class="saspay-method-info">
+            <span class="saspay-method-name">${escapeHtml(op.name)}</span>
+            <span class="saspay-method-fee">${escapeHtml(op.fee)}</span>
+          </div>
+        `;
+
+        card.addEventListener('click', () => {
+          document.querySelectorAll('.saspay-method-card').forEach(c => c.classList.remove('active'));
+          card.classList.add('active');
+          if (saspaySelectedOperator) saspaySelectedOperator.value = op.id;
+        });
+
+        saspayMethodsGrid.appendChild(card);
+      });
+
+      if (saspaySelectedOperator && data.operators.length > 0) {
+        saspaySelectedOperator.value = data.operators[0].id;
+      }
+    }
+
+    if (currentPaymentMethod === 'mobile_money' && submitText) {
+      submitText.textContent = `Payer ${data.total} via Mobile Money →`;
+    }
+  }
+
+  if (saspayCountrySelect) {
+    saspayCountrySelect.addEventListener('change', (e) => {
+      updateSaspayWidget(e.target.value);
+    });
+    // Initialisation
+    updateSaspayWidget(saspayCountrySelect.value || "Cameroun");
+  }
+
+  // 2. Bascule entre Carte Bancaire et Mobile Money
   function selectPaymentMethod(method) {
     currentPaymentMethod = method;
+    if (paymentMethodHidden) paymentMethodHidden.value = method;
 
     if (method === 'card') {
       if (methodCard) methodCard.classList.add('selected');
       if (methodMobileMoney) methodMobileMoney.classList.remove('selected');
       if (cardDetailsBox) cardDetailsBox.style.display = 'block';
       if (mobileMoneyDetailsBox) mobileMoneyDetailsBox.style.display = 'none';
-      if (submitText) submitText.textContent = "Payer 9,00 € par Carte Bancaire";
+      if (submitText) submitText.textContent = "Payer 9,00 € par Carte Bancaire →";
     } else {
       if (methodMobileMoney) methodMobileMoney.classList.add('selected');
       if (methodCard) methodCard.classList.remove('selected');
       if (cardDetailsBox) cardDetailsBox.style.display = 'none';
       if (mobileMoneyDetailsBox) mobileMoneyDetailsBox.style.display = 'block';
-      if (submitText) submitText.textContent = "Valider et Payer 9,00 € via Mobile Money";
-    }
 
-    // Mettre à jour la méthode dans le lead capturé si déjà existant
-    if (emailInput && emailInput.value) captureLeadEmail('method_switch');
+      const selCountry = saspayCountrySelect ? saspayCountrySelect.value : "Cameroun";
+      const data = saspayCountries[selCountry] || saspayCountries["Cameroun"];
+      if (submitText) submitText.textContent = `Payer ${data.total} via Mobile Money →`;
+    }
   }
 
   if (methodCard) {
@@ -1561,27 +1766,7 @@ function initCheckoutPage() {
     });
   }
 
-  // Sélection d'opérateur Mobile Money (Orange Money, MTN, Wave, Moov, Airtel)
-  momoOperatorCards.forEach(card => {
-    card.addEventListener('click', () => {
-      momoOperatorCards.forEach(c => c.classList.remove('active'));
-      card.classList.add('active');
-      const radio = card.querySelector('input[type="radio"]');
-      if (radio) radio.checked = true;
-    });
-  });
-
-  // Formatage du numéro Mobile Money
-  if (momoPhone) {
-    momoPhone.addEventListener('input', (e) => {
-      let val = e.target.value.replace(/[^\d\s]/g, '');
-      if (val.length > 15) val = val.substring(0, 15);
-      e.target.value = val;
-      hideError('momoPhoneError', momoPhone);
-    });
-  }
-
-  // Formatage du numéro de carte bancaire (blocs de 4 chiffres)
+  // 3. Formatage de Carte Bancaire & Mobile Money
   if (cardInput) {
     cardInput.addEventListener('input', (e) => {
       let val = e.target.value.replace(/\D/g, '');
@@ -1592,7 +1777,6 @@ function initCheckoutPage() {
     });
   }
 
-  // Formatage de la date d'expiration (MM/AA)
   if (expInput) {
     expInput.addEventListener('input', (e) => {
       let val = e.target.value.replace(/\D/g, '');
@@ -1606,13 +1790,18 @@ function initCheckoutPage() {
     });
   }
 
-  // Formatage CVC (chiffres uniquement)
   if (cvcInput) {
     cvcInput.addEventListener('input', (e) => {
       let val = e.target.value.replace(/\D/g, '');
       if (val.length > 4) val = val.substring(0, 4);
       e.target.value = val;
       hideError('cvcError', cvcInput);
+    });
+  }
+
+  if (saspayPhoneInput) {
+    saspayPhoneInput.addEventListener('input', (e) => {
+      hideError('momoPhoneError', saspayPhoneInput);
     });
   }
 
@@ -1628,9 +1817,7 @@ function initCheckoutPage() {
     if (inputEl) inputEl.classList.remove('input-error');
   }
 
-  if (passwordInput) passwordInput.addEventListener('input', () => hideError('passwordError', passwordInput));
-
-  // 3. SOUMISSION ET VALIDATION DU PAIEMENT
+  // 4. Soumission et traitement du paiement SANS REDIRECTION PRÉMATURÉE
   checkoutForm.addEventListener('submit', (e) => {
     e.preventDefault();
     let hasError = false;
@@ -1654,42 +1841,30 @@ function initCheckoutPage() {
       hideError('emailError', emailInput);
     }
 
-    if (!passVal || passVal.length < 6) {
+    if (passwordInput && (!passVal || passVal.length < 6)) {
       showError('passwordError', passwordInput);
       hasError = true;
-    } else {
+    } else if (passwordInput) {
       hideError('passwordError', passwordInput);
     }
 
-    // Capture immédiate dès qu'il tente de soumettre
-    captureLeadEmail('checkout_submit_attempt');
-
-    // Validation conditionnelle selon la méthode de paiement choisie
-    let paymentSummaryText = "Carte Bancaire Sécurisée";
     if (currentPaymentMethod === 'card') {
       const cardVal = cardInput ? cardInput.value.replace(/\s/g, '') : '';
       const expVal = expInput ? expInput.value.trim() : '';
       const cvcVal = cvcInput ? cvcInput.value.trim() : '';
 
-      if (!cardVal || cardVal.length < 16) {
+      if (!cardVal || cardVal.length < 15) {
         showError('cardError', cardInput);
         hasError = true;
       } else {
         hideError('cardError', cardInput);
       }
 
-      if (!expVal || expVal.length < 5 || !expVal.includes('/')) {
+      if (!expVal || !expVal.includes('/') || expVal.length < 5) {
         showError('expError', expInput);
         hasError = true;
       } else {
-        const parts = expVal.split('/');
-        const month = parseInt(parts[0], 10);
-        if (isNaN(month) || month < 1 || month > 12) {
-          showError('expError', expInput);
-          hasError = true;
-        } else {
-          hideError('expError', expInput);
-        }
+        hideError('expError', expInput);
       }
 
       if (!cvcVal || cvcVal.length < 3) {
@@ -1698,22 +1873,15 @@ function initCheckoutPage() {
       } else {
         hideError('cvcError', cvcInput);
       }
-
-      paymentSummaryText = `Carte Bancaire (•••• ${cardVal.slice(-4) || '4242'})`;
     } else {
-      // Mobile Money validation
-      const momoPhoneVal = momoPhone ? momoPhone.value.replace(/\s/g, '') : '';
-      if (!momoPhoneVal || momoPhoneVal.length < 8) {
-        showError('momoPhoneError', momoPhone);
+      // Validation Mobile Money
+      const momoVal = saspayPhoneInput ? saspayPhoneInput.value.replace(/\s/g, '') : '';
+      if (!momoVal || momoVal.length < 6) {
+        showError('momoPhoneError', saspayPhoneInput);
         hasError = true;
       } else {
-        hideError('momoPhoneError', momoPhone);
+        hideError('momoPhoneError', saspayPhoneInput);
       }
-
-      const activeOpRadio = document.querySelector('input[name="momoOperator"]:checked');
-      const opName = activeOpRadio ? activeOpRadio.value : 'Orange Money';
-      const prefix = momoCountryPrefix ? momoCountryPrefix.value : '+225';
-      paymentSummaryText = `Mobile Money (${opName} • ${prefix} ${momoPhoneVal})`;
     }
 
     if (hasError) {
@@ -1722,99 +1890,99 @@ function initCheckoutPage() {
       return;
     }
 
-    // Traitement du paiement sécurisé
-    if (submitBtn) {
-      submitBtn.disabled = true;
-      if (submitText) submitText.textContent = "Sécurisation et activation en cours...";
+    // Affichage de la modale de traitement interactive directement sur la page
+    const selCountry = saspayCountrySelect ? saspayCountrySelect.value : "Cameroun";
+    const countryData = saspayCountries[selCountry] || saspayCountries["Cameroun"];
+    const opVal = saspaySelectedOperator ? saspaySelectedOperator.value : "MTN MoMo";
+    const phoneVal = saspayPhoneInput ? saspayPhoneInput.value.trim() : "";
+
+    if (processingModal) {
+      processingModal.classList.add('visible');
+      processingModal.setAttribute('aria-hidden', 'false');
+
+      if (currentPaymentMethod === 'mobile_money') {
+        if (processingTitle) processingTitle.textContent = "Validation Mobile Money en cours...";
+        if (processingDesc) processingDesc.textContent = `Transmission du débit sécurisé à ${opVal} (${selCountry})...`;
+        if (processingDeviceAlert) {
+          processingDeviceAlert.style.display = 'flex';
+          if (processingAlertMsg) {
+            processingAlertMsg.textContent = `Une notification a été envoyée sur le ${countryData.prefix} ${phoneVal}. Veuillez saisir votre code PIN secret sur votre mobile pour approuver le paiement de ${countryData.total}.`;
+          }
+        }
+      } else {
+        if (processingTitle) processingTitle.textContent = "Authentification Bancaire 3D-Secure...";
+        if (processingDesc) processingDesc.textContent = "Vérification sécurisée auprès de votre banque pour le règlement de 9,00 € TTC.";
+        if (processingDeviceAlert) processingDeviceAlert.style.display = 'none';
+      }
+
+      if (processingProgressBar) {
+        processingProgressBar.style.width = '20%';
+        setTimeout(() => { processingProgressBar.style.width = '75%'; }, 400);
+      }
     }
 
-    setTimeout(() => {
-      // Sauvegarde des états payés
-      localStorage.setItem('ov_has_paid', 'true');
-      localStorage.setItem('ov_member_name', nameVal);
-      localStorage.setItem('ov_member_email', emailVal);
-      localStorage.setItem('ov_payment_method', paymentSummaryText);
+    // Préparation des données du formulaire
+    const formData = new FormData(checkoutForm);
+    formData.set('paymentMethod', currentPaymentMethod);
+    formData.set('checkoutName', nameVal);
+    formData.set('checkoutEmail', emailVal);
+    if (passVal) formData.set('checkoutPassword', passVal);
 
-      // Mise à jour du lead en statut "paid_member"
-      try {
-        let leads = JSON.parse(localStorage.getItem('ov_captured_leads') || '[]');
-        const idx = leads.findIndex(l => l.email.toLowerCase() === emailVal.toLowerCase());
-        const updatedLead = {
-          email: emailVal,
-          name: nameVal,
-          paidAt: new Date().toISOString(),
-          status: 'paid_member',
-          amount: '9.00€',
-          paymentMethod: paymentSummaryText
-        };
-        if (idx >= 0) {
-          leads[idx] = { ...leads[idx], ...updatedLead };
-        } else {
-          leads.unshift(updatedLead);
-        }
-        localStorage.setItem('ov_captured_leads', JSON.stringify(leads));
-      } catch (err) {}
+    if (currentPaymentMethod === 'mobile_money') {
+      formData.set('momoCountry', selCountry);
+      formData.set('momoOperator', opVal);
+      formData.set('momoPhone', `${countryData.prefix} ${phoneVal}`);
+      formData.set('momoAmount', countryData.amountRaw);
+      formData.set('momoCurrency', countryData.currency);
+    }
 
-      // Masquage du formulaire et affichage de la page de confirmation
-      if (formView) formView.style.display = 'none';
-      if (successView) {
-        successView.style.display = 'block';
-        window.scrollTo({ top: 0, behavior: 'smooth' });
-      }
+    // Sauvegarder dans localStorage
+    localStorage.setItem('ov_member_name', nameVal);
+    localStorage.setItem('ov_member_email', emailVal);
 
-      // Génération et comptabilisation automatique de la facture officielle séquentielle
-      const newInvoice = generateNewInvoice({
-        clientName: nameVal,
-        clientEmail: emailVal,
-        paymentMethod: paymentSummaryText
-      });
+    // Envoi de la requête au backend PHP
+    fetch('checkout.php', {
+      method: 'POST',
+      body: formData,
+      headers: { 'X-Requested-With': 'XMLHttpRequest' }
+    })
+    .then(r => {
+      if (!r.ok) throw new Error('Erreur HTTP ' + r.status);
+      return r.json();
+    })
+    .then(data => {
+      if (data && (data.redirect_url || data.order_number)) {
+        const targetUrl = data.redirect_url || ('checkout-success.php?order=' + encodeURIComponent(data.order_number));
 
-      const successInvoiceTitle = document.getElementById('successInvoiceTitle');
-      if (successInvoiceTitle) {
-        successInvoiceTitle.textContent = `Facture N° ${newInvoice.invCode}`;
-      }
+        // Compléter la barre de chargement
+        if (processingProgressBar) processingProgressBar.style.width = '100%';
 
-      const btnDownloadCheckoutInvoice = document.getElementById('btnDownloadCheckoutInvoice');
-      if (btnDownloadCheckoutInvoice) {
-        btnDownloadCheckoutInvoice.onclick = () => {
-          triggerInvoiceDownload(newInvoice);
-        };
-      }
-
-      const btnPrintCheckoutInvoice = document.getElementById('btnPrintCheckoutInvoice');
-      if (btnPrintCheckoutInvoice) {
-        btnPrintCheckoutInvoice.onclick = () => {
-          const htmlContent = getInvoiceTemplateHtml(newInvoice);
-          const printWin = window.open('', '_blank');
-          if (printWin) {
-            printWin.document.write(htmlContent);
-            printWin.document.close();
+        // Afficher l'état de succès validé
+        setTimeout(() => {
+          if (processingTitle) processingTitle.textContent = "✅ Paiement validé avec succès !";
+          if (processingDesc) processingDesc.textContent = "Votre adhésion est active. Redirection vers votre reçu officiel...";
+          if (processingSpinnerIcon) {
+            processingSpinnerIcon.innerHTML = `<polyline points="20 6 9 17 4 12" stroke="#16a34a" stroke-width="3"></polyline>`;
           }
-        };
-      }
 
-      if (greetingEl) {
-        greetingEl.innerHTML = `Félicitations <strong>${escapeHtml(nameVal)}</strong>, votre adhésion à 9€/mois est validée et votre accès illimité est activé.`;
-      }
+          // Redirection vers checkout-success.php APRÈS validation
+          setTimeout(() => {
+            window.location.href = targetUrl;
+          }, 1200);
+        }, 1200);
 
-      if (successPaymentMethodLabel) {
-        successPaymentMethodLabel.textContent = paymentSummaryText;
+      } else {
+        if (processingModal) processingModal.classList.remove('visible');
+        alert(data.error || "Une erreur est survenue lors de la validation du paiement.");
       }
-
-      if (successEmailNotice) {
-        successEmailNotice.innerHTML = `Un email de confirmation contenant votre reçu fiscal et vos accès complets vient d'être expédié à l'adresse <strong>${escapeHtml(emailVal)}</strong>.`;
-      }
-
-      showToast(`🎉 Adhésion validée ! Facture #${newInvoice.invCode} générée et enregistrée.`);
-
-      // AUCUNE REDIRECTION AUTOMATIQUE (Choix laissé à l'utilisateur)
-      if (directBtn) {
-        directBtn.addEventListener('click', (ev) => {
-          ev.preventDefault();
-          window.location.href = 'dashboard.html';
-        });
-      }
-    }, 1200);
+    })
+    .catch(err => {
+      console.warn("Échec requête AJAX, soumission standard:", err);
+      // Fallback soumission standard
+      checkoutForm.action = 'checkout.php';
+      checkoutForm.method = 'POST';
+      checkoutForm.submit();
+    });
   });
 }
 
@@ -2912,9 +3080,41 @@ Document généré pour ${memberName} • One Vision Community © Tous droits r�
     ]
   };
 
-  const renderSalonPosts = (channelKey) => {
+  const renderSalonPosts = (channelKey, fetchFromDb = true) => {
     if (!salonFeedContainer) return;
     activeChannelKey = channelKey;
+
+    if (fetchFromDb && window.location.pathname.endsWith('.php')) {
+      fetch(`api/chat.php?channel=${encodeURIComponent(channelKey)}`)
+        .then(res => res.json())
+        .then(data => {
+          if (data && data.success && Array.isArray(data.messages)) {
+            if (!channelPostsData[channelKey]) channelPostsData[channelKey] = [];
+            data.messages.forEach(m => {
+              const postId = `msg-${m.id}`;
+              const exists = channelPostsData[channelKey].some(p => p.id === postId || (p.text === m.content && p.name === m.user_name));
+              if (!exists) {
+                channelPostsData[channelKey].unshift({
+                  id: postId,
+                  name: m.user_name,
+                  role: m.user_role || "Membre",
+                  tag: `# ${channelKey}`,
+                  avatar: m.user_avatar || "./img/avatar-maxime.jpg",
+                  time: m.time_display || "Récemment",
+                  text: m.content,
+                  image: null,
+                  likes: 1,
+                  userLiked: false,
+                  replies: []
+                });
+              }
+            });
+            renderSalonPosts(channelKey, false);
+          }
+        })
+        .catch(err => console.log('Error fetching chat messages:', err));
+    }
+
     const posts = channelPostsData[channelKey] || [];
 
     if (posts.length === 0) {
@@ -3204,6 +3404,18 @@ Document généré pour ${memberName} • One Vision Community © Tous droits r�
         channelPostsData[activeChannelKey] = [];
       }
       channelPostsData[activeChannelKey].unshift(newPost);
+
+      // Synchronisation BDD SQLite via API chat
+      if (window.location.pathname.endsWith('.php')) {
+        fetch('api/chat.php', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            channel: activeChannelKey,
+            content: text || "A partagé une image"
+          })
+        }).catch(err => console.log('Chat backend sync:', err));
+      }
 
       renderSalonPosts(activeChannelKey);
       inlineSalonPostInput.value = '';
@@ -4908,12 +5120,21 @@ function initCreateLivePage() {
       createdAt: new Date().toISOString()
     };
 
-    // Sauvegarde persistante dans localStorage
+    // Sauvegarde persistante dans localStorage & BDD SQLite
     try {
       const stored = localStorage.getItem('ov_community_custom_lives');
       const list = stored ? JSON.parse(stored) : [];
       list.unshift(newSession); // Placer en tête de liste
       localStorage.setItem('ov_community_custom_lives', JSON.stringify(list));
+
+      if (window.location.pathname.endsWith('.php')) {
+        const formData = new FormData(form);
+        fetch('creer-live.php', {
+          method: 'POST',
+          body: formData,
+          headers: { 'X-Requested-With': 'XMLHttpRequest' }
+        }).catch(err => console.log('Live backend sync note:', err));
+      }
     } catch (err) {
       console.error('Erreur sauvegarde live:', err);
     }
@@ -4950,7 +5171,7 @@ function initCreateLivePage() {
     }
 
     if (btnGoToCalendar) {
-      btnGoToCalendar.href = `dashboard.html?tab=tab-calendrier&new_live=${newSession.id}`;
+      btnGoToCalendar.href = getAppUrl('dashboard.html') + `?tab=tab-calendrier&new_live=${newSession.id}`;
     }
 
     if (gridEl) gridEl.style.display = 'none';
