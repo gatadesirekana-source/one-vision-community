@@ -1,0 +1,339 @@
+<!DOCTYPE html>
+<html lang="fr" data-theme="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Support & Service Client — One Vision Community</title>
+  <meta name="description" content="Centre d'aide et support officiel de One Vision Community. Une équipe dédiée à vos côtés pour répondre à vos questions sous 24h ouvrées.">
+
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Great+Vibes&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+  <link rel="stylesheet" href="./css/style.css">
+</head>
+<body>
+
+  <!-- EN-TÊTE -->
+  <header class="header">
+    <div class="container nav-wrapper">
+      <a href="index.html" class="logo" aria-label="Accueil One Vision Community">
+        <div class="logo-icon">OV</div>
+        <div class="logo-text">
+          <span class="logo-brand"><span class="logo-one-script">One</span> Vision</span>
+          <span class="logo-sub">Community</span>
+        </div>
+      </a>
+
+      <div class="nav-actions">
+        <a href="index.html" class="btn btn-secondary" style="font-size:0.9rem;padding:0.55rem 1.1rem;">
+          ← Retour à l'accueil
+        </a>
+        <button class="btn btn-primary open-checkout-btn">
+          <span>Rejoindre pour 9€/mois</span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- HERO DE PAGE -->
+  <div class="page-hero">
+    <div class="container">
+      <span class="page-hero-badge">Centre d'Assistance</span>
+      <h1 class="page-hero-title">Support & Service Client</h1>
+      <p class="page-hero-subtitle">
+        Une question sur votre adhésion à 9€/mois, un souci technique ou une suggestion pour la communauté ? Nous vous répondons sous 24 heures ouvrées.
+      </p>
+    </div>
+  </div>
+
+  <!-- CONTENU PRINCIPAL SUPPORT -->
+  <main class="legal-layout">
+    <div class="container">
+      <!-- Lien retour -->
+      <div style="max-width:860px;margin:0 auto 2rem;">
+        <a href="index.html" class="back-home-link">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"></polyline></svg>
+          Retour à l'accueil
+        </a>
+      </div>
+
+      <!-- Grille d'accès rapide -->
+      <div class="support-quick-grid" style="max-width:960px;margin:0 auto 3.5rem;">
+        <div class="support-quick-card">
+          <div class="support-quick-icon">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path>
+              <polyline points="22,6 12,13 2,6"></polyline>
+            </svg>
+          </div>
+          <h4>Contact Direct par Email</h4>
+          <p>Pour toute question générale ou demande administrative prioritaire.</p>
+          <a href="mailto:support@onevisioncommunity.fr" class="support-link">support@onevisioncommunity.fr</a>
+        </div>
+
+        <div class="support-quick-card">
+          <div class="support-quick-icon">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <rect x="2" y="4" width="20" height="16" rx="2"></rect>
+              <path d="M7 15h0M2 9.5h20"></path>
+            </svg>
+          </div>
+          <h4>Abonnement & Facturation</h4>
+          <p>Gérez votre prélèvement de 9€, téléchargez vos reçus ou résiliez en 1 clic.</p>
+          <a href="javascript:void(0)" class="open-checkout-btn support-link">Accéder à mon compte</a>
+        </div>
+
+        <div class="support-quick-card">
+          <div class="support-quick-icon">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polygon points="23 7 16 12 23 17 23 7"></polygon>
+              <rect x="1" y="5" width="15" height="14" rx="2" ry="2"></rect>
+            </svg>
+          </div>
+          <h4>Accès aux Lives & Replays</h4>
+          <p>Un problème de son, de caméra ou d'accès aux archives vidéo ?</p>
+          <a href="#supportFormSection" class="support-link">Ouvrir un ticket technique</a>
+        </div>
+      </div>
+
+      <!-- Formulaire de Contact Détaillé -->
+      <div class="support-form-card" id="supportFormSection">
+        <h3 style="font-size:1.45rem;font-weight:800;color:#0f172a;margin-bottom:0.5rem;text-align:center;">
+          Envoyer un message à l'équipe support
+        </h3>
+        <p style="font-size:0.95rem;color:var(--color-gray-300);text-align:center;margin-bottom:2rem;">
+          Remplissez les champs ci-dessous. Un membre de l'équipe vous répondra directement sur votre adresse email.
+        </p>
+
+        <form id="supportContactForm">
+          <div class="form-group">
+            <label for="contactName" class="form-label">Votre nom complet</label>
+            <input type="text" id="contactName" class="form-input" placeholder="ex. Thomas Robert" required>
+          </div>
+
+          <div class="form-group">
+            <label for="contactEmail" class="form-label">Votre adresse email</label>
+            <input type="email" id="contactEmail" class="form-input" placeholder="ex. thomas@monentreprise.com" required>
+          </div>
+
+          <div class="form-group">
+            <label for="contactSubject" class="form-label">Objet de votre demande</label>
+            <select id="contactSubject" class="form-select" required>
+              <option value="" disabled selected>Sélectionnez une thématique...</option>
+              <option value="account">Gestion de mon abonnement (9€/mois, résiliation, reçu)</option>
+              <option value="technical">Problème technique (Live, visio, Replays HD)</option>
+              <option value="pre-sales">Question avant de rejoindre One Vision Community</option>
+              <option value="speaker">Proposer une intervention ou un atelier live</option>
+              <option value="other">Autre demande</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label for="contactMessage" class="form-label">Votre message détaillé</label>
+            <textarea id="contactMessage" class="form-textarea" placeholder="Expliquez-nous précisément votre besoin..." required></textarea>
+          </div>
+
+          <div style="margin-top:1.5rem;">
+            <button type="submit" class="btn btn-primary" style="width:100%;padding:0.95rem;">
+              <span>Envoyer mon message au support</span>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                <line x1="22" y1="2" x2="11" y2="13"></line>
+                <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+              </svg>
+            </button>
+          </div>
+
+          <div class="modal-footer-notes" style="margin-top:1.25rem;">
+            ⚡ Délai de réponse garanti sous 24h ouvrées • Support disponible du lundi au samedi
+          </div>
+        </form>
+      </div>
+
+    </div>
+  </main>
+
+  <!-- PIED DE PAGE -->
+  <footer class="footer">
+    <div class="container">
+      <div class="footer-grid">
+        <div class="footer-brand">
+          <a href="index.html" class="logo" aria-label="One Vision Community">
+            <div class="logo-icon">OV</div>
+            <div class="logo-text">
+              <span class="logo-brand"><span class="logo-one-script">One</span> Vision</span>
+              <span class="logo-sub">Community</span>
+            </div>
+          </a>
+          <p>
+            La communauté en ligne des entrepreneurs et coachs qui s'entraident, collaborent sur leurs projets et participent à des lives chaque semaine pour 9€/mois.
+          </p>
+        </div>
+
+        <div class="footer-col">
+          <h5>Navigation</h5>
+          <ul class="footer-links">
+            <li><a href="index.html#fonctionnalites">Fonctionnalités</a></li>
+            <li><a href="index.html#lives">Programme des lives</a></li>
+            <li><a href="index.html#comparatif">Tarif unique (9€)</a></li>
+          </ul>
+        </div>
+
+        <div class="footer-col">
+          <h5>Ressources</h5>
+          <ul class="footer-links">
+            <li><a href="index.html#temoignages">Témoignages membres</a></li>
+            <li><a href="index.html#faq">Questions fréquentes</a></li>
+            <li><a href="javascript:void(0)" class="open-login-btn">Espace de connexion</a></li>
+            <li><a href="support.html" style="font-weight:700;color:var(--color-white);">Support & Service Client</a></li>
+          </ul>
+        </div>
+
+        <div class="footer-col">
+          <h5>Légal</h5>
+          <ul class="footer-links">
+            <li><a href="conditions-generales.html">Conditions Générales</a></li>
+            <li><a href="politique-confidentialite.html">Politique de Confidentialité</a></li>
+            <li><a href="mentions-legales.html">Mentions Légales</a></li>
+            <li><a href="gestion-cookies.html">Gestion des Cookies</a></li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="footer-bottom">
+        <div>© 2026 One Vision Community. Tous droits réservés.</div>
+      </div>
+    </div>
+  </footer>
+
+  <!-- MODALE CHECKOUT & CONNEXION -->
+  <div id="checkoutModal" class="modal-backdrop" aria-hidden="true" role="dialog" aria-labelledby="modalTitle">
+    <div class="modal-card">
+      <button id="modalCloseBtn" class="modal-close-btn" aria-label="Fermer la modale">✕</button>
+      
+      <!-- VUE 1 : FORMULAIRE D'ADHÉSION 9€ (Mode Nouveau Visiteur) -->
+      <div id="viewJoin">
+        <div class="modal-header">
+          <div class="modal-header-top">
+            <h3 id="modalTitle" class="modal-title">Rejoindre la communauté</h3>
+            <span class="modal-price-pill">9€ <span>/mois</span></span>
+          </div>
+          <p class="modal-subtitle">Accès complet et immédiat • Sans engagement • Annulable en 1 clic</p>
+        </div>
+
+        <form id="checkoutForm">
+          <div class="form-group">
+            <label for="memberName" class="form-label">Nom complet</label>
+            <input type="text" id="memberName" class="form-input" placeholder="ex. Alexandre Martin" required autocomplete="name">
+          </div>
+
+          <div class="form-group">
+            <label for="memberEmail" class="form-label">Adresse email</label>
+            <input type="email" id="memberEmail" class="form-input" placeholder="ex. alexandre@monprojet.fr" required autocomplete="email">
+          </div>
+
+          <div class="form-group">
+            <label for="memberPassword" class="form-label">Mot de passe</label>
+            <input type="password" id="memberPassword" class="form-input" placeholder="Au moins 6 caractères" minlength="6" required autocomplete="new-password">
+          </div>
+
+          <button type="submit" class="btn btn-primary modal-submit-btn">
+            <span>Valider mon accès pour 9€</span>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+              <line x1="5" y1="12" x2="19" y2="12"></line>
+              <polyline points="12 5 19 12 12 19"></polyline>
+            </svg>
+          </button>
+
+          <div class="modal-footer-notes">
+            🔒 Paiement chiffré • Reçu fiscal par email • Résiliable en 1 clic
+          </div>
+
+          <div class="modal-switch-mode">
+            Vous avez déjà un compte ? <button type="button" id="switchToLoginBtn">Se connecter</button>
+          </div>
+        </form>
+      </div>
+
+      <!-- VUE 2 : ESPACE DE CONNEXION POUR MEMBRES EXISTANTS -->
+      <div id="viewLogin" style="display:none;">
+        <div class="modal-header">
+          <div class="modal-header-top">
+            <h3 class="modal-title">Espace Connexion</h3>
+            <span class="modal-badge-login">Membres</span>
+          </div>
+          <p class="modal-subtitle">Accédez à vos salons d'échanges, masterminds et replays HD.</p>
+        </div>
+
+        <form id="loginForm">
+          <div class="form-group">
+            <label for="loginEmail" class="form-label">Adresse email</label>
+            <input type="email" id="loginEmail" class="form-input" placeholder="ex. alexandre@monprojet.fr" required autocomplete="email">
+          </div>
+
+          <div class="form-group">
+            <div style="display:flex;justify-content:space-between;align-items:center;">
+              <label for="loginPassword" class="form-label">Mot de passe</label>
+              <a href="support.html" style="font-size:0.75rem;color:#64748b;text-decoration:underline;">Oublié ?</a>
+            </div>
+            <input type="password" id="loginPassword" class="form-input" placeholder="Votre mot de passe" required autocomplete="current-password">
+          </div>
+
+          <button type="submit" class="btn btn-primary modal-submit-btn">
+            <span>Me connecter à mon espace</span>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+              <polyline points="9 18 15 12 9 6"></polyline>
+            </svg>
+          </button>
+
+          <div class="modal-footer-notes">
+            ⚡ Connexion rapide et chiffrée • Accès immédiat aux salons 24/7
+          </div>
+
+          <div class="modal-switch-mode" id="loginSwitchMode">
+            Nouveau ici ? <button type="button" id="switchToJoinBtn">Rejoindre pour 9€/mois</button>
+          </div>
+        </form>
+      </div>
+
+      <!-- VUE 3 : ÉTAT DE SUCCÈS (ANIMÉ) -->
+      <div id="viewSuccess" style="display:none;">
+        <div class="modal-success-box">
+          <div class="modal-success-icon">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
+              <polyline points="20 6 9 17 4 12"></polyline>
+            </svg>
+          </div>
+          <h3 id="successTitle" style="font-size:1.35rem;font-weight:800;color:#0f172a;margin-bottom:0.4rem;">
+            Bienvenue dans One Vision Community !
+          </h3>
+          <p id="successDesc" style="font-size:0.875rem;color:#475569;line-height:1.55;margin-bottom:1.4rem;">
+            Votre accès à 9€/mois est validé. Vous pouvez dès maintenant rejoindre les salons et explorer les replays.
+          </p>
+          <button id="successActionBtn" class="btn btn-primary" style="width:100%;padding:0.85rem;">
+            <span>Entrer dans l'espace membre →</span>
+          </button>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <script src="./js/main.js"></script>
+  <script>
+    // Envoi interactif du formulaire de support
+    document.addEventListener('DOMContentLoaded', () => {
+      const form = document.getElementById('supportContactForm');
+      if (form) {
+        form.addEventListener('submit', (e) => {
+          e.preventDefault();
+          const name = document.getElementById('contactName').value;
+          showToast(`📩 Merci ${name} ! Votre message a bien été transmis au support. Réponse garantie sous 24h.`);
+          form.reset();
+        });
+      }
+    });
+  </script>
+</body>
+</html>

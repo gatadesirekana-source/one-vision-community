@@ -1,0 +1,445 @@
+<!DOCTYPE html>
+<html lang="fr" data-theme="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Créer un Live ou un Mastermind — One Vision Community</title>
+  <meta name="description" content="Proposez une session live, un mastermind ou un retour d'expérience à la communauté One Vision. Publiez directement votre atelier dans le calendrier officiel des membres.">
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎙️</text></svg>">
+
+  <!-- Google Fonts : Great Vibes & Plus Jakarta Sans -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Great+Vibes&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+  <!-- Stylesheet -->
+  <link rel="stylesheet" href="./css/style.css?v=4">
+</head>
+<body class="create-live-body">
+
+  <!-- ==========================================================================
+       1. EN-TÊTE DE NAVIGATION ÉPURÉ
+       ========================================================================== -->
+  <header class="header create-live-header">
+    <div class="container nav-wrapper">
+      <a href="index.html" class="logo" aria-label="Accueil One Vision Community">
+        <div class="logo-icon">OV</div>
+        <div class="logo-text">
+          <span class="logo-brand"><span class="logo-one-script">One</span> Vision</span>
+          <span class="logo-sub">Community</span>
+        </div>
+      </a>
+
+      <div class="create-live-nav-actions">
+        <a href="dashboard.html" class="btn btn-secondary btn-sm" id="backToCalendarBtn">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+            <line x1="19" y1="12" x2="5" y2="12"></line>
+            <polyline points="12 19 5 12 12 5"></polyline>
+          </svg>
+          <span>Retour au Dashboard</span>
+        </a>
+      </div>
+    </div>
+  </header>
+
+  <!-- ==========================================================================
+       2. CONTENU PRINCIPAL : CRÉATION DU LIVE & APERÇU EN DIRECT
+       ========================================================================== -->
+  <main class="create-live-main section">
+    <div class="container">
+
+      <!-- En-tête de la page -->
+      <div class="create-live-intro">
+        <div class="badge badge-accent mb-2">
+          <span class="pulse-status-dot"></span>
+          <span>Espace Collaboratif Ouvert à Tous les Membres</span>
+        </div>
+        <h1 class="create-live-title">Créer un Live ou un Mastermind</h1>
+        <p class="create-live-subtitle">
+          Vous souhaitez partager un retour d'expérience concret, animer un atelier thématique ou organiser un mastermind d'échange ? Renseignez votre sujet ci-dessous : votre session sera immédiatement enregistrée et ajoutée au calendrier de la communauté.
+        </p>
+      </div>
+
+      <!-- Grille à 2 colonnes : Formulaire de création (gauche) + Aperçu dynamique (droite) -->
+      <div class="create-live-grid" id="createLiveGrid">
+
+        <!-- Colonne Gauche : Formulaire de programmation -->
+        <div class="create-live-form-col">
+          <form id="createLiveForm" class="create-live-form" novalidate>
+
+            <!-- Étape 1 : Format de l'intervention -->
+            <div class="form-card">
+              <div class="form-card-header">
+                <span class="form-step-number">1</span>
+                <div>
+                  <h2 class="form-card-title">Format de la session</h2>
+                  <p class="form-card-desc">Choisissez la dynamique qui correspond le mieux à votre intervention.</p>
+                </div>
+              </div>
+
+              <div class="format-options-grid">
+                <label class="format-option-card">
+                  <input type="radio" name="liveFormat" value="Live Thématique" checked>
+                  <div class="format-card-content">
+                    <span class="format-icon">🎙️</span>
+                    <strong class="format-name">Live Thématique</strong>
+                    <span class="format-desc">Présentation de conseils, méthodes actionnables et questions/réponses.</span>
+                  </div>
+                </label>
+
+                <label class="format-option-card">
+                  <input type="radio" name="liveFormat" value="Mastermind Échange">
+                  <div class="format-card-content">
+                    <span class="format-icon">🧠</span>
+                    <strong class="format-name">Mastermind Échange</strong>
+                    <span class="format-desc">Brainstorming collectif, déblocage de freins et retours des pairs.</span>
+                  </div>
+                </label>
+
+                <label class="format-option-card">
+                  <input type="radio" name="liveFormat" value="Retour d'Expérience">
+                  <div class="format-card-content">
+                    <span class="format-icon">🚀</span>
+                    <strong class="format-name">Retour d'Expérience</strong>
+                    <span class="format-desc">Partage d'un cas réel, chiffre, succès ou leçon tirée d'un échec.</span>
+                  </div>
+                </label>
+
+                <label class="format-option-card">
+                  <input type="radio" name="liveFormat" value="Atelier Co-Working">
+                  <div class="format-card-content">
+                    <span class="format-icon">💻</span>
+                    <strong class="format-name">Atelier Co-Working</strong>
+                    <span class="format-desc">Travail collaboratif guidé, feedback en direct sur vos projets.</span>
+                  </div>
+                </label>
+              </div>
+            </div>
+
+            <!-- Étape 2 : Sujet & Contenu du Live -->
+            <div class="form-card">
+              <div class="form-card-header">
+                <span class="form-step-number">2</span>
+                <div>
+                  <h2 class="form-card-title">Thème & Sujet de l'intervention</h2>
+                  <p class="form-card-desc">Rendez votre session irrésistible et claire pour les membres.</p>
+                </div>
+              </div>
+
+              <!-- Titre du Live -->
+              <div class="form-group mb-4">
+                <div class="form-label-row">
+                  <label for="liveTitle" class="form-label">Titre ou Thème principal *</label>
+                  <button type="button" class="btn-preset-example" id="btnFillExample" title="Remplir avec une idée inspirante">
+                    💡 Idée d'exemple
+                  </button>
+                </div>
+                <input 
+                  type="text" 
+                  id="liveTitle" 
+                  class="form-input" 
+                  placeholder="Ex : Comment j'ai signé 3 clients à 2 500€ en 30 jours sans prospection froide" 
+                  maxlength="110" 
+                  required
+                >
+                <span class="form-hint">Un titre direct mettant en avant le résultat concret ou le bénéfice pour les membres.</span>
+              </div>
+
+              <!-- Thématique / Domaine -->
+              <div class="form-group mb-4">
+                <label for="liveCategoryTag" class="form-label">Domaine d'expertise *</label>
+                <select id="liveCategoryTag" class="form-input form-select">
+                  <option value="Retour d'Expérience">🚀 Retour d'Expérience & Cas Réel</option>
+                  <option value="Acquisition & Vente">💼 Vente, Négociation & Closing</option>
+                  <option value="Copywriting & Offres">✍️ Copywriting & Pages de Vente</option>
+                  <option value="IA & Productivité">🤖 Intelligence Artificielle & No-Code</option>
+                  <option value="Mastermind Collectif">🧠 Mastermind & Brainstorming</option>
+                  <option value="Mindset & Organisation">⚡ Organisation & Clarté Mentale</option>
+                  <option value="Atelier Pratique">🛠️ Atelier Pratique & Co-working</option>
+                </select>
+              </div>
+
+              <!-- Description & Ce que les membres vont apprendre -->
+              <div class="form-group mb-4">
+                <label for="liveDesc" class="form-label">Description & Ce que les membres vont retirer *</label>
+                <textarea 
+                  id="liveDesc" 
+                  class="form-input form-textarea" 
+                  rows="4" 
+                  placeholder="Expliquez en 2 ou 3 phrases le déroulement : vos apprentissages clés, vos étapes vécues et le temps réservé aux questions des membres..."
+                  required
+                ></textarea>
+                <span class="form-hint">Soyez direct et authentique. Les membres apprécient la transparence et les cas pratiques.</span>
+              </div>
+
+              <!-- Ressource / Document offert (optionnel) -->
+              <div class="form-group">
+                <label for="liveResources" class="form-label">Ressources fournies aux participants (optionnel)</label>
+                <input 
+                  type="text" 
+                  id="liveResources" 
+                  class="form-input" 
+                  placeholder="Ex : Template Notion offert, Fiche PDF récapitulative, Grille Excel..."
+                >
+              </div>
+            </div>
+
+            <!-- Étape 3 : Date, Heure & Durée -->
+            <div class="form-card">
+              <div class="form-card-header">
+                <span class="form-step-number">3</span>
+                <div>
+                  <h2 class="form-card-title">Date & Planification</h2>
+                  <p class="form-card-desc">Choisissez quand aura lieu votre intervention.</p>
+                </div>
+              </div>
+
+              <div class="form-row-2">
+                <!-- Date -->
+                <div class="form-group">
+                  <label for="liveDate" class="form-label">Date de la session *</label>
+                  <input type="date" id="liveDate" class="form-input" required>
+                </div>
+
+                <!-- Heure -->
+                <div class="form-group">
+                  <label for="liveTime" class="form-label">Heure de début *</label>
+                  <select id="liveTime" class="form-input form-select">
+                    <option value="11h00">11h00 (Matinée)</option>
+                    <option value="12h30">12h30 (Pause déjeuner)</option>
+                    <option value="14h00">14h00 (Début d'après-midi)</option>
+                    <option value="18h00">18h00 (Fin de journée)</option>
+                    <option value="18h30">18h30 (Afterwork)</option>
+                    <option value="19h00" selected>19h00 (Créneau privilégié)</option>
+                    <option value="20h00">20h00 (Soirée)</option>
+                    <option value="20h30">20h30 (Session nocturne)</option>
+                  </select>
+                </div>
+              </div>
+
+              <div class="form-row-2 mt-3">
+                <!-- Durée estimée -->
+                <div class="form-group">
+                  <label for="liveDuration" class="form-label">Durée estimée *</label>
+                  <select id="liveDuration" class="form-input form-select">
+                    <option value="45 min">45 minutes</option>
+                    <option value="1h00" selected>1 heure</option>
+                    <option value="1h30">1 heure 30 minutes</option>
+                    <option value="2h00">2 heures</option>
+                  </select>
+                </div>
+
+                <!-- Onglet de calendrier -->
+                <div class="form-group">
+                  <label for="liveTabSection" class="form-label">Période d'affichage *</label>
+                  <select id="liveTabSection" class="form-input form-select">
+                    <option value="current" selected>Cette semaine (Programme immédiat)</option>
+                    <option value="upcoming">Semaine prochaine (À venir)</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+
+            <!-- Étape 4 : Profil de l'Animateur (Vous) -->
+            <div class="form-card">
+              <div class="form-card-header">
+                <span class="form-step-number">4</span>
+                <div>
+                  <h2 class="form-card-title">Votre profil d'intervenant</h2>
+                  <p class="form-card-desc">Indiquez votre nom et votre spécialité pour que les membres vous identifient.</p>
+                </div>
+              </div>
+
+              <div class="form-row-2">
+                <!-- Nom & Prénom -->
+                <div class="form-group">
+                  <label for="liveAuthor" class="form-label">Votre Nom & Prénom *</label>
+                  <input type="text" id="liveAuthor" class="form-input" value="Katahana Désiré" required>
+                </div>
+
+                <!-- Rôle / Spécialité -->
+                <div class="form-group">
+                  <label for="liveRole" class="form-label">Votre rôle ou domaine d'activité *</label>
+                  <input type="text" id="liveRole" class="form-input" value="Stratège Digital & Membre One Vision" required>
+                </div>
+              </div>
+
+              <!-- Choix de l'avatar -->
+              <div class="form-group mt-3">
+                <label class="form-label">Photo ou avatar de présentation</label>
+                <div class="avatar-selection-grid">
+                  <label class="avatar-option">
+                    <input type="radio" name="liveAvatar" value="./img/avatar-maxime.jpg" checked>
+                    <img src="./img/avatar-maxime.jpg" alt="Avatar Katahana" class="avatar-choice-img">
+                  </label>
+                  <label class="avatar-option">
+                    <input type="radio" name="liveAvatar" value="./img/avatar-cyril.jpg">
+                    <img src="./img/avatar-cyril.jpg" alt="Avatar Cyril" class="avatar-choice-img">
+                  </label>
+                  <label class="avatar-option">
+                    <input type="radio" name="liveAvatar" value="./img/avatar-aurore.jpg">
+                    <img src="./img/avatar-aurore.jpg" alt="Avatar Aurore" class="avatar-choice-img">
+                  </label>
+                  <label class="avatar-option">
+                    <input type="radio" name="liveAvatar" value="./img/avatar-florian.jpg">
+                    <img src="./img/avatar-florian.jpg" alt="Avatar Florian" class="avatar-choice-img">
+                  </label>
+                  <label class="avatar-option">
+                    <input type="radio" name="liveAvatar" value="./img/avatar-sarah.jpg">
+                    <img src="./img/avatar-sarah.jpg" alt="Avatar Sarah" class="avatar-choice-img">
+                  </label>
+                  <label class="avatar-option">
+                    <input type="radio" name="liveAvatar" value="./img/avatar-nadia.jpg">
+                    <img src="./img/avatar-nadia.jpg" alt="Avatar Nadia" class="avatar-choice-img">
+                  </label>
+                </div>
+              </div>
+            </div>
+
+            <!-- Bouton de soumission du formulaire -->
+            <div class="form-actions-bar">
+              <button type="submit" class="btn btn-primary btn-lg btn-block" id="submitLiveBtn">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                  <polygon points="5 3 19 12 5 21 5 3"></polygon>
+                </svg>
+                <span>Publier et Enregistrer dans le Calendrier</span>
+              </button>
+              <p class="form-legal-note">
+                🔒 Votre session sera instantanément enregistrée dans le calendrier interactif visible par l'ensemble des membres.
+              </p>
+            </div>
+
+          </form>
+        </div>
+
+        <!-- Colonne Droite : Prévisualisation en direct & Conseils -->
+        <div class="create-live-preview-col">
+          <div class="sticky-preview-wrapper">
+            
+            <div class="preview-box-header">
+              <div class="preview-badge-status">
+                <span class="pulse-status-dot"></span>
+                <span>Aperçu en direct dans le calendrier</span>
+              </div>
+              <span class="preview-pill-tip">Mise à jour instantanée</span>
+            </div>
+
+            <!-- Fiche de live prévisualisée en direct -->
+            <div class="live-preview-container">
+              <article class="live-card preview-live-card" id="previewLiveCard">
+                <div>
+                  <div class="live-card-top">
+                    <span class="live-tag" id="previewTag">🚀 Retour d'Expérience</span>
+                    <span class="live-date" id="previewDateBadge">
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="12" cy="12" r="10"></circle>
+                        <polyline points="12 6 12 12 16 14"></polyline>
+                      </svg>
+                      <span id="previewDateText">Jeudi • 19h00 (Session Membre)</span>
+                    </span>
+                  </div>
+                  
+                  <!-- Badge d'origine membre -->
+                  <div class="live-member-pill-indicator">
+                    <span>🤝 Session animée par un membre</span>
+                  </div>
+
+                  <h4 class="live-card-title" id="previewTitle">
+                    Comment j'ai signé 3 clients à 2 500€ en 30 jours sans prospection froide
+                  </h4>
+                  <p class="live-card-desc" id="previewDesc">
+                    Partage d'un cas réel sans langue de bois : mon offre d'appel, la trame de cadrage utilisée et les erreurs évitées. Séance ouverte de questions-réponses avec les membres.
+                  </p>
+                </div>
+
+                <div class="live-host">
+                  <div class="host-avatar-preview">
+                    <img src="./img/avatar-maxime.jpg" alt="Avatar" id="previewAvatarImg">
+                  </div>
+                  <div>
+                    <div class="host-name" id="previewAuthor">Katahana Désiré</div>
+                    <div class="host-role" id="previewRole">Stratège Digital & Membre One Vision</div>
+                  </div>
+                </div>
+              </article>
+            </div>
+
+            <!-- Carte de conseils et valeurs -->
+            <div class="preview-guide-card">
+              <h3 class="guide-title">
+                <span>💡</span> Pourquoi proposer votre propre live ?
+              </h3>
+              <ul class="guide-list">
+                <li>
+                  <strong>Visibilité & Autorité :</strong> Faites-vous connaître auprès de plus de 1 200 entrepreneurs actifs et engagés.
+                </li>
+                <li>
+                  <strong>Feedbacks constructifs :</strong> Testez une idée, validez une offre ou recevez des retours précieux de vos pairs.
+                </li>
+                <li>
+                  <strong>Création de synergies :</strong> Trouvez de futurs partenaires, clients ou associés au sein de la communauté.
+                </li>
+              </ul>
+            </div>
+
+          </div>
+        </div>
+
+      </div>
+
+      <!-- ==========================================================================
+           3. ÉCRAN DE CONFIRMATION DE SUCCÈS (APPARU APRÈS SOUMISSION)
+           ========================================================================== -->
+      <div class="create-live-success-screen" id="createLiveSuccessScreen" style="display: none;">
+        <div class="success-card">
+          <div class="success-badge-icon">
+            <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#16a34a" stroke-width="2.5">
+              <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+              <polyline points="22 4 12 14.01 9 11.01"></polyline>
+            </svg>
+          </div>
+
+          <h2 class="success-title">Votre session a été publiée avec succès !</h2>
+          <p class="success-subtitle">
+            Félicitations ! Votre live a été instantanément enregistré dans le calendrier interactif de One Vision Community. Tous les membres peuvent dès maintenant le consulter.
+          </p>
+
+          <!-- Récapitulatif de la session créée -->
+          <div class="success-recap-box" id="successRecapBox">
+            <!-- Rempli dynamiquement par JS -->
+          </div>
+
+          <div class="success-actions-row">
+            <a href="dashboard.html?tab=tab-calendrier" class="btn btn-primary btn-lg" id="btnGoToCalendar">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                <line x1="16" y1="2" x2="16" y2="6"></line>
+                <line x1="8" y1="2" x2="8" y2="6"></line>
+                <line x1="3" y1="10" x2="21" y2="10"></line>
+              </svg>
+              <span>Voir ma session dans le calendrier des lives</span>
+            </a>
+
+            <button type="button" class="btn btn-secondary" id="btnCreateAnother">
+              <span>➕ Créer une autre session</span>
+            </button>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </main>
+
+  <!-- ==========================================================================
+       4. PIED DE PAGE
+       ========================================================================== -->
+  <footer class="footer create-live-footer">
+    <div class="container footer-bottom" style="border-top: 1px solid var(--border-subtle); padding-top: 2rem;">
+      <p>© 2026 One Vision Community. Tous droits réservés. Espace d'animation ouvert et collaboratif.</p>
+    </div>
+  </footer>
+
+  <!-- Scripts -->
+  <script src="./js/main.js?v=4"></script>
+</body>
+</html>

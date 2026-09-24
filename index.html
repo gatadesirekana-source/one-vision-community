@@ -1,0 +1,902 @@
+<!DOCTYPE html>
+<html lang="fr" data-theme="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>One Vision Community — Une communauté d'entrepreneurs qui avancent, pas qui attendent</title>
+  <meta name="description" content="One Vision Community : Vous savez où vous allez, ici vous n'y allez plus seul. Un espace vivant, pas une bibliothèque qu'on oublie. 9€/mois sans engagement.">
+  <meta name="keywords" content="One Vision Community, communauté entrepreneurs, réseau entrepreneurs, entraide business, masterminds, lives hebdomadaires">
+
+  <!-- Open Graph / Meta Réseaux Sociaux -->
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="One Vision Community — Une communauté d'entrepreneurs qui avancent, pas qui attendent">
+  <meta property="og:description" content="Vous savez où vous allez, ici vous n'y allez plus seul. Entourez-vous des gens qui vont dans votre direction. Un espace vivant pour 9€/mois.">
+
+  <!-- Google Fonts : Great Vibes & Plus Jakarta Sans -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Great+Vibes&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+  <!-- Stylesheet -->
+  <link rel="stylesheet" href="./css/style.css?v=3">
+</head>
+<body>
+
+  <!-- ==========================================================================
+       1. EN-TÊTE & NAVIGATION
+       ========================================================================== -->
+  <header class="header">
+    <div class="container nav-wrapper">
+      <!-- Logo de la marque : One (cursive) Vision en haut, Community en dessous -->
+      <a href="#" class="logo" aria-label="Accueil One Vision Community">
+        <div class="logo-icon">OV</div>
+        <div class="logo-text">
+          <span class="logo-brand"><span class="logo-one-script">One</span> Vision</span>
+          <span class="logo-sub">Community</span>
+        </div>
+      </a>
+
+      <!-- Actions : CTA Direct pour 9€/mois -->
+      <div class="nav-actions">
+        <!-- CTA Direct : Rejoindre pour 9€/mois -->
+        <button class="btn btn-primary open-checkout-btn">
+          <span>Rejoindre pour 9€/mois</span>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+            <line x1="5" y1="12" x2="19" y2="12"></line>
+            <polyline points="12 5 19 12 12 19"></polyline>
+          </svg>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- ==========================================================================
+       2. SECTION HERO
+       ========================================================================== -->
+  <section class="hero">
+    <div class="container">
+      <!-- Titre principal animé dynamique (H1 agrandi avec alternance fluide) -->
+      <div class="hero-title-container" aria-live="polite">
+        <h1 class="hero-title hero-title-rotator" id="titleRotator">
+          <span class="title-item active">Diriger seul ne veut pas dire avancer seul.</span>
+          <span class="title-item">La solitude de l'entrepreneur s'arrête ici.</span>
+          <span class="title-item">Personne autour de vous ne comprend vraiment ce que vous vivez. Ici, si.</span>
+          <span class="title-item">Vous savez où vous allez. Ici, vous n'y allez plus seul.</span>
+          <span class="title-item">Avancez avec des entrepreneurs qui comprennent où vous allez.</span>
+          <span class="title-item">Entourez-vous de gens qui vont dans votre direction.</span>
+          <span class="title-item">Vous avez une vision. Ici, vous trouverez ceux qui la partagent.</span>
+          <span class="title-item">One Vision : des entrepreneurs, une direction commune.</span>
+          <span class="title-item">Le prochain projet que vous lancerez se construira peut-être ici.</span>
+          <span class="title-item">Des entrepreneurs qui ne se contentent pas de discuter, qui construisent ensemble.</span>
+          <span class="title-item">Trouvez les bonnes personnes avant de trouver la bonne idée.</span>
+          <span class="title-item">Là où votre vision devient un projet, pas juste une idée.</span>
+          <span class="title-item">Une communauté d'entrepreneurs qui avancent, pas qui attendent.</span>
+          <span class="title-item">Ici, on ne parle pas de business. On en construit.</span>
+          <span class="title-item">Pas de spectateurs. Que des gens qui font.</span>
+          <span class="title-item">Vous n'avez pas besoin d'un cours de plus. Vous avez besoin des bonnes personnes.</span>
+          <span class="title-item">Enfin des retours qui ne vous disent pas juste ce que vous voulez entendre.</span>
+          <span class="title-item">Des entrepreneurs qui vous diront la vérité sur votre projet.</span>
+          <span class="title-item">Ce dont votre projet a besoin, ce n'est pas de likes. C'est de vrais retours.</span>
+          <span class="title-item">Un live par semaine. Une communauté chaque jour.</span>
+        </h1>
+      </div>
+
+      <!-- Sous-titre -->
+      <p class="hero-subtitle">
+        Une communauté d'entrepreneurs qui avancent, <strong>pas qui attendent.</strong>
+      </p>
+
+      <!-- Cadre Vidéo VSL (Vidéo de présentation de la communauté) -->
+      <div class="hero-vsl-container">
+        <div class="vsl-wrapper" id="vslWrapper">
+          <div class="vsl-video-box">
+            <!-- Affiche / Poster interactif de la vidéo -->
+            <div class="vsl-poster">
+              <div class="vsl-backdrop"></div>
+              
+              <!-- Badge informatif durée -->
+              <div class="vsl-badge">
+                <span class="vsl-badge-dot"></span>
+                <span>Vidéo de présentation • 3 min pour tout comprendre</span>
+              </div>
+
+              <!-- Bouton Play central stylisé -->
+              <button class="vsl-play-btn" id="vslPlayBtn" aria-label="Lancer la vidéo de présentation">
+                <div class="play-btn-pulse"></div>
+                <div class="play-btn-icon">
+                  <svg width="28" height="28" viewBox="0 0 24 24" fill="currentColor">
+                    <polygon points="6 3 20 12 6 21 6 3"></polygon>
+                  </svg>
+                </div>
+              </button>
+
+              <!-- Légende explicative -->
+              <div class="vsl-caption">
+                <p class="vsl-title">Pourquoi rejoindre One Vision Community ?</p>
+                <p class="vsl-subtitle">Découvrez les coulisses, l'énergie des lives et l'entraide entre pairs</p>
+              </div>
+            </div>
+
+            <!-- Balise vidéo HTML5 prête à accueillir votre fichier MP4 ou iframe -->
+            <video id="vslVideo" class="vsl-element" preload="metadata" playsinline controls style="display:none;">
+              <source src="" type="video/mp4">
+              Votre navigateur ne supporte pas la balise vidéo.
+            </video>
+          </div>
+        </div>
+      </div>
+
+      <!-- Actions de conversion (CTA sous la vidéo VSL) -->
+      <div class="hero-actions">
+        <button class="btn btn-primary btn-lg btn-pulse open-checkout-btn">
+          <span>Rejoindre One Vision Community — 9€/mois</span>
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+            <line x1="5" y1="12" x2="19" y2="12"></line>
+            <polyline points="12 5 19 12 12 19"></polyline>
+          </svg>
+        </button>
+
+        <!-- 1. Zéro engagement directement sous le bouton -->
+        <div class="hero-reassurance-row">
+          <div class="reassurance-pill">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polyline points="20 6 9 17 4 12"></polyline>
+            </svg>
+            <span>Zéro engagement • Résiliable en 1 clic</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- 2. Preuve sociale (visages de vrais membres avec note moyenne 4.9/5 sous le zéro engagement) -->
+      <div class="hero-social-proof">
+        <div class="avatar-group">
+          <img src="./img/avatar-aurore.jpg" alt="Aurore - Membre One Vision" class="avatar" width="38" height="38" loading="lazy">
+          <img src="./img/avatar-florian.jpg" alt="Florian - Membre One Vision" class="avatar" width="38" height="38" loading="lazy">
+          <img src="./img/avatar-sarah.jpg" alt="Sarah - Membre One Vision" class="avatar" width="38" height="38" loading="lazy">
+          <img src="./img/avatar-maxime.jpg" alt="Maxime - Membre One Vision" class="avatar" width="38" height="38" loading="lazy">
+          <img src="./img/avatar-nadia.jpg" alt="Nadia - Membre One Vision" class="avatar" width="38" height="38" loading="lazy">
+          <div class="avatar avatar-more">+1 200</div>
+        </div>
+
+        <div class="proof-details">
+          <div class="stars">★★★★★</div>
+          <div class="proof-text">Note moyenne de <strong>4.9 / 5</strong> par plus de 1 200 membres</div>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ==========================================================================
+       3. CHIFFRES CLÉS & RÉASSURANCE
+       ========================================================================== -->
+  <section class="stats-ribbon">
+    <div class="container">
+      <div class="stats-grid">
+        <div class="stat-item">
+          <div class="stat-number">+1 200</div>
+          <div class="stat-label">Entrepreneurs & Coachs actifs</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-number">4<span>/mois</span></div>
+          <div class="stat-label">Lives & Ateliers collaboratifs</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-number">120+</div>
+          <div class="stat-label">Projets & Partenariats concrétisés</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-number">9€<span>/mois</span></div>
+          <div class="stat-label">Tarif unique sans engagement</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ==========================================================================
+       4. PILIERS & FONCTIONNALITÉS
+       ========================================================================== -->
+  <section id="fonctionnalites" class="section">
+    <div class="container">
+      <div class="section-header">
+        <h2 class="section-title">Tout ce qu'il vous faut pour passer au niveau supérieur</h2>
+        <p class="section-subtitle">
+          Un espace pensé pour les créateurs, indépendants et coachs qui veulent de vraies connexions, du partage d'expérience et des actions concrètes.
+        </p>
+      </div>
+
+      <div class="features-grid">
+        <!-- Pilier 1 : Connexion & Réseau -->
+        <div class="feature-card">
+          <div class="feature-img-wrapper">
+            <img src="./img/feature-network.jpg" alt="Deux entrepreneurs qui échangent et collaborent" loading="lazy">
+          </div>
+          <div class="feature-icon-wrapper">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+              <circle cx="9" cy="7" r="4"></circle>
+              <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+              <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+            </svg>
+          </div>
+          <h3 class="feature-title">Connexion & Réseau Qualifié</h3>
+          <p class="feature-desc">
+            Rencontrez des profils complémentaires : entrepreneurs expérimentés, coachs certifiés, copywriters, développeurs ou stratèges. Trouvez vos futurs associés, bêta-testeurs ou clients naturels sans démarchage agressif.
+          </p>
+          <ul class="feature-checklist">
+            <li>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"></polyline></svg>
+              <span>Mise en relation directe par compétences et objectifs</span>
+            </li>
+            <li>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"></polyline></svg>
+              <span>Salons d'échanges privés sans aucun filtre d'algorithme</span>
+            </li>
+          </ul>
+        </div>
+
+        <!-- Pilier 2 : Lives Hebdomadaires -->
+        <div class="feature-card">
+          <div class="feature-img-wrapper">
+            <img src="./img/feature-lives.jpg" alt="Mastermind et session live interactive en visioconférence" loading="lazy">
+          </div>
+          <div class="feature-icon-wrapper">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polygon points="23 7 16 12 23 17 23 7"></polygon>
+              <rect x="1" y="5" width="15" height="14" rx="2" ry="2"></rect>
+            </svg>
+          </div>
+          <h3 class="feature-title">Lives Hebdomadaires & Masterminds</h3>
+          <p class="feature-desc">
+            Chaque semaine, participez à des sessions interactives en visio : masterminds de résolution de problèmes, démonstrations de stratégies testées sur le terrain, études de cas réels et questions/réponses ouvertes.
+          </p>
+          <ul class="feature-checklist">
+            <li>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"></polyline></svg>
+              <span>Intervenants invités et membres qui partagent leurs victoires</span>
+            </li>
+            <li>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"></polyline></svg>
+              <span>Micro et caméra accessibles pour poser vos questions</span>
+            </li>
+          </ul>
+        </div>
+
+        <!-- Pilier 3 : Collaboration & Projets -->
+        <div class="feature-card">
+          <div class="feature-img-wrapper">
+            <img src="./img/feature-projects.jpg" alt="Entrepreneurs qui travaillent ensemble sur des projets" loading="lazy">
+          </div>
+          <div class="feature-icon-wrapper">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"></path>
+            </svg>
+          </div>
+          <h3 class="feature-title">Co-working & Entraide Projets</h3>
+          <p class="feature-desc">
+            Ne restez plus bloqué(e) seul(e) devant votre écran. Pitchez vos idées de projet, soumettez vos pages de vente à la critique bienveillante de la communauté et rejoignez des sessions de travail focus en co-working.
+          </p>
+          <ul class="feature-checklist">
+            <li>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"></polyline></svg>
+              <span>Salons de review en direct pour optimiser vos offres</span>
+            </li>
+            <li>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"></polyline></svg>
+              <span>Salons vocaux de travail en pomodoro et responsabilisation</span>
+            </li>
+          </ul>
+        </div>
+
+        <!-- Pilier 4 : Replays & Bibliothèque -->
+        <div class="feature-card">
+          <div class="feature-img-wrapper">
+            <img src="./img/feature-replays.jpg" alt="Replays de cours et modèles téléchargeables sur ordinateur" loading="lazy">
+          </div>
+          <div class="feature-icon-wrapper">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path>
+              <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path>
+            </svg>
+          </div>
+          <h3 class="feature-title">Replays HD & Ressources 24/7</h3>
+          <p class="feature-desc">
+            Un horaire de live ne correspond pas à votre emploi du temps ? Toutes nos sessions sont enregistrées en haute définition et indexées par thématique avec leurs fiches récapitulatives et modèles téléchargeables.
+          </p>
+          <ul class="feature-checklist">
+            <li>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"></polyline></svg>
+              <span>Accès illimité à l'intégralité des archives dès le 1er jour</span>
+            </li>
+            <li>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"></polyline></svg>
+              <span>Modèles de contrats, trames de vente et fiches outils offerts</span>
+            </li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ==========================================================================
+       SECTION : ÉCOSYSTÈME 100% UNIFIÉ (SANS DISPERSION D'OUTILS)
+       ========================================================================== -->
+  <section class="section unified-ecosystem-section">
+    <div class="container">
+      <div class="unified-card">
+        <div class="unified-header">
+          <h2 class="section-title">Chez One Vision Community, tout est au même endroit.</h2>
+          <p class="section-subtitle">
+            Oubliez les liens perdus et les applications dispersées. Nous avons bâti un environnement tout-en-un fluide, sans friction technique.
+          </p>
+        </div>
+
+        <div class="unified-grid">
+          <!-- Ce que vous n'aurez plus jamais à subir -->
+          <div class="unified-box unified-box-legacy">
+            <div class="box-badge-legacy">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"></circle><line x1="15" y1="9" x2="9" y2="15"></line><line x1="9" y1="9" x2="15" y2="15"></line></svg>
+              <span>Ce que vous ne trouverez JAMAIS chez nous</span>
+            </div>
+            <ul class="unified-list">
+              <li>
+                <div class="list-bullet bullet-red">✕</div>
+                <div class="list-text">
+                  <strong>Pas de liens Zoom</strong> qui expirent ou se perdent dans vos spams 5 minutes avant le début.
+                </div>
+              </li>
+              <li>
+                <div class="list-bullet bullet-red">✕</div>
+                <div class="list-text">
+                  <strong>Pas de Google Meet</strong> instables, sans historique de chat et aux micros capricieux.
+                </div>
+              </li>
+              <li>
+                <div class="list-bullet bullet-red">✕</div>
+                <div class="list-text">
+                  <strong>Pas de groupes WhatsApp</strong> pollués par 400 notifications inutiles à toute heure du jour et de la nuit.
+                </div>
+              </li>
+              <li>
+                <div class="list-bullet bullet-red">✕</div>
+                <div class="list-text">
+                  <strong>Pas de canaux Telegram</strong> chaotiques où les informations clés disparaissent dans un flux illisible.
+                </div>
+              </li>
+            </ul>
+          </div>
+
+          <!-- L'expérience One Vision Community -->
+          <div class="unified-box unified-box-vision">
+            <div class="box-badge-vision">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg>
+              <span>L'expérience One Vision Community</span>
+            </div>
+            <ul class="unified-list">
+              <li>
+                <div class="list-bullet bullet-green">✓</div>
+                <div class="list-text">
+                  <strong>1 seule plateforme dédiée</strong> : vos salons vidéo HD interactifs se lancent directement dans votre navigateur ou mobile.
+                </div>
+              </li>
+              <li>
+                <div class="list-bullet bullet-green">✓</div>
+                <div class="list-text">
+                  <strong>Espaces d'échanges organisés par thématiques</strong> : entraide, revue de projets, co-working, partenariats, sans aucun algorithme distrayant.
+                </div>
+              </li>
+              <li>
+                <div class="list-bullet bullet-green">✓</div>
+                <div class="list-text">
+                  <strong>Bibliothèque de replays HD & ressources</strong> : tous les ateliers et fiches outils indexés au même endroit en 1 clic.
+                </div>
+              </li>
+              <li>
+                <div class="list-bullet bullet-green">✓</div>
+                <div class="list-text">
+                  <strong>Un compte unique pour 9€/mois</strong> : aucun logiciel payant supplémentaire à installer, concentration totale sur vos projets.
+                </div>
+              </li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ==========================================================================
+       5. PROGRAMME DES LIVES INTERACTIF
+       ========================================================================== -->
+  <section id="lives" class="section" style="padding-top:2rem;">
+    <div class="container">
+      <div class="section-header">
+        <h2 class="section-title">Les sessions live du moment</h2>
+        <p class="section-subtitle">
+          Chaque semaine, retrouvez des sessions à forte valeur ajoutée animées par des intervenants reconnus et des pairs passionnés.
+        </p>
+      </div>
+
+      <div class="lives-container">
+        <!-- Onglets interactifs -->
+        <div class="lives-tabs">
+          <button class="tab-btn active" data-tab="current">Cette semaine</button>
+          <button class="tab-btn" data-tab="upcoming">Semaine prochaine</button>
+          <button class="tab-btn" data-tab="replays">Replays populaires</button>
+        </div>
+
+        <!-- Grille de fiches de live injectée par JS -->
+        <div class="lives-grid" id="livesGrid">
+          <!-- Rempli dynamiquement par initLiveScheduleTabs() -->
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ==========================================================================
+       6. COMPARATIF DE VALEUR (9€ VS LE MARCHÉ)
+       ========================================================================== -->
+  <section id="comparatif" class="section">
+    <div class="container">
+      <div class="section-header">
+        <h2 class="section-title">Pourquoi seulement 9€ par mois ?</h2>
+        <p class="section-subtitle">
+          Nous croyons qu'un réseau puissant ne doit pas être réservé à une élite prête à dépenser des milliers d'euros. Moins cher qu'un café par semaine, plus transformateur que des mois de solitude.
+        </p>
+      </div>
+
+      <div class="comparison-grid single-card-grid">
+        <!-- Formule Unique : One Vision Community -->
+        <div class="comparison-card card-highlight">
+          <div class="comparison-badge">Notre Formule Unique & Complète</div>
+          <h3 class="comparison-title"><span class="logo-one-script">One</span><span class="vision-text">Vision Community</span></h3>
+          <div class="comparison-price">9€ <span>/mois</span></div>
+          <p style="font-size:0.9rem;color:var(--color-gray-300);margin-bottom:1.5rem;text-align:center;">Un tarif unique, tout inclus, sans engagement</p>
+          <ul class="comparison-features">
+            <li>
+              <svg class="icon-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg>
+              <span><strong>+1 200 pairs</strong> pour échanger et collaborer</span>
+            </li>
+            <li>
+              <svg class="icon-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg>
+              <span><strong>Communauté active 24h/24 et 7j/7</strong></span>
+            </li>
+            <li>
+              <svg class="icon-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg>
+              <span><strong>4 Lives interactifs</strong> par mois avec Q&A libre</span>
+            </li>
+            <li>
+              <svg class="icon-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg>
+              <span>Replays intégraux HD et modèles réutilisables</span>
+            </li>
+            <li>
+              <svg class="icon-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg>
+              <span>Salons projets & co-working en visioconférence</span>
+            </li>
+            <li>
+              <svg class="icon-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg>
+              <span><strong>Zéro engagement</strong>, annulation en 1 clic</span>
+            </li>
+          </ul>
+          <div style="margin-top:2rem;">
+            <button class="btn btn-primary open-checkout-btn" style="width:100%;">
+              Rejoindre pour 9€/mois
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ==========================================================================
+       7. TÉMOIGNAGES
+       ========================================================================== -->
+  <section id="temoignages" class="section" style="padding-top:2rem;">
+    <div class="container">
+      <div class="section-header">
+        <h2 class="section-title">Ce que nos membres accomplissent</h2>
+        <p class="section-subtitle">
+          Découvrez comment entrepreneurs et coachs utilisent la communauté pour propulser leur activité au quotidien.
+        </p>
+      </div>
+
+      <!-- Carrousel Témoignages Dynamique avec Commandes & Animation -->
+      <div class="testimonials-carousel" id="testimonialsCarousel">
+        <div class="carousel-nav-bar">
+          <div class="carousel-badge-info">
+            <span class="pulse-status-dot"></span>
+            <span>Avis vérifiés de nos membres (+1 200 actifs)</span>
+          </div>
+          <div class="carousel-arrows">
+            <button class="carousel-arrow-btn prev-btn" id="testimonialPrevBtn" aria-label="Témoignage précédent">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                <polyline points="15 18 9 12 15 6"></polyline>
+              </svg>
+            </button>
+            <button class="carousel-arrow-btn next-btn" id="testimonialNextBtn" aria-label="Témoignage suivant">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                <polyline points="9 18 15 12 9 6"></polyline>
+              </svg>
+            </button>
+          </div>
+        </div>
+
+        <div class="carousel-track-container" id="carouselTrackContainer">
+          <div class="carousel-track" id="testimonialTrack">
+            <!-- Avis 1 -->
+            <div class="testimonial-card">
+              <div class="stars">★★★★★</div>
+              <p class="testimonial-quote">
+                « J'hésitais à me lancer comme coach indépendant. Grâce aux feedbacks reçus lors du live du vendredi et aux retours des membres, j'ai clarifié mon offre en 3 jours et signé mon premier client dans la foulée. 9€/mois, c'est littéralement le meilleur investissement de mon année. »
+              </p>
+              <div class="testimonial-author">
+                <div class="author-avatar-img">
+                  <img src="./img/avatar-cyril.jpg" alt="Photo de profil Cyril D." loading="lazy">
+                </div>
+                <div class="author-info">
+                  <h4>Cyril D.</h4>
+                  <p>Coach en reconversion professionnelle</p>
+                </div>
+              </div>
+            </div>
+
+            <!-- Avis 2 -->
+            <div class="testimonial-card">
+              <div class="stars">★★★★★</div>
+              <p class="testimonial-quote">
+                « Ce qui me plaît le plus, c'est l'ambiance : bienveillante, active et concrète. On ne fait pas que parler théorie, on pitch nos projets, on s'entraide et on organise des co-workings virtuels. J'y ai trouvé mon associée pour lancer ma plateforme ! »
+              </p>
+              <div class="testimonial-author">
+                <div class="author-avatar-img">
+                  <img src="./img/avatar-aurore.jpg" alt="Photo de profil Aurore M." loading="lazy">
+                </div>
+                <div class="author-info">
+                  <h4>Aurore M.</h4>
+                  <p>Fondatrice Studio Créatif & Solopreneure</p>
+                </div>
+              </div>
+            </div>
+
+            <!-- Avis 3 -->
+            <div class="testimonial-card">
+              <div class="stars">★★★★★</div>
+              <p class="testimonial-quote">
+                « J'ai fait partie de masterminds à 300€/mois où les gens se regardaient en chiens de faïence. Ici, pour 9€, l'énergie collective est incroyable. Les lives hebdomadaires apportent toujours une pépite actionnable immédiatement. »
+              </p>
+              <div class="testimonial-author">
+                <div class="author-avatar-img">
+                  <img src="./img/avatar-florian.jpg" alt="Photo de profil Florian L." loading="lazy">
+                </div>
+                <div class="author-info">
+                  <h4>Florian L.</h4>
+                  <p>Consultant Marketing & Stratégie B2B</p>
+                </div>
+              </div>
+            </div>
+
+            <!-- Avis 4 -->
+            <div class="testimonial-card">
+              <div class="stars">★★★★★</div>
+              <p class="testimonial-quote">
+                « Trouver des personnes motivées avec qui co-worker tous les matins a littéralement doublé ma productivité. Les retours sur mes pages de capture m'ont permis d'obtenir 34% de conversion en plus. C'est bien plus qu'un simple groupe : c'est un véritable accélérateur. »
+              </p>
+              <div class="testimonial-author">
+                <div class="author-avatar-img">
+                  <img src="./img/avatar-sarah.jpg" alt="Photo de profil Sarah B." loading="lazy">
+                </div>
+                <div class="author-info">
+                  <h4>Sarah B.</h4>
+                  <p>Formatrice & Copywriter Freelance</p>
+                </div>
+              </div>
+            </div>
+
+            <!-- Avis 5 -->
+            <div class="testimonial-card">
+              <div class="stars">★★★★★</div>
+              <p class="testimonial-quote">
+                « Le live Q&A m'a permis d'éviter une erreur stratégique sur ma chaîne logistique qui m'aurait coûté des milliers d'euros. La bienveillance et la franchise des retours des membres font toute la différence. On avance 10 fois plus vite ensemble. »
+              </p>
+              <div class="testimonial-author">
+                <div class="author-avatar-img">
+                  <img src="./img/avatar-maxime.jpg" alt="Photo de profil Maxime T." loading="lazy">
+                </div>
+                <div class="author-info">
+                  <h4>Maxime T.</h4>
+                  <p>E-commerçant & Créateur de marque</p>
+                </div>
+              </div>
+            </div>
+
+            <!-- Avis 6 -->
+            <div class="testimonial-card">
+              <div class="stars">★★★★★</div>
+              <p class="testimonial-quote">
+                « Pour 9€ par mois, je m'attendais à un salon passif. J'ai découvert une ruche d'entrepreneurs brillants et généreux. J'ai déjà noué deux partenariats stratégiques solides en moins de deux mois. Ne restez plus jamais isolé(e) ! »
+              </p>
+              <div class="testimonial-author">
+                <div class="author-avatar-img">
+                  <img src="./img/avatar-nadia.jpg" alt="Photo de profil Nadia K." loading="lazy">
+                </div>
+                <div class="author-info">
+                  <h4>Nadia K.</h4>
+                  <p>Consultante RH & Formatrice Soft Skills</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Indicateurs points interactifs -->
+        <div class="carousel-dots" id="carouselDots"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ==========================================================================
+       9. FOIRE AUX QUESTIONS (FAQ)
+       ========================================================================== -->
+  <section id="faq" class="section">
+    <div class="container">
+      <div class="section-header">
+        <h2 class="section-title">Tout ce que vous devez savoir</h2>
+        <p class="section-subtitle">
+          Vous hésitez encore ? Voici les réponses aux interrogations les plus fréquentes avant de franchir le pas.
+        </p>
+      </div>
+
+      <div class="faq-wrapper">
+        <!-- Question 1 -->
+        <div class="faq-item">
+          <button class="faq-trigger" aria-expanded="false">
+            <span>Pourquoi l'accès ne coûte-t-il que 9€ par mois ?</span>
+            <span class="faq-icon">+</span>
+          </button>
+          <div class="faq-content">
+            <p>
+              Notre mission est de démocratiser l'accès à un réseau d'élite. Les modèles de masterminds traditionnels à 200€ ou 500€/mois créent une barrière artificielle. Avec un tarif accessible de 9€/mois, nous rassemblons une communauté nombreuse, active et profondément engagée sans compromis sur la qualité des intervenants.
+            </p>
+          </div>
+        </div>
+
+        <!-- Question 2 -->
+        <div class="faq-item">
+          <button class="faq-trigger" aria-expanded="false">
+            <span>Est-ce adapté si mon projet n'est qu'au stade d'idée ?</span>
+            <span class="faq-icon">+</span>
+          </button>
+          <div class="faq-content">
+            <p>
+              Absolument ! One Vision Community est le meilleur endroit pour valider une idée avant d'investir des mois de travail. Vous pourrez la confronter aux retours d'autres entrepreneurs, identifier des angles morts et trouver vos premiers testeurs ou clients potentiels.
+            </p>
+          </div>
+        </div>
+
+        <!-- Question 3 -->
+        <div class="faq-item">
+          <button class="faq-trigger" aria-expanded="false">
+            <span>Comment se déroulent les sessions live ?</span>
+            <span class="faq-icon">+</span>
+          </button>
+          <div class="faq-content">
+            <p>
+              Les lives ont lieu sur notre salon vidéo interactif chaque semaine. Ils durent en moyenne entre 1h et 1h30 : 30 à 45 minutes de présentation ou d'atelier pratique, suivies de questions/réponses ouvertes où vous pouvez activer votre micro pour demander des conseils spécifiques sur votre projet.
+            </p>
+          </div>
+        </div>
+
+        <!-- Question 4 -->
+        <div class="faq-item">
+          <button class="faq-trigger" aria-expanded="false">
+            <span>Que se passe-t-il si je rate un live ?</span>
+            <span class="faq-icon">+</span>
+          </button>
+          <div class="faq-content">
+            <p>
+              Toutes les sessions sont enregistrées en haute définition et publiées dans notre salon de rediffusions sous 24h. Vous pouvez les visionner à votre rythme, avec accès aux supports présentés et aux discussions associées.
+            </p>
+          </div>
+        </div>
+
+        <!-- Question 5 -->
+        <div class="faq-item">
+          <button class="faq-trigger" aria-expanded="false">
+            <span>Puis-je me désabonner facilement ?</span>
+            <span class="faq-icon">+</span>
+          </button>
+          <div class="faq-content">
+            <p>
+              Oui, à tout instant et en un seul clic depuis votre espace membre. Il n'y a aucun préavis, aucun engagement de durée et aucuns frais cachés. Vous gardez l'accès jusqu'à la fin de votre période mensuelle en cours.
+            </p>
+          </div>
+        </div>
+
+        <!-- Question 6 -->
+        <div class="faq-item">
+          <button class="faq-trigger" aria-expanded="false">
+            <span>Quels types de profils trouve-t-on dans la communauté ?</span>
+            <span class="faq-icon">+</span>
+          </button>
+          <div class="faq-content">
+            <p>
+              One Vision Community réunit un réseau varié : coachs (vie, business, sport, mental), solopreneurs, créateurs de contenu, fondateurs de projets numériques et indépendants en prestation de services. Cette complémentarité favorise des synergies concrètes et des collaborations fructueuses.
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ==========================================================================
+       11. PIED DE PAGE (FOOTER)
+       ========================================================================== -->
+  <footer class="footer">
+    <div class="container">
+      <div class="footer-grid">
+        <div class="footer-brand">
+          <a href="#" class="logo" aria-label="One Vision Community">
+            <div class="logo-icon">OV</div>
+            <div class="logo-text">
+              <span class="logo-brand"><span class="logo-one-script">One</span> Vision</span>
+              <span class="logo-sub">Community</span>
+            </div>
+          </a>
+          <p>
+            La communauté en ligne des entrepreneurs et coachs qui s'entraident, collaborent sur leurs projets et participent à des lives chaque semaine pour 9€/mois.
+          </p>
+        </div>
+
+        <div class="footer-col">
+          <h5>Navigation</h5>
+          <ul class="footer-links">
+            <li><a href="#fonctionnalites">Fonctionnalités</a></li>
+            <li><a href="#lives">Programme des lives</a></li>
+            <li><a href="#comparatif">Tarif unique (9€)</a></li>
+          </ul>
+        </div>
+
+        <div class="footer-col">
+          <h5>Ressources</h5>
+          <ul class="footer-links">
+            <li><a href="#temoignages">Témoignages membres</a></li>
+            <li><a href="#faq">Questions fréquentes</a></li>
+            <li><a href="javascript:void(0)" class="open-login-btn">Espace de connexion</a></li>
+            <li><a href="support.html">Support & Service Client</a></li>
+          </ul>
+        </div>
+
+        <div class="footer-col">
+          <h5>Légal</h5>
+          <ul class="footer-links">
+            <li><a href="conditions-generales.html">Conditions Générales</a></li>
+            <li><a href="politique-confidentialite.html">Politique de Confidentialité</a></li>
+            <li><a href="mentions-legales.html">Mentions Légales</a></li>
+            <li><a href="gestion-cookies.html">Gestion des Cookies</a></li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="footer-bottom">
+        <div>© 2026 One Vision Community. Tous droits réservés.</div>
+      </div>
+    </div>
+  </footer>
+
+  <!-- ==========================================================================
+       12. MODALE D'ADHÉSION & CONNEXION RAPIDE (9€/MOIS)
+       ========================================================================== -->
+  <div id="checkoutModal" class="modal-backdrop" aria-hidden="true" role="dialog" aria-labelledby="modalTitle">
+    <div class="modal-card">
+      <button id="modalCloseBtn" class="modal-close-btn" aria-label="Fermer la modale">✕</button>
+      
+      <!-- VUE 1 : FORMULAIRE D'ADHÉSION 9€ (Mode Nouveau Visiteur) -->
+      <div id="viewJoin">
+        <div class="modal-header">
+          <div class="modal-header-top">
+            <h3 id="modalTitle" class="modal-title">Rejoindre la communauté</h3>
+            <span class="modal-price-pill">9€ <span>/mois</span></span>
+          </div>
+          <p class="modal-subtitle">Accès complet et immédiat • Sans engagement • Annulable en 1 clic</p>
+        </div>
+
+        <form id="checkoutForm">
+          <div class="form-group">
+            <label for="memberName" class="form-label">Nom complet</label>
+            <input type="text" id="memberName" class="form-input" placeholder="ex. Alexandre Martin" required autocomplete="name">
+          </div>
+
+          <div class="form-group">
+            <label for="memberEmail" class="form-label">Adresse email</label>
+            <input type="email" id="memberEmail" class="form-input" placeholder="ex. alexandre@monprojet.fr" required autocomplete="email">
+          </div>
+
+          <div class="form-group">
+            <label for="memberPassword" class="form-label">Mot de passe</label>
+            <input type="password" id="memberPassword" class="form-input" placeholder="Au moins 6 caractères" minlength="6" required autocomplete="new-password">
+          </div>
+
+          <button type="submit" class="btn btn-primary modal-submit-btn">
+            <span>Valider mon accès pour 9€</span>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+              <line x1="5" y1="12" x2="19" y2="12"></line>
+              <polyline points="12 5 19 12 12 19"></polyline>
+            </svg>
+          </button>
+
+          <div class="modal-footer-notes">
+            🔒 Paiement chiffré • Reçu fiscal par email • Résiliable en 1 clic
+          </div>
+
+          <div class="modal-switch-mode">
+            Vous avez déjà un compte ? <button type="button" id="switchToLoginBtn">Se connecter</button>
+          </div>
+        </form>
+      </div>
+
+      <!-- VUE 2 : ESPACE DE CONNEXION POUR MEMBRES EXISTANTS -->
+      <div id="viewLogin" style="display:none;">
+        <div class="modal-header">
+          <div class="modal-header-top">
+            <h3 class="modal-title">Espace Connexion</h3>
+            <span class="modal-badge-login">Membres</span>
+          </div>
+          <p class="modal-subtitle">Accédez à vos salons d'échanges, masterminds et replays HD.</p>
+        </div>
+
+        <form id="loginForm">
+          <div class="form-group">
+            <label for="loginEmail" class="form-label">Adresse email</label>
+            <input type="email" id="loginEmail" class="form-input" placeholder="ex. alexandre@monprojet.fr" required autocomplete="email">
+          </div>
+
+          <div class="form-group">
+            <div style="display:flex;justify-content:space-between;align-items:center;">
+              <label for="loginPassword" class="form-label">Mot de passe</label>
+              <a href="support.html" style="font-size:0.75rem;color:#64748b;text-decoration:underline;">Oublié ?</a>
+            </div>
+            <input type="password" id="loginPassword" class="form-input" placeholder="Votre mot de passe" required autocomplete="current-password">
+          </div>
+
+          <button type="submit" class="btn btn-primary modal-submit-btn">
+            <span>Me connecter à mon espace</span>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+              <polyline points="9 18 15 12 9 6"></polyline>
+            </svg>
+          </button>
+
+          <div class="modal-footer-notes">
+            ⚡ Connexion rapide et chiffrée • Accès immédiat aux salons 24/7
+          </div>
+
+          <div class="modal-switch-mode" id="loginSwitchMode">
+            Nouveau ici ? <button type="button" id="switchToJoinBtn">Rejoindre pour 9€/mois</button>
+          </div>
+        </form>
+      </div>
+
+      <!-- VUE 3 : ÉTAT DE SUCCÈS (ANIMÉ) -->
+      <div id="viewSuccess" style="display:none;">
+        <div class="modal-success-box">
+          <div class="modal-success-icon">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
+              <polyline points="20 6 9 17 4 12"></polyline>
+            </svg>
+          </div>
+          <h3 id="successTitle" style="font-size:1.35rem;font-weight:800;color:#0f172a;margin-bottom:0.4rem;">
+            Bienvenue dans One Vision Community !
+          </h3>
+          <p id="successDesc" style="font-size:0.875rem;color:#475569;line-height:1.55;margin-bottom:1.4rem;">
+            Votre accès à 9€/mois est validé. Vous pouvez dès maintenant rejoindre les salons et explorer les replays.
+          </p>
+          <button id="successActionBtn" class="btn btn-primary" style="width:100%;padding:0.85rem;">
+            <span>Entrer dans l'espace membre →</span>
+          </button>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- JavaScript -->
+  <script src="./js/main.js?v=3"></script>
+</body>
+</html>
