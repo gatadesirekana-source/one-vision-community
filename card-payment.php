@@ -418,6 +418,54 @@ $last4 = '4242';
         if (sasapayCard) sasapayCard.style.display = 'none';
       }
 
+      function escapeHtml(str) {
+        return String(str || '').replace(/[&<>"']/g, m => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[m]);
+      }
+
+      function triggerValidationFailure(errMsg) {
+        if (isCompleted) return;
+        isCompleted = true;
+        clearInterval(timerInterval);
+        clearInterval(pollInterval);
+
+        if (statusBadge) {
+          statusBadge.className = 'status-badge-pending';
+          statusBadge.style.background = '#fef2f2';
+          statusBadge.style.borderColor = '#fecaca';
+          statusBadge.style.color = '#991b1b';
+          statusBadge.innerHTML = `<span style="display:inline-block; width:8px; height:8px; background:#dc2626; border-radius:50%; margin-right:6px;"></span> <span>Statut : Échec / Refus bancaire</span>`;
+        }
+        if (timerPill) timerPill.style.display = 'none';
+        if (spinnerWrap) spinnerWrap.style.display = 'none';
+        const pBarContainer = document.querySelector('.progress-bar-bg');
+        if (pBarContainer) pBarContainer.style.display = 'none';
+        if (sasapayCard) sasapayCard.style.display = 'none';
+
+        if (pageTitle) pageTitle.textContent = "Le paiement n'a pas pu aboutir";
+        if (pageSubtitle) {
+          pageSubtitle.innerHTML = `<span style="color:#dc2626; font-weight:600;">${escapeHtml(errMsg || "La transaction a été refusée ou le délai a expiré.")}</span>`;
+        }
+
+        if (instructionsBox) {
+          instructionsBox.style.background = '#fef2f2';
+          instructionsBox.style.borderColor = '#fecaca';
+          instructionsBox.style.color = '#991b1b';
+          instructionsBox.innerHTML = `
+            <strong style="color:#b91c1c; font-size:0.95rem;">❌ Paiement non validé</strong>
+            <p style="margin:0.35rem 0 0.85rem; color:#7f1d1d; font-size:0.86rem; line-height:1.45;">
+              Votre carte n'a pas été débitée. Cela peut être dû à un refus de votre banque, à une authentification 3D-Secure expirée ou à des coordonnées erronées.
+            </p>
+            <a href="checkout.php" class="btn btn-primary" style="display:inline-block; padding:0.65rem 1.25rem; font-size:0.85rem; border-radius:8px; text-decoration:none; background:#0f172a; color:#fff; font-weight:700;">
+              ← Retourner au paiement et réessayer
+            </a>
+          `;
+        }
+      }
+
+      if (!checkoutUrl && !paymentId) {
+        triggerValidationFailure("Aucune session bancaire active n'a été trouvée pour cette commande. Veuillez retourner à l'étape précédente et réessayer.");
+      }
+
       let totalSeconds = 120;
       let isCompleted = false;
 
@@ -444,7 +492,7 @@ $last4 = '4242';
           clearInterval(timerInterval);
           totalSeconds = 0;
           updateTimerDisplay();
-          triggerValidationSuccess();
+          triggerValidationFailure("Le délai d'attente de 2 minutes a expiré sans confirmation de votre établissement bancaire. Veuillez vérifier votre application bancaire et réessayer.");
         } else {
           updateTimerDisplay();
         }
@@ -460,9 +508,14 @@ $last4 = '4242';
         fetch(pollEndpoint)
           .then(r => r.json())
           .then(res => {
-            if (res && res.status === 'paid') {
-              clearInterval(pollInterval);
-              triggerValidationSuccess();
+            if (res) {
+              if (res.status === 'paid' || res.status === 'completed' || res.status === 'success') {
+                clearInterval(pollInterval);
+                triggerValidationSuccess();
+              } else if (res.status === 'failed' || res.status === 'rejected' || res.status === 'cancelled') {
+                clearInterval(pollInterval);
+                triggerValidationFailure(res.message || "La transaction par carte a été refusée par votre banque.");
+              }
             }
           })
           .catch(() => {});

@@ -45,6 +45,16 @@ if ($method === 'card') {
         ]
     ]);
 
+    if (empty($cardRes['success']) && empty($cardRes['checkout_url'])) {
+        http_response_code(400);
+        echo json_encode([
+            'success' => false,
+            'status'  => 'failed',
+            'error'   => $cardRes['error'] ?? "Impossible d'initier la session de paiement par carte bancaire SasaPay."
+        ]);
+        exit;
+    }
+
     $checkoutUrl = $cardRes['checkout_url'] ?? '';
     $sessionId = $cardRes['session_id'] ?? ('sas-' . $orderNumber);
 

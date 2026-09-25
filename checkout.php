@@ -29,6 +29,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     if (empty($name) || empty($email) || !filter_var($email, FILTER_VALIDATE_EMAIL)) {
         $error = "Veuillez renseigner un nom valide et une adresse email valide.";
+        if (!empty($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest') {
+            header('Content-Type: application/json; charset=utf-8');
+            http_response_code(400);
+            echo json_encode([
+                'success' => false,
+                'error'   => $error
+            ]);
+            exit;
+        }
     } else {
         try {
             $userId = null;
@@ -562,6 +571,10 @@ $pageDescription = "Finalisez votre adhésion à One Vision Community pour 9€ 
                   <span class="saspay-footer-logo">⚡ SasPay</span>
                 </div>
 
+              <!-- Message d'erreur global si l'initiation échoue -->
+              <div id="checkoutGlobalError" class="checkout-alert-error" style="display:none; background:#fef2f2; border:1px solid #fecaca; border-radius:12px; padding:0.85rem 1rem; margin-bottom:1.15rem; color:#991b1b; font-size:0.88rem; align-items:flex-start; gap:0.6rem;">
+                <svg style="flex-shrink:0; margin-top:2px;" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#dc2626" stroke-width="2.5"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
+                <div id="checkoutGlobalErrorText" style="line-height:1.45;">Une erreur est survenue lors de l'initiation du paiement.</div>
               </div>
 
               <!-- Bouton de paiement CTA Principal -->

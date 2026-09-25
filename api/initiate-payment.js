@@ -154,15 +154,15 @@ module.exports = async function handler(req, res) {
         });
       }
 
-      // Fallback si SasaPay renvoie une erreur
-      return res.status(200).json({
-        success: true,
-        status: 'pending',
-        method: 'card',
-        order_number: orderNumber,
-        payment_id: 'sas-' + orderNumber,
-        checkout_url: `https://pay.saspay.me/checkout/${orderNumber.toLowerCase()}`,
-        message: 'Passerelle carte bancaire prête.'
+      // Si SasaPay a renvoyé une erreur (4xx/5xx ou payload d'erreur)
+      const errorMsg = (sasaData && (sasaData.message || sasaData.error || sasaData.detail)) 
+        ? (typeof sasaData.error === 'string' ? sasaData.error : (sasaData.message || JSON.stringify(sasaData.error)))
+        : `Impossible d'initier la session bancaire SasaPay (HTTP ${sasaRes.status})`;
+
+      return res.status(sasaRes.status >= 400 ? sasaRes.status : 400).json({
+        success: false,
+        error: errorMsg,
+        status: 'failed'
       });
     }
 
@@ -224,14 +224,11 @@ module.exports = async function handler(req, res) {
     });
 
   } catch (err) {
-    const orderNumber = 'ORD-' + new Date().getFullYear() + '-' + Math.floor(100 + Math.random() * 900) + '-' + Math.random().toString(36).substring(2, 6).toUpperCase();
-    return res.status(200).json({
-      success: true,
-      status: 'pending',
-      order_number: orderNumber,
-      payment_id: 'sas-' + orderNumber,
-      checkout_url: `https://pay.wave.com/c/ovc-${orderNumber.toLowerCase()}`,
-      message: 'Session de paiement prête.'
+    console.error('[initiate-payment] Erreur:', err);
+    return res.status(500).json({
+      success: false,
+      status: 'error',
+      error: err.message || 'Erreur interne lors de l\'initiation du paiement'
     });
   }
 };

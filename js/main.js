@@ -2221,6 +2221,40 @@ function initCheckoutPage() {
     localStorage.setItem('ov_member_email', emailVal);
     localStorage.setItem('ov_member_phone', cleanPhone);
 
+    // Fonctions d'affichage d'erreurs globales de paiement
+    const checkoutGlobalError = document.getElementById('checkoutGlobalError');
+    const checkoutGlobalErrorText = document.getElementById('checkoutGlobalErrorText');
+
+    function showCheckoutGlobalError(msg) {
+      console.error("[Checkout] Erreur de paiement :", msg);
+      if (checkoutGlobalError) {
+        if (checkoutGlobalErrorText) {
+          checkoutGlobalErrorText.innerHTML = msg || "Le paiement par carte a échoué. Veuillez vérifier vos coordonnées bancaires et réessayer.";
+        }
+        checkoutGlobalError.style.display = 'flex';
+        checkoutGlobalError.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      } else {
+        alert(msg || "Le paiement a échoué. Veuillez réessayer.");
+      }
+
+      if (submitBtn) {
+        submitBtn.disabled = false;
+        if (submitText) {
+          submitText.textContent = currentPaymentMethod === 'card'
+            ? "Payer 9,00 € par Carte Bancaire"
+            : `Payer ${activeAmount} ${activeCurrency} via Mobile Money`;
+        }
+      }
+    }
+
+    function hideCheckoutGlobalError() {
+      if (checkoutGlobalError) {
+        checkoutGlobalError.style.display = 'none';
+      }
+    }
+
+    hideCheckoutGlobalError();
+
     // État de chargement sur le bouton
     if (submitBtn) {
       submitBtn.disabled = true;
@@ -2278,6 +2312,13 @@ function initCheckoutPage() {
       const orderNum = (data && data.order_number) ? data.order_number : defaultOrderNum;
       const paymentId = (data && (data.payment_id || data.checkout_request_id || data.session_id)) ? (data.payment_id || data.checkout_request_id || data.session_id) : '';
       const checkoutUrl = (data && data.checkout_url) ? data.checkout_url : '';
+
+      // Si SasaPay n'a renvoyé ni URL ni session ID, c'est une défaillance de la passerelle
+      if (!checkoutUrl && !paymentId) {
+        showCheckoutGlobalError("La passerelle bancaire SasaPay n'a pas pu créer de session de paiement valide. Veuillez vérifier vos coordonnées et réessayer.");
+        return;
+      }
+
       const rawCard = cardInput ? cardInput.value.replace(/\s/g, '') : '';
       const brand = detectCardBrand(rawCard);
       const last4 = rawCard.length >= 4 ? rawCard.slice(-4) : '4242';
@@ -2361,21 +2402,48 @@ function initCheckoutPage() {
 
     // Déclencher l'appel d'initiation et router selon le mode de paiement choisi
     fetch(initiateEndpoint, fetchOptions)
-      .then(r => r.json())
-      .then(initData => {
+      .then(async (response) => {
+        let payload;
+        const contentType = response.headers.get('content-type') || '';
+        if (contentType.includes('application/json')) {
+          payload = await response.json();
+        } else {
+          const rawText = await response.text();
+          try {
+            payload = JSON.parse(rawText);
+          } catch(e) {
+            throw new Error(`Réponse inattendue du serveur (${response.status}) : ${rawText.substring(0, 100)}`);
+          }
+        }
+
+        // Si le code HTTP indique une erreur (4xx, 5xx)
+        if (!response.ok) {
+          const errMsg = (payload && (payload.error || payload.message))
+            ? (payload.error || payload.message)
+            : `Erreur HTTP ${response.status} de la passerelle de paiement.`;
+          throw new Error(errMsg);
+        }
+
+        // Si le JSON renvoie explicitement success: false
+        if (!payload || payload.success === false) {
+          const errMsg = (payload && (payload.error || payload.message))
+            ? (payload.error || payload.message)
+            : "La passerelle de paiement n'a pas pu initier votre transaction. Veuillez vérifier vos informations et réessayer.";
+          throw new Error(errMsg);
+        }
+
+        return payload;
+      })
+      .then((initData) => {
         if (currentPaymentMethod === 'card') {
           navigateToCardPaymentPage(initData);
         } else {
           navigateToPaymentPage(initData);
         }
       })
-      .catch(err => {
-        console.warn("Initiation sécurisée (mode de secours actif):", err);
-        if (currentPaymentMethod === 'card') {
-          navigateToCardPaymentPage({ order_number: defaultOrderNum });
-        } else {
-          navigateToPaymentPage({ order_number: defaultOrderNum });
-        }
+      .catch((err) => {
+        console.error("[Checkout] Erreur lors de l'initiation du paiement :", err);
+        showCheckoutGlobalError(err.message || "Le paiement a échoué. Veuillez vérifier vos coordonnées et réessayer.");
       });
   });
 }
