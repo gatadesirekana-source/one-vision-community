@@ -108,6 +108,9 @@
 
   <script>
     document.addEventListener('DOMContentLoaded', () => {
+      // Confirmer et mémoriser de manière permanente le statut membre payé
+      localStorage.setItem('ov_has_paid', 'true');
+
       const urlParams = new URLSearchParams(window.location.search);
       const orderParam = urlParams.get('order');
       if (orderParam) {
@@ -118,9 +121,12 @@
       if (savedName) document.getElementById('successClientName').textContent = savedName;
       if (savedEmail) document.getElementById('successClientEmail').textContent = savedEmail;
       
-      const isPhp = window.location.pathname.endsWith('.php');
-      if (isPhp) {
-        document.getElementById('dashboardLink').href = 'dashboard.php';
+      const isPhp = !window.location.hostname.includes('github.io') && 
+                    window.location.protocol !== 'file:' && 
+                    window.location.pathname.endsWith('.php');
+      const dashLink = document.getElementById('dashboardLink');
+      if (dashLink) {
+        dashLink.href = isPhp ? 'dashboard.php' : 'dashboard.html';
       }
     });
   </script>

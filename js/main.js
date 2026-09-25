@@ -4,9 +4,19 @@
  * bascule de thème sombre/clair, onglets des sessions et modale 9€/mois.
  */
 
+function isPhpEnvironment() {
+  if (typeof window === 'undefined') return false;
+  // Ne jamais traiter comme environnement PHP sur GitHub Pages ou en ouverture directe de fichier local
+  if (window.location.hostname.includes('github.io') || window.location.protocol === 'file:') {
+    return false;
+  }
+  // En environnement PHP réel (Apache, XAMPP, serveur PHP intégré), la page se termine explicitement par .php
+  return window.location.pathname.endsWith('.php');
+}
+
 function getAppUrl(path) {
-  const isPhp = window.location.pathname.endsWith('.php') || !window.location.pathname.includes('.html');
-  return isPhp ? path.replace(/\.html/g, '.php') : path;
+  const isPhp = isPhpEnvironment();
+  return isPhp ? path.replace(/\.html/g, '.php') : path.replace(/\.php/g, '.html');
 }
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -488,8 +498,7 @@ function initCheckoutModal() {
   // Synchronisation dynamique de l'interface : Nouveau visiteur vs Membre ayant déjà payé
   function updateMemberUI() {
     // En environnement PHP, l'état de session est géré directement par le serveur
-    const isPhp = window.location.pathname.endsWith('.php') || !window.location.pathname.includes('.html');
-    if (isPhp) {
+    if (isPhpEnvironment()) {
       return;
     }
 
@@ -616,7 +625,7 @@ function initCheckoutModal() {
 
     if (targetLogin) {
       e.preventDefault();
-      if (window.location.pathname.endsWith('.php')) {
+      if (isPhpEnvironment()) {
         window.location.href = 'login.php';
         return;
       }
@@ -686,7 +695,7 @@ function initCheckoutModal() {
         Connexion en cours...
       `;
 
-      if (window.location.pathname.endsWith('.php')) {
+      if (isPhpEnvironment()) {
         const formData = new FormData();
         formData.append('email', emailInput ? emailInput.value : '');
         formData.append('password', passInput ? passInput.value : '');
@@ -1942,67 +1951,69 @@ function initCheckoutPage() {
       formData.set('momoCurrency', countryData.currency);
     }
 
-    // Sauvegarder dans localStorage
+    // Sauvegarder dans localStorage l'état payé et les informations du membre
     localStorage.setItem('ov_member_name', nameVal);
     localStorage.setItem('ov_member_email', emailVal);
+    localStorage.setItem('ov_has_paid', 'true');
 
-    // Envoi de la requête au backend PHP
-    fetch('checkout.php', {
-      method: 'POST',
-      body: formData,
-      headers: { 'X-Requested-With': 'XMLHttpRequest' }
-    })
-    .then(r => {
-      if (!r.ok) throw new Error('Erreur HTTP ' + r.status);
-      return r.json();
-    })
-    .then(data => {
-      if (data && (data.redirect_url || data.order_number)) {
-        const targetUrl = data.redirect_url || ('checkout-success.php?order=' + encodeURIComponent(data.order_number));
+    if (isPhpEnvironment()) {
+      // Envoi de la requête au backend PHP uniquement en environnement PHP réel
+      fetch('checkout.php', {
+        method: 'POST',
+        body: formData,
+        headers: { 'X-Requested-With': 'XMLHttpRequest' }
+      })
+      .then(r => {
+        if (!r.ok) throw new Error('Erreur HTTP ' + r.status);
+        return r.json();
+      })
+      .then(data => {
+        if (data && (data.redirect_url || data.order_number)) {
+          const targetUrl = data.redirect_url || ('checkout-success.php?order=' + encodeURIComponent(data.order_number));
 
-        // Compléter la barre de chargement
-        if (processingProgressBar) processingProgressBar.style.width = '100%';
+          // Compléter la barre de chargement
+          if (processingProgressBar) processingProgressBar.style.width = '100%';
 
-        // Afficher l'état de succès validé
-        setTimeout(() => {
-          if (processingTitle) processingTitle.textContent = "✅ Paiement validé avec succès !";
-          if (processingDesc) processingDesc.textContent = "Votre adhésion est active. Redirection vers votre reçu officiel...";
-          if (processingSpinnerIcon) {
-            processingSpinnerIcon.innerHTML = `<polyline points="20 6 9 17 4 12" stroke="#16a34a" stroke-width="3"></polyline>`;
-          }
-
-          // Redirection vers checkout-success.php APRÈS validation
+          // Afficher l'état de succès validé
           setTimeout(() => {
-            window.location.href = targetUrl;
-          }, 1200);
-        }, 1200);
+            if (processingTitle) processingTitle.textContent = "✅ Paiement validé avec succès !";
+            if (processingDesc) processingDesc.textContent = "Votre adhésion est active. Redirection vers votre reçu officiel...";
+            if (processingSpinnerIcon) {
+              processingSpinnerIcon.innerHTML = `<polyline points="20 6 9 17 4 12" stroke="#16a34a" stroke-width="3"></polyline>`;
+            }
 
-      } else {
-        if (processingModal) processingModal.classList.remove('visible');
-        alert(data.error || "Une erreur est survenue lors de la validation du paiement.");
-      }
-    })
-    .catch(err => {
-      console.warn("Échec requête AJAX:", err);
-      // En mode statique GitHub Pages (pas de serveur PHP), valider et rediriger vers checkout-success.html
-      if (window.location.hostname.includes('github.io') || !window.location.pathname.includes('.php')) {
-        if (processingProgressBar) processingProgressBar.style.width = '100%';
-        setTimeout(() => {
-          if (processingTitle) processingTitle.textContent = "✅ Paiement validé avec succès !";
-          if (processingDesc) processingDesc.textContent = "Votre adhésion est active. Redirection vers votre reçu officiel...";
-          if (processingSpinnerIcon) {
-            processingSpinnerIcon.innerHTML = `<polyline points="20 6 9 17 4 12" stroke="#16a34a" stroke-width="3"></polyline>`;
-          }
-          setTimeout(() => {
-            window.location.href = 'checkout-success.html?order=ORD-' + Math.floor(1000 + Math.random() * 9000);
+            // Redirection vers checkout-success.php APRÈS validation
+            setTimeout(() => {
+              window.location.href = targetUrl;
+            }, 1200);
           }, 1200);
-        }, 1200);
-      } else {
+
+        } else {
+          if (processingModal) processingModal.classList.remove('visible');
+          alert(data.error || "Une erreur est survenue lors de la validation du paiement.");
+        }
+      })
+      .catch(err => {
+        console.warn("Échec requête AJAX:", err);
         checkoutForm.action = 'checkout.php';
         checkoutForm.method = 'POST';
         checkoutForm.submit();
-      }
-    });
+      });
+    } else {
+      // Mode statique (GitHub Pages, serveur HTML standard, ouverture locale)
+      if (processingProgressBar) processingProgressBar.style.width = '100%';
+      setTimeout(() => {
+        if (processingTitle) processingTitle.textContent = "✅ Paiement validé avec succès !";
+        if (processingDesc) processingDesc.textContent = "Votre adhésion est active. Redirection vers votre confirmation d'adhésion...";
+        if (processingSpinnerIcon) {
+          processingSpinnerIcon.innerHTML = `<polyline points="20 6 9 17 4 12" stroke="#16a34a" stroke-width="3"></polyline>`;
+        }
+        setTimeout(() => {
+          const orderNum = 'ORD-' + Math.floor(100000 + Math.random() * 900000);
+          window.location.href = 'checkout-success.html?order=' + encodeURIComponent(orderNum);
+        }, 1200);
+      }, 1200);
+    }
   });
 }
 
@@ -3104,7 +3115,7 @@ Document généré pour ${memberName} • One Vision Community © Tous droits r�
     if (!salonFeedContainer) return;
     activeChannelKey = channelKey;
 
-    if (fetchFromDb && window.location.pathname.endsWith('.php')) {
+    if (fetchFromDb && isPhpEnvironment()) {
       fetch(`api/chat.php?channel=${encodeURIComponent(channelKey)}`)
         .then(res => res.json())
         .then(data => {
@@ -3426,7 +3437,7 @@ Document généré pour ${memberName} • One Vision Community © Tous droits r�
       channelPostsData[activeChannelKey].unshift(newPost);
 
       // Synchronisation BDD SQLite via API chat
-      if (window.location.pathname.endsWith('.php')) {
+      if (isPhpEnvironment()) {
         fetch('api/chat.php', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -5147,7 +5158,7 @@ function initCreateLivePage() {
       list.unshift(newSession); // Placer en tête de liste
       localStorage.setItem('ov_community_custom_lives', JSON.stringify(list));
 
-      if (window.location.pathname.endsWith('.php')) {
+      if (isPhpEnvironment()) {
         const formData = new FormData(form);
         fetch('creer-live.php', {
           method: 'POST',
