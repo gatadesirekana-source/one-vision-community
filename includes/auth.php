@@ -100,11 +100,13 @@ function register_user(string $fullName, string $email, string $password, array 
     $skills = trim($extra['skills'] ?? '');
     $avatar = $extra['avatar'] ?? './img/avatar-maxime.jpg';
 
+    $subscriptionStatus = $extra['subscription_status'] ?? 'pending';
+
     $stmt = $db->prepare("
         INSERT INTO users (full_name, email, password, avatar, company, job_title, bio, skills, role, subscription_status)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'member', 'active')
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'member', ?)
     ");
-    $stmt->execute([$fullName, $email, $passwordHash, $avatar, $company, $jobTitle, $bio, $skills]);
+    $stmt->execute([$fullName, $email, $passwordHash, $avatar, $company, $jobTitle, $bio, $skills, $subscriptionStatus]);
     $newId = $db->lastInsertId();
 
     // Auto login

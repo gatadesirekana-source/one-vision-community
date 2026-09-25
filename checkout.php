@@ -24,7 +24,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $momoCountry = trim($_POST['momoCountry'] ?? 'Cameroun');
     $momoOperator = trim($_POST['momoOperator'] ?? 'MTN MoMo');
     $momoPhone = trim($_POST['momoPhone'] ?? '');
-    $momoAmount = trim($_POST['momoAmount'] ?? '5904');
+    $momoAmount = trim($_POST['momoAmount'] ?? '200');
     $momoCurrency = trim($_POST['momoCurrency'] ?? 'XAF');
 
     if (empty($name) || empty($email) || !filter_var($email, FILTER_VALIDATE_EMAIL)) {
@@ -46,7 +46,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 } else {
                     $pwd = !empty($password) ? $password : 'Member2026!';
                     $reg = register_user($name, $email, $pwd, [
-                        'job_title' => 'Membre One Vision Community'
+                        'job_title'           => 'Membre One Vision Community',
+                        'subscription_status' => 'pending' // L'abonnement reste PENDING jusqu'à confirmation réelle
                     ]);
                     if ($reg['success']) {
                         $userId = $reg['user_id'];
@@ -61,57 +62,117 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $orderNumber = 'ORD-' . date('Y') . '-' . $randomNum . '-' . strtoupper(substr(uniqid(), -4));
             $invoiceNumber = 'OV-' . date('Y') . '-' . str_pad($randomNum, 4, '0', STR_PAD_LEFT);
 
-            // Créer une session SasPay en arrière-plan pour traçabilité de l'API
+            // Déclencher l'appel d'initiation SasPay (C2B Mobile Money ou Session de Checkout)
             $saspaySessionId = '';
+            $saspayRequestId = '';
+            $saspayCheckoutUrl = '';
             try {
                 $returnUrl = APP_URL . '/checkout-success.php?order=' . urlencode($orderNumber);
-                $saspaySession = saspay_create_checkout_session([
-                    'amount'         => 9.00,
-                    'currency'       => 'EUR',
-                    'description'    => 'Adhésion One Vision Community (9€/mois)',
-                    'customer_email' => $email,
-                    'customer_name'  => $name,
-                    'customer_phone' => $momoPhone,
-                    'return_url'     => $returnUrl,
-                    'metadata'       => [
-                        'order_number' => $orderNumber,
-                        'user_id'      => $userId,
-                        'method'       => $method,
-                        'operator'     => $momoOperator,
-                        'country'      => $momoCountry
-                    ]
-                ]);
-                if (!empty($saspaySession['session_id'])) {
-                    $saspaySessionId = $saspaySession['session_id'];
+                
+                $orderAmount = ($method === 'mobile_money' && !empty($momoAmount)) ? (float)$momoAmount : 0.30;
+                $orderCurrency = ($method === 'mobile_money' && !empty($momoCurrency)) ? $momoCurrency : 'EUR';
+
+                if ($method === 'mobile_money') {
+                    // Appel C2B / SoftPay Mobile Money
+                    $momoRes = saspay_initiate_c2b([
+                        'amount'         => $orderAmount,
+                        'currency'       => $orderCurrency,
+                        'operator'       => $momoOperator,
+                        'country'        => $momoCountry,
+                        'phone_number'   => $momoPhone,
+                        'order_number'   => $orderNumber,
+                        'customer_email' => $email,
+                        'customer_name'  => $name,
+                        'return_url'     => $returnUrl,
+                        'metadata'       => [
+                            'order_number' => $orderNumber,
+                            'user_id'      => $userId,
+                            'method'       => 'mobile_money',
+                            'operator'     => $momoOperator,
+                            'country'      => $momoCountry
+                        ]
+                    ]);
+
+                    if (!$momoRes['success']) {
+                        throw new Exception($momoRes['error'] ?? "Impossible d'initier la demande de paiement avec l'opérateur sélectionné.");
+                    }
+
+                    if (!empty($momoRes['checkout_request_id'])) {
+                        $saspayRequestId = $momoRes['checkout_request_id'];
+                        $saspaySessionId = $momoRes['session_id'] ?? $momoRes['checkout_request_id'];
+                    }
+                    if (!empty($momoRes['checkout_url'])) {
+                        $saspayCheckoutUrl = $momoRes['checkout_url'];
+                    }
+                } else {
+                    // Session de Checkout Carte Bancaire
+                    $saspaySession = saspay_create_checkout_session([
+                        'amount'         => $orderAmount,
+                        'currency'       => $orderCurrency,
+                        'description'    => 'Adhésion One Vision Community (9€/mois)',
+                        'customer_email' => $email,
+                        'customer_name'  => $name,
+                        'customer_phone' => $momoPhone,
+                        'return_url'     => $returnUrl,
+                        'metadata'       => [
+                            'order_number' => $orderNumber,
+                            'user_id'      => $userId,
+                            'method'       => 'card'
+                        ]
+                    ]);
+
+                    if (!$saspaySession['success'] && empty($saspaySession['checkout_url'])) {
+                        throw new Exception($saspaySession['error'] ?? "Impossible d'ouvrir la session de paiement par carte.");
+                    }
+
+                    if (!empty($saspaySession['session_id'])) {
+                        $saspaySessionId = $saspaySession['session_id'];
+                        $saspayRequestId = $saspaySession['session_id'];
+                    }
+                    if (!empty($saspaySession['checkout_url'])) {
+                        $saspayCheckoutUrl = $saspaySession['checkout_url'];
+                    }
                 }
             } catch (Throwable $t) {
-                // silencieux
+                if (!empty($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest') {
+                    header('Content-Type: application/json; charset=utf-8');
+                    echo json_encode([
+                        'success' => false,
+                        'error'   => $t->getMessage()
+                    ]);
+                    exit;
+                }
+                throw $t;
             }
 
             $paymentMethodLabel = ($method === 'card') 
                 ? 'Carte Bancaire Sécurisée (3D-Secure)' 
                 : 'Mobile Money (' . $momoOperator . ' - ' . $momoCountry . ')';
 
+            // CRITIQUE : La commande est enregistrée avec le statut 'pending' (JAMAIS 'paid' dès l'initiation)
             $stmt = $db->prepare("
                 INSERT INTO orders (
                     order_number, user_id, amount, currency, status,
                     payment_method, billing_name, billing_email, billing_country, invoice_number, 
-                    saspay_session_id, momo_phone, momo_operator, momo_country
+                    saspay_session_id, saspay_transaction_id, momo_phone, momo_operator, momo_country
                 ) VALUES (
-                    ?, ?, 9.00, 'EUR', 'paid',
+                    ?, ?, ?, ?, 'pending',
                     ?, ?, ?, ?, ?, 
-                    ?, ?, ?, ?
+                    ?, ?, ?, ?, ?
                 )
             ");
             $stmt->execute([
                 $orderNumber,
                 $userId,
+                $orderAmount,
+                $orderCurrency,
                 $paymentMethodLabel,
                 $name,
                 $email,
                 $momoCountry ?: 'France',
                 $invoiceNumber,
                 $saspaySessionId,
+                $saspayRequestId,
                 $momoPhone,
                 $momoOperator,
                 $momoCountry
@@ -119,29 +180,42 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
             $orderId = $db->lastInsertId();
 
-            // Activer immédiatement l'abonnement du membre
-            $db->prepare("UPDATE users SET subscription_status = 'active' WHERE id = ?")->execute([$userId]);
+            // CRITIQUE : L'ABONNEMENT N'EST PAS ACTIVÉ ICI.
+            // Il sera activé UNIQUEMENT quand le callback IPN ou le polling confirmera le statut 'paid'.
 
-            // Mettre en session l'utilisateur
+            // Mettre en session temporaire les identifiants
             $_SESSION['user_id'] = $userId;
             $_SESSION['user_name'] = $name;
             $_SESSION['user_email'] = $email;
             $_SESSION['user_role'] = 'member';
 
-            $redirectUrl = 'checkout-success.php?order=' . urlencode($orderNumber);
-
+            // Réponse AJAX pour le frontend : statut 'pending' obligatoire (jamais de redirection de succès immédiate)
             if (!empty($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest') {
-                header('Content-Type: application/json');
+                header('Content-Type: application/json; charset=utf-8');
+                $pendingMsg = ($method === 'card') 
+                    ? "En attente d'authentification bancaire..." 
+                    : "En attente de confirmation sur votre téléphone...";
+
                 echo json_encode([
-                    'success'      => true,
-                    'redirect_url' => $redirectUrl,
-                    'order_number' => $orderNumber,
-                    'order_id'     => $orderId
+                    'success'             => true,
+                    'status'              => 'pending',
+                    'method'              => $method,
+                    'order_number'        => $orderNumber,
+                    'order_id'            => $orderId,
+                    'checkout_request_id' => $saspayRequestId,
+                    'checkout_url'        => $saspayCheckoutUrl,
+                    'poll_url'            => 'api/check-payment-status.php?order=' . urlencode($orderNumber),
+                    'message'             => $pendingMsg
                 ]);
                 exit;
             }
 
-            header('Location: ' . $redirectUrl);
+            // Fallback non-AJAX : redirige vers l'URL de paiement ou la page de confirmation
+            if (!empty($saspayCheckoutUrl)) {
+                header('Location: ' . $saspayCheckoutUrl);
+                exit;
+            }
+            header('Location: checkout-success.php?order=' . urlencode($orderNumber));
             exit;
 
         } catch (Exception $e) {
@@ -382,25 +456,25 @@ $pageDescription = "Finalisez votre adhésion à One Vision Community pour 9€ 
                       <span class="saspay-brand-sub">à One Vision</span>
                     </div>
                   </div>
-                  <div class="saspay-header-price" id="saspayHeaderAmount">5904 XAF</div>
+                  <div class="saspay-header-price" id="saspayHeaderAmount">200 XAF</div>
                 </div>
 
                 <!-- 1. Sélection du Pays -->
                 <label class="saspay-field-label" for="saspayCountrySelect">Pays</label>
                 <div class="saspay-country-select-wrapper">
                   <select id="saspayCountrySelect" name="momoCountry" class="saspay-country-select" aria-label="Choisir votre pays">
-                    <option value="Cameroun" data-currency="XAF" data-amount="5904" data-fee="267" data-total="6171" data-prefix="+237" selected>🇨🇲 Cameroun</option>
-                    <option value="Côte d'Ivoire" data-currency="XOF" data-amount="5900" data-fee="100" data-total="6000" data-prefix="+225">🇨🇮 Côte d'Ivoire</option>
-                    <option value="Sénégal" data-currency="XOF" data-amount="5900" data-fee="100" data-total="6000" data-prefix="+221">🇸🇳 Sénégal</option>
-                    <option value="Bénin" data-currency="XOF" data-amount="5900" data-fee="100" data-total="6000" data-prefix="+229">🇧🇯 Bénin</option>
-                    <option value="Burkina Faso" data-currency="XOF" data-amount="5900" data-fee="100" data-total="6000" data-prefix="+226">🇧🇫 Burkina Faso</option>
-                    <option value="Mali" data-currency="XOF" data-amount="5900" data-fee="100" data-total="6000" data-prefix="+223">🇲🇱 Mali</option>
-                    <option value="Togo" data-currency="XOF" data-amount="5900" data-fee="100" data-total="6000" data-prefix="+228">🇹🇬 Togo</option>
-                    <option value="Guinée" data-currency="GNF" data-amount="84000" data-fee="1500" data-total="85500" data-prefix="+224">🇬🇳 Guinée</option>
-                    <option value="RDC" data-currency="USD" data-amount="9.80" data-fee="0.20" data-total="10.00" data-prefix="+243">🇨🇩 RDC</option>
-                    <option value="Congo" data-currency="XAF" data-amount="5904" data-fee="267" data-total="6171" data-prefix="+242">🇨🇬 Congo</option>
-                    <option value="Gabon" data-currency="XAF" data-amount="5904" data-fee="267" data-total="6171" data-prefix="+241">🇬🇦 Gabon</option>
-                    <option value="France" data-currency="EUR" data-amount="9.00" data-fee="0.00" data-total="9.00" data-prefix="+33">🌍 International (EUR)</option>
+                    <option value="Cameroun" data-currency="XAF" data-amount="200" data-fee="0" data-total="200" data-prefix="+237" selected>🇨🇲 Cameroun</option>
+                    <option value="Côte d'Ivoire" data-currency="XOF" data-amount="200" data-fee="0" data-total="200" data-prefix="+225">🇨🇮 Côte d'Ivoire</option>
+                    <option value="Sénégal" data-currency="XOF" data-amount="200" data-fee="0" data-total="200" data-prefix="+221">🇸🇳 Sénégal</option>
+                    <option value="Bénin" data-currency="XOF" data-amount="200" data-fee="0" data-total="200" data-prefix="+229">🇧🇯 Bénin</option>
+                    <option value="Burkina Faso" data-currency="XOF" data-amount="200" data-fee="0" data-total="200" data-prefix="+226">🇧🇫 Burkina Faso</option>
+                    <option value="Mali" data-currency="XOF" data-amount="200" data-fee="0" data-total="200" data-prefix="+223">🇲🇱 Mali</option>
+                    <option value="Togo" data-currency="XOF" data-amount="200" data-fee="0" data-total="200" data-prefix="+228">🇹🇬 Togo</option>
+                    <option value="Guinée" data-currency="GNF" data-amount="200" data-fee="0" data-total="200" data-prefix="+224">🇬🇳 Guinée</option>
+                    <option value="RDC" data-currency="USD" data-amount="0.30" data-fee="0.00" data-total="0.30" data-prefix="+243">🇨🇩 RDC</option>
+                    <option value="Congo" data-currency="XAF" data-amount="200" data-fee="0" data-total="200" data-prefix="+242">🇨🇬 Congo</option>
+                    <option value="Gabon" data-currency="XAF" data-amount="200" data-fee="0" data-total="200" data-prefix="+241">🇬🇦 Gabon</option>
+                    <option value="France" data-currency="EUR" data-amount="0.30" data-fee="0.00" data-total="0.30" data-prefix="+33">🌍 International (EUR)</option>
                   </select>
                   <span class="saspay-select-arrow">▼</span>
                 </div>
@@ -412,6 +486,12 @@ $pageDescription = "Finalisez votre adhésion à One Vision Community pour 9€ 
                 </div>
                 <input type="hidden" name="momoOperator" id="saspaySelectedOperator" value="MTN MoMo">
 
+                <!-- Info-bulle dynamique selon l'opérateur choisi -->
+                <div id="saspayOperatorTip" style="margin-top:0.6rem; margin-bottom:1.1rem; padding:0.65rem 0.95rem; background:#f8fafc; border:1px solid #e2e8f0; border-radius:10px; font-size:0.82rem; color:#475569; display:flex; align-items:center; gap:0.5rem; line-height:1.45;">
+                  <span style="font-size:1.1rem;">💡</span>
+                  <span id="saspayOperatorTipText">Push direct sur votre téléphone : vous recevrez une invite USSD sur votre écran pour saisir votre code PIN secret.</span>
+                </div>
+
                 <!-- 3. Numéro de téléphone -->
                 <label class="saspay-field-label" for="saspayPhoneInput">Numéro de téléphone</label>
                 <div class="saspay-phone-wrapper">
@@ -420,22 +500,22 @@ $pageDescription = "Finalisez votre adhésion à One Vision Community pour 9€ 
                 </div>
                 <div class="field-error" id="momoPhoneError" style="margin-top:-0.9rem; margin-bottom:1rem;">Numéro de téléphone Mobile Money requis.</div>
 
-                <input type="hidden" name="momoAmount" id="momoAmountHidden" value="5904">
+                <input type="hidden" name="momoAmount" id="momoAmountHidden" value="200">
                 <input type="hidden" name="momoCurrency" id="momoCurrencyHidden" value="XAF">
 
                 <!-- 4. Récapitulatif tarifaire exact -->
                 <div class="saspay-breakdown-box">
                   <div class="saspay-breakdown-row">
                     <span>Montant</span>
-                    <strong id="saspayBreakdownAmount">5 904 XAF</strong>
+                    <strong id="saspayBreakdownAmount">200 XAF</strong>
                   </div>
                   <div class="saspay-breakdown-row">
                     <span>Frais</span>
-                    <span id="saspayBreakdownFee">+267 XAF</span>
+                    <span id="saspayBreakdownFee">+0 XAF</span>
                   </div>
                   <div class="saspay-breakdown-row saspay-breakdown-total">
                     <span>Total à payer</span>
-                    <strong id="saspayBreakdownTotal">6 171 XAF</strong>
+                    <strong id="saspayBreakdownTotal">200 XAF</strong>
                   </div>
                 </div>
 
@@ -449,7 +529,7 @@ $pageDescription = "Finalisez votre adhésion à One Vision Community pour 9€ 
 
               <!-- Bouton de paiement CTA Principal -->
               <button type="submit" id="submitPaymentBtn" class="btn btn-primary checkout-submit-btn">
-                <span id="submitPaymentText">Payer 9,00 € par Carte Bancaire →</span>
+                <span id="submitPaymentText">Payer 0,30 € par Carte Bancaire →</span>
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
                   <line x1="5" y1="12" x2="19" y2="12"></line>
                   <polyline points="12 5 19 12 12 19"></polyline>
@@ -503,7 +583,7 @@ $pageDescription = "Finalisez votre adhésion à One Vision Community pour 9€ 
             <div class="summary-pricing-box">
               <div class="pricing-line">
                 <span>Adhésion mensuelle</span>
-                <span class="price-val">9,00 €</span>
+                <span class="price-val">200 FCFA <small>(~0,30 €)</small></span>
               </div>
               <div class="pricing-line">
                 <span>Frais d'activation</span>
@@ -511,7 +591,7 @@ $pageDescription = "Finalisez votre adhésion à One Vision Community pour 9€ 
               </div>
               <div class="pricing-line total-line">
                 <span>Total à régler aujourd'hui</span>
-                <span class="total-amount">9,00 € <span class="recur-text">/ mois</span></span>
+                <span class="total-amount">200 FCFA <span class="recur-text">(Tarif test)</span></span>
               </div>
             </div>
 
@@ -560,11 +640,21 @@ $pageDescription = "Finalisez votre adhésion à One Vision Community pour 9€ 
           </div>
         </div>
 
+        <div class="processing-timer-badge" id="processingTimerBadge" style="display:none;">
+          <span id="processingTimerIcon">⏳</span>
+          <span id="processingTimerText">En attente de validation sur votre téléphone...</span>
+        </div>
+
         <div class="processing-progress-bar-wrap">
           <div class="processing-progress-bar-fill" id="processingProgressBar"></div>
         </div>
 
-        <span style="font-size:0.78rem; color:#94a3b8; display:block;">
+        <div class="processing-actions" id="processingActions" style="display:none;">
+          <button type="button" class="processing-retry-btn" id="processingRetryBtn" style="display:none;">🔄 Réessayer le paiement</button>
+          <button type="button" class="processing-cancel-btn" id="processingCancelBtn">Annuler la demande</button>
+        </div>
+
+        <span style="font-size:0.78rem; color:#94a3b8; display:block; margin-top:1rem;">
           Paiement sécurisé chiffré SSL 256-bit • SasPay & 3D-Secure
         </span>
 

@@ -40,7 +40,7 @@
               <li><a href="logout.php">Déconnexion</a></li>
             <?php else: ?>
               <li><a href="login.php">Espace de connexion</a></li>
-              <li><a href="checkout.php">Rejoindre pour 9€/mois</a></li>
+              <li><a href="checkout.php">Rejoindre pour 200 FCFA (Test)</a></li>
             <?php endif; ?>
             <li><a href="support.php" style="font-weight:600; color:var(--color-white);">Support & Service Client</a></li>
           </ul>

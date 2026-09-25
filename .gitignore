@@ -17,11 +17,13 @@ database/*.sqlite
 includes/config.local.php
 .env
 .env.*
+!.env.example
 
 .vscode/
 .idea/
 *.suo
 *.ntvs*
+scratch/
 *.njsproj
 *.sln
 *.sw?

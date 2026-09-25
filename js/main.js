@@ -1459,6 +1459,20 @@ function initCheckoutPage() {
   const checkoutForm = document.getElementById('checkoutPaymentForm');
   if (!checkoutForm) return;
 
+  // Si une commande était en cours ou vient d'être payée, rediriger vers le succès
+  const checkPendingOrder = new URLSearchParams(window.location.search).get('order') || sessionStorage.getItem('ov_current_order');
+  if (checkPendingOrder && isPhpEnvironment()) {
+    fetch(`api/check-payment-status.php?order=${encodeURIComponent(checkPendingOrder)}`)
+      .then(res => res.json())
+      .then(statusData => {
+        if (statusData && statusData.status === 'paid') {
+          sessionStorage.removeItem('ov_current_order');
+          window.location.href = statusData.redirect_url || `checkout-success.php?order=${encodeURIComponent(checkPendingOrder)}`;
+        }
+      })
+      .catch(() => {});
+  }
+
   const nameInput = document.getElementById('checkoutName');
   const emailInput = document.getElementById('checkoutEmail');
   const passwordInput = document.getElementById('checkoutPassword');
@@ -1494,9 +1508,15 @@ function initCheckoutPage() {
   const processingTitle = document.getElementById('processingTitle');
   const processingDesc = document.getElementById('processingDesc');
   const processingDeviceAlert = document.getElementById('processingDeviceAlert');
+  const processingAlertTitle = document.getElementById('processingAlertTitle');
   const processingAlertMsg = document.getElementById('processingAlertMsg');
   const processingProgressBar = document.getElementById('processingProgressBar');
   const processingSpinnerIcon = document.getElementById('processingSpinnerIcon');
+  const processingTimerBadge = document.getElementById('processingTimerBadge');
+  const processingTimerText = document.getElementById('processingTimerText');
+  const processingActions = document.getElementById('processingActions');
+  const processingRetryBtn = document.getElementById('processingRetryBtn');
+  const processingCancelBtn = document.getElementById('processingCancelBtn');
 
   // Soumission
   const submitBtn = document.getElementById('submitPaymentBtn');
@@ -1508,170 +1528,170 @@ function initCheckoutPage() {
   const saspayCountries = {
     "Cameroun": {
       currency: "XAF",
-      amount: "5 904",
-      amountRaw: 5904,
-      fee: "+267 XAF",
-      feeRaw: 267,
-      total: "6 171 XAF",
+      amount: "200",
+      amountRaw: 200,
+      fee: "0 XAF",
+      feeRaw: 0,
+      total: "200 XAF",
       prefix: "+237",
       phonePlaceholder: "67 12 34 56 7",
       operators: [
-        { id: "MTN MoMo", name: "MTN MoMo Cameroun", fee: "+267 XAF de frais", icon: "🟡" },
-        { id: "Orange Money", name: "Orange Money Cameroun", fee: "+267 XAF de frais", icon: "🟠" },
-        { id: "Crypto", name: "Crypto / Stablecoin", fee: "+0,63 USD de frais", icon: "🟣" }
+        { id: "MTN MoMo", name: "MTN MoMo Cameroun", fee: "0 XAF de frais", icon: "🟡" },
+        { id: "Orange Money", name: "Orange Money Cameroun", fee: "0 XAF de frais", icon: "🟠" },
+        { id: "Crypto", name: "Crypto / Stablecoin", fee: "0 USD de frais", icon: "🟣" }
       ]
     },
     "Côte d'Ivoire": {
       currency: "XOF",
-      amount: "5 900",
-      amountRaw: 5900,
-      fee: "+100 XOF",
-      feeRaw: 100,
-      total: "6 000 XOF",
+      amount: "200",
+      amountRaw: 200,
+      fee: "0 XOF",
+      feeRaw: 0,
+      total: "200 XOF",
       prefix: "+225",
       phonePlaceholder: "07 77 95 73 37",
       operators: [
         { id: "Wave", name: "Wave CI", fee: "0 XOF de frais", icon: "🔵" },
-        { id: "Orange Money", name: "Orange Money CI", fee: "+100 XOF de frais", icon: "🟠" },
-        { id: "MTN MoMo", name: "MTN MoMo CI", fee: "+100 XOF de frais", icon: "🟡" },
-        { id: "Moov Money", name: "Moov Money CI", fee: "+100 XOF de frais", icon: "🟢" }
+        { id: "MTN MoMo", name: "MTN MoMo CI", fee: "0 XOF de frais", icon: "🟡" },
+        { id: "Orange Money", name: "Orange Money CI", fee: "0 XOF de frais", icon: "🟠" },
+        { id: "Moov Money", name: "Moov Money CI", fee: "0 XOF de frais", icon: "🟢" }
       ]
     },
     "Sénégal": {
       currency: "XOF",
-      amount: "5 900",
-      amountRaw: 5900,
-      fee: "+100 XOF",
-      feeRaw: 100,
-      total: "6 000 XOF",
+      amount: "200",
+      amountRaw: 200,
+      fee: "0 XOF",
+      feeRaw: 0,
+      total: "200 XOF",
       prefix: "+221",
       phonePlaceholder: "77 123 45 67",
       operators: [
         { id: "Wave", name: "Wave Sénégal", fee: "0 XOF de frais", icon: "🔵" },
-        { id: "Orange Money", name: "Orange Money SN", fee: "+100 XOF de frais", icon: "🟠" },
-        { id: "Free Money", name: "Free Money SN", fee: "+100 XOF de frais", icon: "🔴" }
+        { id: "Orange Money", name: "Orange Money SN", fee: "0 XOF de frais", icon: "🟠" },
+        { id: "Free Money", name: "Free Money SN", fee: "0 XOF de frais", icon: "🔴" }
       ]
     },
     "Bénin": {
       currency: "XOF",
-      amount: "5 900",
-      amountRaw: 5900,
-      fee: "+100 XOF",
-      feeRaw: 100,
-      total: "6 000 XOF",
+      amount: "200",
+      amountRaw: 200,
+      fee: "0 XOF",
+      feeRaw: 0,
+      total: "200 XOF",
       prefix: "+229",
       phonePlaceholder: "97 12 34 56",
       operators: [
-        { id: "MTN MoMo", name: "MTN MoMo Bénin", fee: "+100 XOF de frais", icon: "🟡" },
-        { id: "Moov Money", name: "Moov Money Bénin", fee: "+100 XOF de frais", icon: "🟢" }
+        { id: "MTN MoMo", name: "MTN MoMo Bénin", fee: "0 XOF de frais", icon: "🟡" },
+        { id: "Moov Money", name: "Moov Money Bénin", fee: "0 XOF de frais", icon: "🟢" }
       ]
     },
     "Burkina Faso": {
       currency: "XOF",
-      amount: "5 900",
-      amountRaw: 5900,
-      fee: "+100 XOF",
-      feeRaw: 100,
-      total: "6 000 XOF",
+      amount: "200",
+      amountRaw: 200,
+      fee: "0 XOF",
+      feeRaw: 0,
+      total: "200 XOF",
       prefix: "+226",
       phonePlaceholder: "70 12 34 56",
       operators: [
-        { id: "Orange Money", name: "Orange Money BF", fee: "+100 XOF de frais", icon: "🟠" },
-        { id: "Moov Money", name: "Moov Money BF", fee: "+100 XOF de frais", icon: "🟢" }
+        { id: "Orange Money", name: "Orange Money BF", fee: "0 XOF de frais", icon: "🟠" },
+        { id: "Moov Money", name: "Moov Money BF", fee: "0 XOF de frais", icon: "🟢" }
       ]
     },
     "Mali": {
       currency: "XOF",
-      amount: "5 900",
-      amountRaw: 5900,
-      fee: "+100 XOF",
-      feeRaw: 100,
-      total: "6 000 XOF",
+      amount: "200",
+      amountRaw: 200,
+      fee: "0 XOF",
+      feeRaw: 0,
+      total: "200 XOF",
       prefix: "+223",
       phonePlaceholder: "70 12 34 56",
       operators: [
-        { id: "Orange Money", name: "Orange Money Mali", fee: "+100 XOF de frais", icon: "🟠" },
-        { id: "Moov Money", name: "Moov Money Mali", fee: "+100 XOF de frais", icon: "🟢" }
+        { id: "Orange Money", name: "Orange Money Mali", fee: "0 XOF de frais", icon: "🟠" },
+        { id: "Moov Money", name: "Moov Money Mali", fee: "0 XOF de frais", icon: "🟢" }
       ]
     },
     "Togo": {
       currency: "XOF",
-      amount: "5 900",
-      amountRaw: 5900,
-      fee: "+100 XOF",
-      feeRaw: 100,
-      total: "6 000 XOF",
+      amount: "200",
+      amountRaw: 200,
+      fee: "0 XOF",
+      feeRaw: 0,
+      total: "200 XOF",
       prefix: "+228",
       phonePlaceholder: "90 12 34 56",
       operators: [
-        { id: "T-Money", name: "T-Money Togo", fee: "+100 XOF de frais", icon: "🟡" },
-        { id: "Moov Money", name: "Moov Money Togo", fee: "+100 XOF de frais", icon: "🟢" }
+        { id: "T-Money", name: "T-Money Togo", fee: "0 XOF de frais", icon: "🟡" },
+        { id: "Moov Money", name: "Moov Money Togo", fee: "0 XOF de frais", icon: "🟢" }
       ]
     },
     "Guinée": {
       currency: "GNF",
-      amount: "84 000",
-      amountRaw: 84000,
-      fee: "+1 500 GNF",
-      feeRaw: 1500,
-      total: "85 500 GNF",
+      amount: "3 000",
+      amountRaw: 3000,
+      fee: "0 GNF",
+      feeRaw: 0,
+      total: "3 000 GNF",
       prefix: "+224",
       phonePlaceholder: "620 12 34 56",
       operators: [
-        { id: "Orange Money", name: "Orange Money GN", fee: "+1500 GNF de frais", icon: "🟠" },
-        { id: "MTN MoMo", name: "MTN MoMo GN", fee: "+1500 GNF de frais", icon: "🟡" }
+        { id: "Orange Money", name: "Orange Money GN", fee: "0 GNF de frais", icon: "🟠" },
+        { id: "MTN MoMo", name: "MTN MoMo GN", fee: "0 GNF de frais", icon: "🟡" }
       ]
     },
     "RDC": {
       currency: "USD",
-      amount: "9.80",
-      amountRaw: 9.80,
-      fee: "+0.20 USD",
-      feeRaw: 0.20,
-      total: "10.00 USD",
+      amount: "0.50",
+      amountRaw: 0.50,
+      fee: "0.00 USD",
+      feeRaw: 0.00,
+      total: "0.50 USD",
       prefix: "+243",
       phonePlaceholder: "81 234 5678",
       operators: [
-        { id: "Vodacom M-Pesa", name: "Vodacom M-Pesa", fee: "+0,20 USD de frais", icon: "🔴" },
-        { id: "Airtel Money", name: "Airtel Money RDC", fee: "+0,20 USD de frais", icon: "🔴" },
-        { id: "Orange Money", name: "Orange Money RDC", fee: "+0,20 USD de frais", icon: "🟠" }
+        { id: "Vodacom M-Pesa", name: "Vodacom M-Pesa", fee: "0 USD de frais", icon: "🔴" },
+        { id: "Airtel Money", name: "Airtel Money RDC", fee: "0 USD de frais", icon: "🔴" },
+        { id: "Orange Money", name: "Orange Money RDC", fee: "0 USD de frais", icon: "🟠" }
       ]
     },
     "Congo": {
       currency: "XAF",
-      amount: "5 904",
-      amountRaw: 5904,
-      fee: "+267 XAF",
-      feeRaw: 267,
-      total: "6 171 XAF",
+      amount: "200",
+      amountRaw: 200,
+      fee: "0 XAF",
+      feeRaw: 0,
+      total: "200 XAF",
       prefix: "+242",
       phonePlaceholder: "06 123 4567",
       operators: [
-        { id: "MTN MoMo", name: "MTN MoMo Congo", fee: "+267 XAF de frais", icon: "🟡" },
-        { id: "Airtel Money", name: "Airtel Money Congo", fee: "+267 XAF de frais", icon: "🔴" }
+        { id: "MTN MoMo", name: "MTN MoMo Congo", fee: "0 XAF de frais", icon: "🟡" },
+        { id: "Airtel Money", name: "Airtel Money Congo", fee: "0 XAF de frais", icon: "🔴" }
       ]
     },
     "Gabon": {
       currency: "XAF",
-      amount: "5 904",
-      amountRaw: 5904,
-      fee: "+267 XAF",
-      feeRaw: 267,
-      total: "6 171 XAF",
+      amount: "200",
+      amountRaw: 200,
+      fee: "0 XAF",
+      feeRaw: 0,
+      total: "200 XAF",
       prefix: "+241",
       phonePlaceholder: "074 12 34 56",
       operators: [
-        { id: "Airtel Money", name: "Airtel Money Gabon", fee: "+267 XAF de frais", icon: "🔴" },
-        { id: "Moov Money", name: "Moov Money Gabon", fee: "+267 XAF de frais", icon: "🟢" }
+        { id: "Airtel Money", name: "Airtel Money Gabon", fee: "0 XAF de frais", icon: "🔴" },
+        { id: "Moov Money", name: "Moov Money Gabon", fee: "0 XAF de frais", icon: "🟢" }
       ]
     },
     "France": {
       currency: "EUR",
-      amount: "9.00",
-      amountRaw: 9.00,
+      amount: "0.30",
+      amountRaw: 0.30,
       fee: "0.00 EUR",
       feeRaw: 0.00,
-      total: "9.00 EUR",
+      total: "0.30 EUR",
       prefix: "+33",
       phonePlaceholder: "06 12 34 56 78",
       operators: [
@@ -1696,10 +1716,25 @@ function initCheckoutPage() {
     if (momoAmountHidden) momoAmountHidden.value = data.amountRaw;
     if (momoCurrencyHidden) momoCurrencyHidden.value = data.currency;
 
+    function updateOperatorTip(opId) {
+      const tipText = document.getElementById('saspayOperatorTipText');
+      if (!tipText) return;
+      const isWave = (opId || '').toLowerCase().includes('wave');
+      if (isWave) {
+        tipText.innerHTML = `<strong>📲 Wave :</strong> Sur smartphone, l'application Wave s'ouvre automatiquement. Sur ordinateur, Wave affiche un QR code sécurisé à scanner avec votre application Wave. <em>(Pour un push direct sur votre écran sans scan, choisissez MTN MoMo ou Moov).</em>`;
+      } else {
+        tipText.innerHTML = `<strong>⚡ Push direct (${escapeHtml(opId || 'Mobile Money')}) :</strong> Une invite USSD s'affichera directement sur l'écran de votre téléphone pour saisir votre code PIN secret (sans quitter la page).`;
+      }
+    }
+
     // Rendu des boutons opérateurs
     if (saspayMethodsGrid) {
       saspayMethodsGrid.innerHTML = '';
       data.operators.forEach((op, index) => {
+        const isWave = op.id.toLowerCase().includes('wave');
+        const badgeColor = isWave ? '#0284c7' : '#16a34a';
+        const badgeLabel = isWave ? '📲 App / QR' : '⚡ Push direct';
+
         const card = document.createElement('div');
         card.className = `saspay-method-card ${index === 0 ? 'active' : ''}`;
         card.dataset.operator = op.id;
@@ -1708,6 +1743,7 @@ function initCheckoutPage() {
           <div class="saspay-method-info">
             <span class="saspay-method-name">${escapeHtml(op.name)}</span>
             <span class="saspay-method-fee">${escapeHtml(op.fee)}</span>
+            <span style="font-size:0.7rem; color:${badgeColor}; font-weight:700; display:inline-block; margin-top:2px;">${badgeLabel}</span>
           </div>
         `;
 
@@ -1715,6 +1751,7 @@ function initCheckoutPage() {
           document.querySelectorAll('.saspay-method-card').forEach(c => c.classList.remove('active'));
           card.classList.add('active');
           if (saspaySelectedOperator) saspaySelectedOperator.value = op.id;
+          updateOperatorTip(op.id);
         });
 
         saspayMethodsGrid.appendChild(card);
@@ -1722,6 +1759,7 @@ function initCheckoutPage() {
 
       if (saspaySelectedOperator && data.operators.length > 0) {
         saspaySelectedOperator.value = data.operators[0].id;
+        updateOperatorTip(data.operators[0].id);
       }
     }
 
@@ -1748,7 +1786,7 @@ function initCheckoutPage() {
       if (methodMobileMoney) methodMobileMoney.classList.remove('selected');
       if (cardDetailsBox) cardDetailsBox.style.display = 'block';
       if (mobileMoneyDetailsBox) mobileMoneyDetailsBox.style.display = 'none';
-      if (submitText) submitText.textContent = "Payer 9,00 € par Carte Bancaire →";
+      if (submitText) submitText.textContent = "Payer 0,30 € par Carte Bancaire →";
     } else {
       if (methodMobileMoney) methodMobileMoney.classList.add('selected');
       if (methodCard) methodCard.classList.remove('selected');
@@ -1905,34 +1943,171 @@ function initCheckoutPage() {
       return;
     }
 
-    // Affichage de la modale de traitement interactive directement sur la page
+    // Données relatives au pays et à l'opérateur
     const selCountry = saspayCountrySelect ? saspayCountrySelect.value : "Cameroun";
     const countryData = saspayCountries[selCountry] || saspayCountries["Cameroun"];
     const opVal = saspaySelectedOperator ? saspaySelectedOperator.value : "MTN MoMo";
     const phoneVal = saspayPhoneInput ? saspayPhoneInput.value.trim() : "";
 
+    // Variables de contrôle des timers et du polling
+    let activePollInterval = null;
+    let activeCountdownInterval = null;
+    let secondsRemaining = 180; // 3 minutes timeout
+
+    function cleanupTimers() {
+      if (activePollInterval) { clearInterval(activePollInterval); activePollInterval = null; }
+      if (activeCountdownInterval) { clearInterval(activeCountdownInterval); activeCountdownInterval = null; }
+    }
+
+    function formatTime(s) {
+      const m = Math.floor(s / 60);
+      const sec = s % 60;
+      return `${m.toString().padStart(2, '0')}:${sec.toString().padStart(2, '0')}`;
+    }
+
+    if (processingCancelBtn) {
+      processingCancelBtn.onclick = () => {
+        cleanupTimers();
+        if (processingModal) {
+          processingModal.classList.remove('visible');
+          processingModal.setAttribute('aria-hidden', 'true');
+        }
+        if (submitBtn) submitBtn.disabled = false;
+        if (submitText) submitText.textContent = (currentPaymentMethod === 'mobile_money') ? "Payer via Mobile Money" : "Payer 0,30 €";
+      };
+    }
+
+    if (processingRetryBtn) {
+      processingRetryBtn.onclick = () => {
+        cleanupTimers();
+        if (processingModal) {
+          processingModal.classList.remove('visible');
+          processingModal.setAttribute('aria-hidden', 'true');
+        }
+        if (submitBtn) submitBtn.disabled = false;
+        if (submitText) submitText.textContent = (currentPaymentMethod === 'mobile_money') ? "Payer via Mobile Money" : "Payer 0,30 €";
+      };
+    }
+
+    // AFFICHER LA MODALE DANS L'ÉTAT STRICTEMENT "EN ATTENTE" (JAMAIS SUCCÈS À CET INSTANT)
     if (processingModal) {
       processingModal.classList.add('visible');
       processingModal.setAttribute('aria-hidden', 'false');
 
       if (currentPaymentMethod === 'mobile_money') {
-        if (processingTitle) processingTitle.textContent = "Validation Mobile Money en cours...";
-        if (processingDesc) processingDesc.textContent = `Transmission du débit sécurisé à ${opVal} (${selCountry})...`;
+        if (processingTitle) processingTitle.textContent = "⏳ En attente de confirmation sur votre téléphone...";
+        if (processingDesc) {
+          processingDesc.textContent = `Une demande de débit C2B a été transmise à ${opVal} (${selCountry}) sur le numéro ${countryData.prefix} ${phoneVal}.`;
+        }
         if (processingDeviceAlert) {
           processingDeviceAlert.style.display = 'flex';
+          if (processingAlertTitle) processingAlertTitle.textContent = "Action requise sur votre téléphone";
           if (processingAlertMsg) {
-            processingAlertMsg.textContent = `Une notification a été envoyée sur le ${countryData.prefix} ${phoneVal}. Veuillez saisir votre code PIN secret sur votre mobile pour approuver le paiement de ${countryData.total}.`;
+            processingAlertMsg.textContent = `Déverrouillez votre mobile et saisissez votre code PIN secret pour approuver le règlement de ${countryData.total}. Ne fermez pas cette page.`;
           }
         }
       } else {
-        if (processingTitle) processingTitle.textContent = "Authentification Bancaire 3D-Secure...";
-        if (processingDesc) processingDesc.textContent = "Vérification sécurisée auprès de votre banque pour le règlement de 9,00 € TTC.";
-        if (processingDeviceAlert) processingDeviceAlert.style.display = 'none';
+        if (processingTitle) processingTitle.textContent = "⏳ En attente d'authentification bancaire...";
+        if (processingDesc) {
+          processingDesc.textContent = "Initialisation de la session sécurisée (3D Secure)... Votre propre banque va vous demander de valider le règlement (via une notification push dans votre application bancaire ou par un code SMS secret). Redirection vers l'espace sécurisé...";
+        }
+        if (processingDeviceAlert) {
+          processingDeviceAlert.style.display = 'flex';
+          if (processingAlertTitle) processingAlertTitle.textContent = "Authentification 3D Secure requise";
+          if (processingAlertMsg) {
+            processingAlertMsg.textContent = "Préparez votre téléphone : votre établissement bancaire va vous envoyer une demande de confirmation (app bancaire ou SMS).";
+          }
+        }
+      }
+
+      if (processingSpinnerIcon) {
+        processingSpinnerIcon.innerHTML = `
+          <circle cx="12" cy="12" r="10" stroke-opacity="0.25"></circle>
+          <path d="M12 2a10 10 0 0 1 10 10" stroke-linecap="round"></path>
+        `;
+      }
+
+      if (processingTimerBadge) {
+        processingTimerBadge.style.display = 'inline-flex';
+        if (processingTimerText) processingTimerText.textContent = `Temps restant pour valider : ${formatTime(secondsRemaining)}`;
       }
 
       if (processingProgressBar) {
-        processingProgressBar.style.width = '20%';
-        setTimeout(() => { processingProgressBar.style.width = '75%'; }, 400);
+        processingProgressBar.style.width = '30%';
+      }
+
+      if (processingActions) {
+        processingActions.style.display = 'flex';
+        if (processingRetryBtn) processingRetryBtn.style.display = 'none';
+        if (processingCancelBtn) {
+          processingCancelBtn.style.display = 'inline-block';
+          processingCancelBtn.textContent = 'Annuler la demande';
+        }
+      }
+    }
+
+    // Gestion du compte à rebours d'expiration
+    activeCountdownInterval = setInterval(() => {
+      secondsRemaining--;
+      if (processingTimerText) {
+        processingTimerText.textContent = `Temps restant pour valider : ${formatTime(Math.max(0, secondsRemaining))}`;
+      }
+
+      if (secondsRemaining <= 0) {
+        cleanupTimers();
+        handlePaymentTimeout();
+      }
+    }, 1000);
+
+    function handlePaymentSuccess(targetUrl) {
+      cleanupTimers();
+      // LE STATUT PAYÉ EST ACTIVÉ UNIQUEMENT LORSQUE CE SUCCÈS RÉEL EST REÇU
+      localStorage.setItem('ov_has_paid', 'true');
+
+      if (processingProgressBar) processingProgressBar.style.width = '100%';
+      if (processingTitle) processingTitle.textContent = "✅ Paiement validé avec succès !";
+      if (processingDesc) processingDesc.textContent = "Votre transaction a été confirmée. Votre adhésion est active. Redirection...";
+      if (processingTimerBadge) processingTimerBadge.style.display = 'none';
+      if (processingActions) processingActions.style.display = 'none';
+      if (processingSpinnerIcon) {
+        processingSpinnerIcon.innerHTML = `<polyline points="20 6 9 17 4 12" stroke="#16a34a" stroke-width="3"></polyline>`;
+      }
+
+      setTimeout(() => {
+        window.location.href = targetUrl;
+      }, 1500);
+    }
+
+    function handlePaymentFailed(msg) {
+      cleanupTimers();
+      if (processingProgressBar) processingProgressBar.style.width = '100%';
+      if (processingTitle) processingTitle.textContent = "❌ Échec du paiement";
+      if (processingDesc) processingDesc.textContent = msg || "La transaction a été refusée ou annulée depuis votre téléphone. Votre compte n'a pas été débité.";
+      if (processingTimerBadge) processingTimerBadge.style.display = 'none';
+      if (processingDeviceAlert) processingDeviceAlert.style.display = 'none';
+      if (processingSpinnerIcon) {
+        processingSpinnerIcon.innerHTML = `<line x1="18" y1="6" x2="6" y2="18" stroke="#dc2626" stroke-width="3"></line><line x1="6" y1="6" x2="18" y2="18" stroke="#dc2626" stroke-width="3"></line>`;
+      }
+      if (processingActions) {
+        processingActions.style.display = 'flex';
+        if (processingRetryBtn) processingRetryBtn.style.display = 'inline-block';
+        if (processingCancelBtn) processingCancelBtn.textContent = 'Fermer';
+      }
+    }
+
+    function handlePaymentTimeout() {
+      cleanupTimers();
+      if (processingTitle) processingTitle.textContent = "⏱️ Délai de confirmation dépassé";
+      if (processingDesc) processingDesc.textContent = "Aucune validation n'a été reçue sur votre téléphone dans les délais. La transaction a expiré sans aucun prélèvement.";
+      if (processingTimerBadge) processingTimerBadge.style.display = 'none';
+      if (processingDeviceAlert) processingDeviceAlert.style.display = 'none';
+      if (processingSpinnerIcon) {
+        processingSpinnerIcon.innerHTML = `<circle cx="12" cy="12" r="10" stroke="#f59e0b" stroke-width="2.5"></circle><polyline points="12 6 12 12 16 14" stroke="#f59e0b" stroke-width="2.5"></polyline>`;
+      }
+      if (processingActions) {
+        processingActions.style.display = 'flex';
+        if (processingRetryBtn) processingRetryBtn.style.display = 'inline-block';
+        if (processingCancelBtn) processingCancelBtn.textContent = 'Fermer';
       }
     }
 
@@ -1951,13 +2126,12 @@ function initCheckoutPage() {
       formData.set('momoCurrency', countryData.currency);
     }
 
-    // Sauvegarder dans localStorage l'état payé et les informations du membre
+    // Mémoriser le nom et l'email pour le reçu (mais PAS ov_has_paid)
     localStorage.setItem('ov_member_name', nameVal);
     localStorage.setItem('ov_member_email', emailVal);
-    localStorage.setItem('ov_has_paid', 'true');
 
     if (isPhpEnvironment()) {
-      // Envoi de la requête au backend PHP uniquement en environnement PHP réel
+      // 1. Déclencher l'appel d'initiation au backend PHP (C2B / Session)
       fetch('checkout.php', {
         method: 'POST',
         body: formData,
@@ -1967,52 +2141,107 @@ function initCheckoutPage() {
         if (!r.ok) throw new Error('Erreur HTTP ' + r.status);
         return r.json();
       })
-      .then(data => {
-        if (data && (data.redirect_url || data.order_number)) {
-          const targetUrl = data.redirect_url || ('checkout-success.php?order=' + encodeURIComponent(data.order_number));
+      .then(initData => {
+        if (initData && initData.success && initData.order_number) {
+          const orderNum = initData.order_number;
+          sessionStorage.setItem('ov_current_order', orderNum);
 
-          // Compléter la barre de chargement
-          if (processingProgressBar) processingProgressBar.style.width = '100%';
-
-          // Afficher l'état de succès validé
-          setTimeout(() => {
-            if (processingTitle) processingTitle.textContent = "✅ Paiement validé avec succès !";
-            if (processingDesc) processingDesc.textContent = "Votre adhésion est active. Redirection vers votre reçu officiel...";
-            if (processingSpinnerIcon) {
-              processingSpinnerIcon.innerHTML = `<polyline points="20 6 9 17 4 12" stroke="#16a34a" stroke-width="3"></polyline>`;
+          // Si SasPay renvoie un checkout_url (Carte Bancaire 3D Secure ou redirection Wave):
+          if (initData.checkout_url) {
+            if (currentPaymentMethod === 'card') {
+              if (processingTitle) processingTitle.textContent = "⏳ Authentification 3D Secure requise...";
+              if (processingDesc) processingDesc.textContent = "Veuillez autoriser l'opération sur l'espace sécurisé de votre banque. Si la page ne s'est pas ouverte, cliquez sur le bouton ci-dessous.";
+            } else {
+              if (processingTitle) processingTitle.textContent = "⏳ Validation requise sur votre application mobile...";
+              if (processingDesc) processingDesc.textContent = "Confirmez le débit avec votre code PIN secret sur l'application Wave ou Mobile Money. Cette page se mettra à jour automatiquement dès votre confirmation.";
             }
 
-            // Redirection vers checkout-success.php APRÈS validation
-            setTimeout(() => {
-              window.location.href = targetUrl;
-            }, 1200);
-          }, 1200);
+            // Ajouter un bouton d'accès direct dans la modale
+            if (processingActions) {
+              let directPayBtn = document.getElementById('saspayDirectOpenBtn');
+              if (!directPayBtn) {
+                directPayBtn = document.createElement('a');
+                directPayBtn.id = 'saspayDirectOpenBtn';
+                directPayBtn.className = 'btn btn-primary';
+                directPayBtn.target = '_blank';
+                directPayBtn.rel = 'noopener noreferrer';
+                directPayBtn.style.cssText = 'display:inline-flex; align-items:center; gap:0.5rem; padding:0.75rem 1.25rem; font-weight:700; border-radius:10px; margin-bottom:0.6rem; text-decoration:none; font-size:0.95rem;';
+                processingActions.insertBefore(directPayBtn, processingActions.firstChild);
+              }
+              directPayBtn.href = initData.checkout_url;
+              directPayBtn.innerHTML = (currentPaymentMethod === 'card') 
+                ? '💳 Ouvrir la validation 3D Secure →' 
+                : '📲 Ouvrir Wave / Confirmer le paiement →';
+            }
+
+            // Tenter d'ouvrir l'URL de paiement dans un nouvel onglet ou rediriger
+            try {
+              const payWindow = window.open(initData.checkout_url, '_blank');
+              if (!payWindow || payWindow.closed || typeof payWindow.closed === 'undefined') {
+                setTimeout(() => {
+                  window.location.href = initData.checkout_url;
+                }, 1200);
+              }
+            } catch (e) {
+              setTimeout(() => {
+                window.location.href = initData.checkout_url;
+              }, 1200);
+            }
+          }
+
+          // 2. Lancer IMMÉDIATEMENT le polling toutes les 2.5 secondes du statut réel
+          activePollInterval = setInterval(() => {
+            fetch(`api/check-payment-status.php?order=${encodeURIComponent(orderNum)}`)
+              .then(res => res.json())
+              .then(statusData => {
+                if (statusData && statusData.status === 'paid') {
+                  // Confirmation réelle reçue (soit via webhook IPN, soit via SasPay verify)
+                  handlePaymentSuccess(statusData.redirect_url || `checkout-success.php?order=${encodeURIComponent(orderNum)}`);
+                } else if (statusData && statusData.status === 'failed') {
+                  handlePaymentFailed(statusData.message || "La transaction a été refusée ou rejetée.");
+                } else if (statusData && statusData.status === 'expired') {
+                  handlePaymentTimeout();
+                } else {
+                  // Toujours en attente : mise à jour visuelle fluide
+                  if (processingProgressBar) {
+                    processingProgressBar.style.width = Math.min(85, 30 + (180 - secondsRemaining) * 0.3) + '%';
+                  }
+                }
+              })
+              .catch(pollErr => {
+                console.log("Polling en attente...", pollErr);
+              });
+          }, 2500);
 
         } else {
-          if (processingModal) processingModal.classList.remove('visible');
-          alert(data.error || "Une erreur est survenue lors de la validation du paiement.");
+          handlePaymentFailed(initData.error || "Impossible d'initier la demande de paiement SasPay.");
         }
       })
       .catch(err => {
-        console.warn("Échec requête AJAX:", err);
-        checkoutForm.action = 'checkout.php';
-        checkoutForm.method = 'POST';
-        checkoutForm.submit();
+        console.warn("Échec d'initiation AJAX:", err);
+        handlePaymentFailed("Erreur lors de la communication avec le serveur de paiement.");
       });
+
     } else {
-      // Mode statique (GitHub Pages, serveur HTML standard, ouverture locale)
-      if (processingProgressBar) processingProgressBar.style.width = '100%';
-      setTimeout(() => {
-        if (processingTitle) processingTitle.textContent = "✅ Paiement validé avec succès !";
-        if (processingDesc) processingDesc.textContent = "Votre adhésion est active. Redirection vers votre confirmation d'adhésion...";
-        if (processingSpinnerIcon) {
-          processingSpinnerIcon.innerHTML = `<polyline points="20 6 9 17 4 12" stroke="#16a34a" stroke-width="3"></polyline>`;
+      // Mode statique (GitHub Pages / test sans backend PHP) :
+      // RÈGLE : Cliquer sur "Payer" sans valider sur le téléphone ne doit JAMAIS afficher "paiement réussi".
+      // La page reste en attente jusqu'à expiration, sauf si un testeur clique manuellement sur le bouton de test.
+      if (processingActions) {
+        let testSimBtn = document.getElementById('testSimulateMobileConfirmBtn');
+        if (!testSimBtn) {
+          testSimBtn = document.createElement('button');
+          testSimBtn.id = 'testSimulateMobileConfirmBtn';
+          testSimBtn.type = 'button';
+          testSimBtn.className = 'processing-retry-btn';
+          testSimBtn.style.cssText = 'background:#4f46e5; font-size:0.78rem; padding:0.45rem 0.8rem; margin-top:0.4rem;';
+          testSimBtn.innerHTML = '🧪 Test Sandbox : Simuler validation mobile (PIN saisi)';
+          testSimBtn.onclick = () => {
+            const fakeOrder = 'ORD-' + Math.floor(100000 + Math.random() * 900000);
+            handlePaymentSuccess(`checkout-success.html?order=${encodeURIComponent(fakeOrder)}`);
+          };
+          processingActions.insertBefore(testSimBtn, processingActions.firstChild);
         }
-        setTimeout(() => {
-          const orderNum = 'ORD-' + Math.floor(100000 + Math.random() * 900000);
-          window.location.href = 'checkout-success.html?order=' + encodeURIComponent(orderNum);
-        }, 1200);
-      }, 1200);
+      }
     }
   });
 }

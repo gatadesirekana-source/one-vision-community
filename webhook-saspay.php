@@ -67,13 +67,17 @@ foreach ($headers as $k => $v) {
     $headerMap[strtolower($k)] = $v;
 }
 
-$signatureHeader = $headerMap['x-saspay-signature'] 
+$signatureHeader = strtolower(trim($headerMap['x-webhook-signature'] 
+    ?? $headerMap['x-saspay-signature'] 
     ?? $headerMap['saspay-signature'] 
-    ?? $headerMap['x-webhook-signature'] 
     ?? $headerMap['x-signature'] 
+    ?? $_SERVER['HTTP_X_WEBHOOK_SIGNATURE'] 
     ?? $_SERVER['HTTP_X_SASPAY_SIGNATURE'] 
-    ?? $_SERVER['HTTP_SASPAY_SIGNATURE'] 
-    ?? '';
+    ?? ''));
+
+$timestampHeader = trim($headerMap['x-webhook-timestamp'] 
+    ?? $_SERVER['HTTP_X_WEBHOOK_TIMESTAMP'] 
+    ?? '');
 
 $tokenParam = $_GET['token'] 
     ?? $_GET['secret'] 
@@ -88,43 +92,67 @@ if (strpos($authHeader, 'Bearer ') === 0) {
 $isVerified = false;
 
 if (!empty($secret)) {
-    // A. Vérification par jeton secret direct
+    // A. Contrôle de l'âge de l'événement (tolérance 300s = 5 min selon la doc SasPay)
+    if (!empty($timestampHeader) && abs(time() - (int)$timestampHeader) > 300) {
+        log_webhook('Forbidden: Webhook timestamp out of tolerance', ['timestamp' => $timestampHeader]);
+        http_response_code(403);
+        echo json_encode(['success' => false, 'error' => 'Timestamp out of tolerance']);
+        exit;
+    }
+
+    // B. Vérification par jeton secret direct
     if (!empty($tokenParam) && hash_equals($secret, $tokenParam)) {
         $isVerified = true;
     }
 
-    // B. Vérification par signature HMAC SHA-256
+    // C. Vérification par signature officielle SasPay HMAC SHA-256 (timestamp . '.' . rawPayload)
     if (!$isVerified && !empty($signatureHeader)) {
-        $expectedSignature = hash_hmac('sha256', $rawPayload, $secret);
+        if (!empty($timestampHeader)) {
+            $expectedOfficial = hash_hmac('sha256', $timestampHeader . '.' . $rawPayload, $secret);
+            if (hash_equals($expectedOfficial, $signatureHeader)) {
+                $isVerified = true;
+            }
+        }
 
-        // Format direct hex
-        if (hash_equals($expectedSignature, $signatureHeader)) {
-            $isVerified = true;
-        } 
-        // Format stripe/saspay t=timestamp,v1=signature
-        elseif (strpos($signatureHeader, 'v1=') !== false) {
-            preg_match('/v1=([a-f0-9]+)/', $signatureHeader, $matches);
-            if (!empty($matches[1]) && hash_equals($expectedSignature, $matches[1])) {
+        // Fallback sans timestamp
+        if (!$isVerified) {
+            $expectedDirect = hash_hmac('sha256', $rawPayload, $secret);
+            if (hash_equals($expectedDirect, $signatureHeader)) {
                 $isVerified = true;
             }
         }
     }
 
-    // Si aucune signature ou token n'est fourni, on log pour traçabilité
-    if (!$isVerified && empty($signatureHeader) && empty($tokenParam)) {
-        // En environnement local ou test de développement, autoriser si non configuré en mode strict
-        log_webhook('Warning: Webhook received without signature header or token parameter');
-        $isVerified = true; 
-    } elseif (!$isVerified) {
-        log_webhook('Unauthorized: Webhook signature mismatch', [
-            'received_signature' => $signatureHeader,
-            'received_token' => $tokenParam
-        ]);
-        http_response_code(401);
-        echo json_encode(['success' => false, 'error' => 'Invalid webhook signature or token']);
-        exit;
+    if (!$isVerified) {
+        // En mode production, AUCUN webhook sans signature valide n'est toléré (protection anti-falsification)
+        if (defined('SASPAY_ENV') && SASPAY_ENV === 'production') {
+            log_webhook('Security Alert: Unauthorized webhook rejected in production', [
+                'received_signature' => $signatureHeader,
+                'received_token'     => $tokenParam
+            ]);
+            http_response_code(401);
+            echo json_encode(['success' => false, 'error' => 'Unauthorized: Invalid or missing webhook signature']);
+            exit;
+        }
+
+        // En environnement sandbox / local de développement uniquement
+        if (empty($signatureHeader) && empty($tokenParam)) {
+            log_webhook('Dev Warning: Webhook received without signature header in sandbox/local');
+            $isVerified = true; 
+        } else {
+            http_response_code(401);
+            echo json_encode(['success' => false, 'error' => 'Invalid webhook signature or token']);
+            exit;
+        }
     }
 } else {
+    // Si aucun secret n'est configuré en production : interdiction stricte de traiter le webhook
+    if (defined('SASPAY_ENV') && SASPAY_ENV === 'production') {
+        log_webhook('Security Alert: Webhook received in production without SASPAY_WEBHOOK_SECRET configured');
+        http_response_code(500);
+        echo json_encode(['success' => false, 'error' => 'Server configuration error: Webhook secret missing']);
+        exit;
+    }
     $isVerified = true;
 }
 
@@ -145,7 +173,46 @@ log_webhook("Webhook event received: {$event}", ['event' => $event]);
 
 $db = get_db();
 
-// 5. Traitement des événements de succès de paiement
+// 5. Normalisation des identifiants SasaPay / SasPay
+$checkoutReqId = $payload['CheckoutRequestID'] 
+    ?? $payload['checkout_request_id'] 
+    ?? $data['CheckoutRequestID'] 
+    ?? $data['checkout_request_id'] 
+    ?? '';
+
+$billRef = $payload['BillRefNumber'] 
+    ?? $payload['AccountReference'] 
+    ?? $data['BillRefNumber'] 
+    ?? $data['AccountReference'] 
+    ?? '';
+
+$txnId = $payload['TransactionID'] 
+    ?? $data['TransactionID'] 
+    ?? $data['id'] 
+    ?? $data['transaction_id'] 
+    ?? $data['transactionId'] 
+    ?? $data['reference'] 
+    ?? '';
+
+$sessionId = $data['session_id'] 
+    ?? $data['sessionId'] 
+    ?? $data['checkout_session_id'] 
+    ?? '';
+
+$orderRef = $billRef 
+    ?? $data['reference'] 
+    ?? $data['order_number'] 
+    ?? $data['order_id'] 
+    ?? $data['metadata']['order_number'] 
+    ?? $data['metadata']['order_id'] 
+    ?? $data['client_reference_id'] 
+    ?? '';
+
+$resultCode = isset($payload['ResultCode']) ? (int)$payload['ResultCode'] : (isset($data['ResultCode']) ? (int)$data['ResultCode'] : null);
+$isResultCodeSuccess = ($resultCode !== null && $resultCode === 0);
+$isResultCodeFailed = ($resultCode !== null && $resultCode !== 0);
+
+// Traitement des événements de succès de paiement
 $successEvents = [
     'transaction.success', 
     'payment.success', 
@@ -156,40 +223,26 @@ $successEvents = [
     'PAID'
 ];
 
-if (in_array($event, $successEvents, true) || strtoupper($payload['status'] ?? '') === 'SUCCESS') {
-    $txnId = $data['id'] 
-        ?? $data['transaction_id'] 
-        ?? $data['transactionId'] 
-        ?? $data['reference'] 
-        ?? '';
+$isSuccessEvent = in_array($event, $successEvents, true) 
+    || strtoupper($payload['status'] ?? '') === 'SUCCESS' 
+    || $isResultCodeSuccess;
 
-    $sessionId = $data['session_id'] 
-        ?? $data['sessionId'] 
-        ?? $data['checkout_session_id'] 
-        ?? '';
-
-    $orderRef = $data['reference'] 
-        ?? $data['order_number'] 
-        ?? $data['order_id'] 
-        ?? $data['metadata']['order_number'] 
-        ?? $data['metadata']['order_id'] 
-        ?? $data['client_reference_id'] 
-        ?? '';
-
+if ($isSuccessEvent) {
     // Recherche de la commande associée dans la base
     $stmt = $db->prepare("
         SELECT * FROM orders 
-        WHERE (saspay_session_id != '' AND saspay_session_id = ?) 
-           OR (saspay_transaction_id != '' AND saspay_transaction_id = ?) 
+        WHERE (saspay_session_id != '' AND (saspay_session_id = ? OR saspay_session_id = ?)) 
+           OR (saspay_transaction_id != '' AND (saspay_transaction_id = ? OR saspay_transaction_id = ?)) 
+           OR order_number = ?
            OR order_number = ?
            OR invoice_number = ?
         LIMIT 1
     ");
-    $stmt->execute([$sessionId, $txnId, $orderRef, $orderRef]);
+    $stmt->execute([$sessionId, $checkoutReqId, $txnId, $checkoutReqId, $orderRef, $billRef, $orderRef]);
     $order = $stmt->fetch();
 
     if ($order) {
-        $finalTxnId = !empty($txnId) ? $txnId : ($order['saspay_transaction_id'] ?: 'TXN_' . uniqid());
+        $finalTxnId = !empty($txnId) ? $txnId : (!empty($checkoutReqId) ? $checkoutReqId : ($order['saspay_transaction_id'] ?: 'TXN_' . uniqid()));
 
         // Mettre à jour la commande à 'paid'
         $updateOrder = $db->prepare("
@@ -199,7 +252,7 @@ if (in_array($event, $successEvents, true) || strtoupper($payload['status'] ?? '
         ");
         $updateOrder->execute([$finalTxnId, $order['id']]);
 
-        // Activer l'abonnement du membre
+        // ACTIVATION OFFICIELLE DE L'ABONNEMENT APRÈS CONFIRMATION RÉELLE
         $updateUser = $db->prepare("
             UPDATE users 
             SET subscription_status = 'active', subscription_started_at = CURRENT_TIMESTAMP 
@@ -207,7 +260,7 @@ if (in_array($event, $successEvents, true) || strtoupper($payload['status'] ?? '
         ");
         $updateUser->execute([$order['user_id']]);
 
-        log_webhook("Order #{$order['order_number']} successfully marked as PAID. User #{$order['user_id']} subscription activated.", [
+        log_webhook("Order #{$order['order_number']} successfully marked as PAID via IPN. User #{$order['user_id']} subscription activated.", [
             'order_id' => $order['id'],
             'user_id' => $order['user_id'],
             'transaction_id' => $finalTxnId
@@ -224,10 +277,10 @@ if (in_array($event, $successEvents, true) || strtoupper($payload['status'] ?? '
         log_webhook("Order not found for webhook event {$event}", [
             'txn_id' => $txnId,
             'session_id' => $sessionId,
+            'checkout_request_id' => $checkoutReqId,
             'reference' => $orderRef
         ]);
         
-        // On retourne quand même 200 pour acquitter la réception auprès de SasPay
         echo json_encode([
             'success' => true,
             'event' => $event,
@@ -238,21 +291,27 @@ if (in_array($event, $successEvents, true) || strtoupper($payload['status'] ?? '
 }
 
 // Traitement des échecs ou annulations
-if (in_array($event, ['transaction.failed', 'payment.failed', 'checkout.session.expired'])) {
-    $txnId = $data['id'] ?? $data['transaction_id'] ?? '';
-    $orderRef = $data['reference'] ?? $data['order_number'] ?? '';
-
+$failEvents = ['transaction.failed', 'payment.failed', 'checkout.session.expired', 'FAILED', 'CANCELLED'];
+if (in_array($event, $failEvents, true) || $isResultCodeFailed) {
     $stmt = $db->prepare("
         SELECT * FROM orders 
-        WHERE saspay_transaction_id = ? OR order_number = ?
+        WHERE (saspay_transaction_id != '' AND (saspay_transaction_id = ? OR saspay_transaction_id = ?)) 
+           OR order_number = ?
+           OR order_number = ?
         LIMIT 1
     ");
-    $stmt->execute([$txnId, $orderRef]);
+    $stmt->execute([$txnId, $checkoutReqId, $orderRef, $billRef]);
     $order = $stmt->fetch();
 
     if ($order && $order['status'] === 'pending') {
         $db->prepare("UPDATE orders SET status = 'failed' WHERE id = ?")->execute([$order['id']]);
-        log_webhook("Order #{$order['order_number']} marked as failed via webhook.");
+        log_webhook("Order #{$order['order_number']} marked as failed via webhook IPN.");
+        echo json_encode([
+            'success' => true,
+            'event' => $event,
+            'message' => "Order #{$order['order_number']} marked as failed"
+        ]);
+        exit;
     }
 }
 

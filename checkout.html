@@ -191,25 +191,25 @@
                       <span class="saspay-brand-sub">à One Vision</span>
                     </div>
                   </div>
-                  <div class="saspay-header-price" id="saspayHeaderAmount">5904 XAF</div>
+                  <div class="saspay-header-price" id="saspayHeaderAmount">200 XAF</div>
                 </div>
 
                 <!-- 1. Sélection du Pays -->
                 <label class="saspay-field-label" for="saspayCountrySelect">Pays</label>
                 <div class="saspay-country-select-wrapper">
                   <select id="saspayCountrySelect" name="momoCountry" class="saspay-country-select" aria-label="Choisir votre pays">
-                    <option value="Cameroun" data-currency="XAF" data-amount="5904" data-fee="267" data-total="6171" data-prefix="+237" selected>🇨🇲 Cameroun</option>
-                    <option value="Côte d'Ivoire" data-currency="XOF" data-amount="5900" data-fee="100" data-total="6000" data-prefix="+225">🇨🇮 Côte d'Ivoire</option>
-                    <option value="Sénégal" data-currency="XOF" data-amount="5900" data-fee="100" data-total="6000" data-prefix="+221">🇸🇳 Sénégal</option>
-                    <option value="Bénin" data-currency="XOF" data-amount="5900" data-fee="100" data-total="6000" data-prefix="+229">🇧🇯 Bénin</option>
-                    <option value="Burkina Faso" data-currency="XOF" data-amount="5900" data-fee="100" data-total="6000" data-prefix="+226">🇧🇫 Burkina Faso</option>
-                    <option value="Mali" data-currency="XOF" data-amount="5900" data-fee="100" data-total="6000" data-prefix="+223">🇲🇱 Mali</option>
-                    <option value="Togo" data-currency="XOF" data-amount="5900" data-fee="100" data-total="6000" data-prefix="+228">🇹🇬 Togo</option>
-                    <option value="Guinée" data-currency="GNF" data-amount="84000" data-fee="1500" data-total="85500" data-prefix="+224">🇬🇳 Guinée</option>
-                    <option value="RDC" data-currency="USD" data-amount="9.80" data-fee="0.20" data-total="10.00" data-prefix="+243">🇨🇩 RDC</option>
-                    <option value="Congo" data-currency="XAF" data-amount="5904" data-fee="267" data-total="6171" data-prefix="+242">🇨🇬 Congo</option>
-                    <option value="Gabon" data-currency="XAF" data-amount="5904" data-fee="267" data-total="6171" data-prefix="+241">🇬🇦 Gabon</option>
-                    <option value="France" data-currency="EUR" data-amount="9.00" data-fee="0.00" data-total="9.00" data-prefix="+33">🌍 International (EUR)</option>
+                    <option value="Cameroun" data-currency="XAF" data-amount="200" data-fee="0" data-total="200" data-prefix="+237" selected>🇨🇲 Cameroun</option>
+                    <option value="Côte d'Ivoire" data-currency="XOF" data-amount="200" data-fee="0" data-total="200" data-prefix="+225">🇨🇮 Côte d'Ivoire</option>
+                    <option value="Sénégal" data-currency="XOF" data-amount="200" data-fee="0" data-total="200" data-prefix="+221">🇸🇳 Sénégal</option>
+                    <option value="Bénin" data-currency="XOF" data-amount="200" data-fee="0" data-total="200" data-prefix="+229">🇧🇯 Bénin</option>
+                    <option value="Burkina Faso" data-currency="XOF" data-amount="200" data-fee="0" data-total="200" data-prefix="+226">🇧🇫 Burkina Faso</option>
+                    <option value="Mali" data-currency="XOF" data-amount="200" data-fee="0" data-total="200" data-prefix="+223">🇲🇱 Mali</option>
+                    <option value="Togo" data-currency="XOF" data-amount="200" data-fee="0" data-total="200" data-prefix="+228">🇹🇬 Togo</option>
+                    <option value="Guinée" data-currency="GNF" data-amount="200" data-fee="0" data-total="200" data-prefix="+224">🇬🇳 Guinée</option>
+                    <option value="RDC" data-currency="USD" data-amount="0.30" data-fee="0.00" data-total="0.30" data-prefix="+243">🇨🇩 RDC</option>
+                    <option value="Congo" data-currency="XAF" data-amount="200" data-fee="0" data-total="200" data-prefix="+242">🇨🇬 Congo</option>
+                    <option value="Gabon" data-currency="XAF" data-amount="200" data-fee="0" data-total="200" data-prefix="+241">🇬🇦 Gabon</option>
+                    <option value="France" data-currency="EUR" data-amount="0.30" data-fee="0.00" data-total="0.30" data-prefix="+33">🌍 International (EUR)</option>
                   </select>
                   <span class="saspay-select-arrow">▼</span>
                 </div>
@@ -221,6 +221,12 @@
                 </div>
                 <input type="hidden" name="momoOperator" id="saspaySelectedOperator" value="MTN MoMo">
 
+                <!-- Info-bulle dynamique selon l'opérateur choisi -->
+                <div id="saspayOperatorTip" style="margin-top:0.6rem; margin-bottom:1.1rem; padding:0.65rem 0.95rem; background:#f8fafc; border:1px solid #e2e8f0; border-radius:10px; font-size:0.82rem; color:#475569; display:flex; align-items:center; gap:0.5rem; line-height:1.45;">
+                  <span style="font-size:1.1rem;">💡</span>
+                  <span id="saspayOperatorTipText">Push direct sur votre téléphone : vous recevrez une invite USSD sur votre écran pour saisir votre code PIN secret.</span>
+                </div>
+
                 <!-- 3. Numéro de téléphone -->
                 <label class="saspay-field-label" for="saspayPhoneInput">Numéro de téléphone</label>
                 <div class="saspay-phone-wrapper">
@@ -229,22 +235,22 @@
                 </div>
                 <div class="field-error" id="momoPhoneError" style="margin-top:-0.9rem; margin-bottom:1rem;">Numéro de téléphone Mobile Money requis.</div>
 
-                <input type="hidden" name="momoAmount" id="momoAmountHidden" value="5904">
+                <input type="hidden" name="momoAmount" id="momoAmountHidden" value="200">
                 <input type="hidden" name="momoCurrency" id="momoCurrencyHidden" value="XAF">
 
                 <!-- 4. Récapitulatif tarifaire exact -->
                 <div class="saspay-breakdown-box">
                   <div class="saspay-breakdown-row">
                     <span>Montant</span>
-                    <strong id="saspayBreakdownAmount">5 904 XAF</strong>
+                    <strong id="saspayBreakdownAmount">200 XAF</strong>
                   </div>
                   <div class="saspay-breakdown-row">
                     <span>Frais</span>
-                    <span id="saspayBreakdownFee">+267 XAF</span>
+                    <span id="saspayBreakdownFee">+0 XAF</span>
                   </div>
                   <div class="saspay-breakdown-row saspay-breakdown-total">
                     <span>Total à payer</span>
-                    <strong id="saspayBreakdownTotal">6 171 XAF</strong>
+                    <strong id="saspayBreakdownTotal">200 XAF</strong>
                   </div>
                 </div>
 
@@ -258,7 +264,7 @@
 
               <!-- Bouton de paiement CTA Principal -->
               <button type="submit" id="submitPaymentBtn" class="btn btn-primary checkout-submit-btn">
-                <span id="submitPaymentText">Payer 9,00 € par Carte Bancaire →</span>
+                <span id="submitPaymentText">Payer 0,30 € par Carte Bancaire →</span>
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
                   <line x1="5" y1="12" x2="19" y2="12"></line>
                   <polyline points="12 5 19 12 12 19"></polyline>
@@ -314,7 +320,7 @@
             <div class="summary-pricing-table">
               <div class="pricing-row">
                 <span>Adhésion mensuelle</span>
-                <span>9,00 €</span>
+                <span>200 FCFA <small>(~0,30 €)</small></span>
               </div>
               <div class="pricing-row">
                 <span>Frais d'activation & dossier</span>
@@ -327,7 +333,7 @@
               <div class="pricing-divider"></div>
               <div class="pricing-row total-row">
                 <span>Total à régler aujourd'hui</span>
-                <span class="total-amount">9,00 € <span class="recur-text">/ mois</span></span>
+                <span class="total-amount">200 FCFA <span class="recur-text">(Tarif test)</span></span>
               </div>
             </div>
 
@@ -377,11 +383,21 @@
           </div>
         </div>
 
+        <div class="processing-timer-badge" id="processingTimerBadge" style="display:none;">
+          <span id="processingTimerIcon">⏳</span>
+          <span id="processingTimerText">En attente de validation sur votre téléphone...</span>
+        </div>
+
         <div class="processing-progress-bar-wrap">
           <div class="processing-progress-bar-fill" id="processingProgressBar"></div>
         </div>
 
-        <span style="font-size:0.78rem; color:#94a3b8; display:block;">
+        <div class="processing-actions" id="processingActions" style="display:none;">
+          <button type="button" class="processing-retry-btn" id="processingRetryBtn" style="display:none;">🔄 Réessayer le paiement</button>
+          <button type="button" class="processing-cancel-btn" id="processingCancelBtn">Annuler la demande</button>
+        </div>
+
+        <span style="font-size:0.78rem; color:#94a3b8; display:block; margin-top:1rem;">
           Paiement sécurisé chiffré SSL 256-bit • SasPay & 3D-Secure
         </span>
 

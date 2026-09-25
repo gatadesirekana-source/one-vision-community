@@ -3839,6 +3839,60 @@ input:checked + .slider:before {
   transition: width 2.2s ease-in-out;
 }
 
+.processing-timer-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  padding: 0.35rem 0.85rem;
+  border-radius: 999px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: #475569;
+  margin-bottom: 1.25rem;
+}
+
+.processing-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  margin-top: 1.25rem;
+}
+
+.processing-retry-btn {
+  background: #2563eb;
+  color: #ffffff;
+  border: none;
+  padding: 0.75rem 1.25rem;
+  border-radius: 12px;
+  font-weight: 700;
+  font-size: 0.92rem;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.processing-retry-btn:hover {
+  background: #1d4ed8;
+}
+
+.processing-cancel-btn {
+  background: transparent;
+  color: #64748b;
+  border: 1px solid #cbd5e1;
+  padding: 0.6rem 1rem;
+  border-radius: 12px;
+  font-weight: 600;
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.processing-cancel-btn:hover {
+  background: #f1f5f9;
+  color: #0f172a;
+}
+
 .checkout-submit-btn {
   width: 100%;
   padding: 1rem;
