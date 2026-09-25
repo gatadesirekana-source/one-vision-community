@@ -220,7 +220,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 header('Location: ' . $saspayCheckoutUrl);
                 exit;
             }
-            header('Location: checkout-success.php?order=' . urlencode($orderNumber));
+            header('Location: payment.php?order=' . urlencode($orderNumber));
             exit;
 
         } catch (Exception $e) {
@@ -245,7 +245,7 @@ $pageDescription = "Finalisez votre adhésion à One Vision Community pour 9€ 
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Great+Vibes&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 
-  <link rel="stylesheet" href="./css/style.css?v=8">
+  <link rel="stylesheet" href="./css/style.css?v=9">
 </head>
 <body class="checkout-body">
 
@@ -852,6 +852,6 @@ $pageDescription = "Finalisez votre adhésion à One Vision Community pour 9€ 
     };
   </script>
   <script src="./js/qrcode.min.js"></script>
-  <script src="./js/main.js?v=11"></script>
+  <script src="./js/main.js?v=12"></script>
 </body>
 </html>
