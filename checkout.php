@@ -292,12 +292,20 @@ $pageDescription = "Finalisez votre adhésion à One Vision Community pour 9€ 
         <div class="checkout-form-column">
           <div class="checkout-card">
             
-            <div class="checkout-steps-badge">
-              <span class="step-badge active">Étape unique : Adhésion & Activation</span>
+            <div class="checkout-steps-badge" id="checkoutStepsNav">
+              <div class="checkout-step-pill active" id="stepPill1">
+                <span class="checkout-step-num" id="stepPillNum1">1</span>
+                <span>1. Vos identifiants</span>
+              </div>
+              <span class="checkout-step-divider">→</span>
+              <div class="checkout-step-pill" id="stepPill2">
+                <span class="checkout-step-num" id="stepPillNum2">2</span>
+                <span>2. Paiement sécurisé</span>
+              </div>
             </div>
 
-            <h1 class="checkout-title">Finaliser votre adhésion</h1>
-            <p class="checkout-subtitle">Remplissez vos informations pour activer votre accès instantané à la communauté.</p>
+            <h1 class="checkout-title" id="checkoutMainTitle">Finaliser votre adhésion</h1>
+            <p class="checkout-subtitle" id="checkoutMainSubtitle">Remplissez vos informations pour activer votre accès instantané à la communauté.</p>
 
             <?php if (defined('SASPAY_TEST_OVERRIDE_AMOUNT') && SASPAY_TEST_OVERRIDE_AMOUNT !== null): ?>
               <div class="test-override-banner" style="margin-bottom:1.5rem; padding:0.9rem 1.25rem; background:#f0fdf4; border:1.5px solid #86efac; border-radius:14px; display:flex; align-items:flex-start; gap:0.75rem; color:#166534; font-size:0.88rem; box-shadow:0 4px 12px rgba(22, 101, 52, 0.05);">
@@ -312,66 +320,110 @@ $pageDescription = "Finalisez votre adhésion à One Vision Community pour 9€ 
             <form id="checkoutPaymentForm" method="POST" action="checkout.php" novalidate>
               <?= csrf_field() ?>
               
-              <!-- 1. IDENTIFIANTS DU COMPTE -->
-              <div class="form-section-title">
-                <span class="section-number">1</span>
-                <span>Vos identifiants de compte</span>
-              </div>
-
-              <div class="form-group">
-                <label for="checkoutName" class="form-label">Nom complet</label>
-                <input 
-                  type="text" 
-                  id="checkoutName" 
-                  name="checkoutName"
-                  class="form-input" 
-                  placeholder="ex. Alexandre Martin" 
-                  value="<?= htmlspecialchars($currentUser['full_name'] ?? '') ?>"
-                  required 
-                  autocomplete="name"
-                >
-                <div class="field-error" id="nameError">Veuillez renseigner votre nom complet.</div>
-              </div>
-
-              <div class="form-group">
-                <label for="checkoutEmail" class="form-label">Adresse email professionnelle ou personnelle</label>
-                <input 
-                  type="email" 
-                  id="checkoutEmail" 
-                  name="checkoutEmail"
-                  class="form-input" 
-                  placeholder="ex. alexandre@monprojet.fr" 
-                  value="<?= htmlspecialchars($currentUser['email'] ?? '') ?>"
-                  required 
-                  autocomplete="email"
-                >
-                <div class="field-error" id="emailError">Veuillez renseigner une adresse email valide.</div>
-              </div>
-
-              <?php if (!$currentUser): ?>
-                <div class="form-group">
-                  <label for="checkoutPassword" class="form-label">Mot de passe de votre espace</label>
-                  <input 
-                    type="password" 
-                    id="checkoutPassword" 
-                    name="checkoutPassword"
-                    class="form-input" 
-                    placeholder="Au moins 6 caractères" 
-                    minlength="6" 
-                    required 
-                    autocomplete="new-password"
-                  >
-                  <div class="field-error" id="passwordError">Le mot de passe doit comporter au moins 6 caractères.</div>
+              <!-- ÉTAPE 1 : IDENTIFIANTS DU COMPTE (PAGE COMPACTE / CAPTURE) -->
+              <div id="checkoutStep1" class="checkout-step-pane">
+                <div class="form-section-title">
+                  <span class="section-number">1</span>
+                  <span>Vos identifiants de compte</span>
                 </div>
-              <?php endif; ?>
 
-              <!-- 2. PAIEMENT SÉCURISÉ -->
-              <div class="form-section-title" style="margin-top:1.8rem;">
-                <span class="section-number">2</span>
-                <span>Informations de paiement sécurisé</span>
+                <div class="form-group">
+                  <label for="checkoutName" class="form-label">Nom complet</label>
+                  <input 
+                    type="text" 
+                    id="checkoutName" 
+                    name="checkoutName"
+                    class="form-input" 
+                    placeholder="ex. Alexandre Martin" 
+                    value="<?= htmlspecialchars($currentUser['full_name'] ?? '') ?>"
+                    required 
+                    autocomplete="name"
+                  >
+                  <div class="field-error" id="nameError">Veuillez renseigner votre nom complet.</div>
+                </div>
+
+                <div class="form-group">
+                  <label for="checkoutEmail" class="form-label">Adresse email professionnelle ou personnelle</label>
+                  <input 
+                    type="email" 
+                    id="checkoutEmail" 
+                    name="checkoutEmail"
+                    class="form-input" 
+                    placeholder="ex. alexandre@monprojet.fr" 
+                    value="<?= htmlspecialchars($currentUser['email'] ?? '') ?>"
+                    required 
+                    autocomplete="email"
+                  >
+                  <div class="field-error" id="emailError">Veuillez renseigner une adresse email valide.</div>
+                </div>
+
+                <?php if (!$currentUser): ?>
+                  <div class="form-group">
+                    <label for="checkoutPassword" class="form-label">Mot de passe de votre espace</label>
+                    <input 
+                      type="password" 
+                      id="checkoutPassword" 
+                      name="checkoutPassword"
+                      class="form-input" 
+                      placeholder="Au moins 6 caractères" 
+                      minlength="6" 
+                      required 
+                      autocomplete="new-password"
+                    >
+                    <div class="field-error" id="passwordError">Le mot de passe doit comporter au moins 6 caractères.</div>
+                  </div>
+                <?php endif; ?>
+
+                <div class="step1-info-badge">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#16a34a" stroke-width="2.5"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+                  <span>Vos identifiants permettront d'activer immédiatement votre espace membre personnel.</span>
+                </div>
+
+                <!-- Bouton Continuer Étape 1 -->
+                <button type="button" id="goToStep2Btn" class="btn btn-primary checkout-submit-btn" style="margin-top:1.5rem;">
+                  <span>Continuer vers le paiement →</span>
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                    <line x1="5" y1="12" x2="19" y2="12"></line>
+                    <polyline points="12 5 19 12 12 19"></polyline>
+                  </svg>
+                </button>
+
+                <div class="checkout-guarantee-note" style="margin-top:1.25rem;">
+                  <div class="guarantee-item">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#16a34a" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                    <span>Sans engagement • Étape suivante : Choix du moyen de paiement</span>
+                  </div>
+                  <div class="guarantee-item">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#16a34a" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                    <span>Aucun débit immédiat • Annulation possible en 1 clic</span>
+                  </div>
+                </div>
               </div>
 
-              <input type="hidden" name="paymentMethod" id="paymentMethodHidden" value="card">
+              <!-- ÉTAPE 2 : INFORMATIONS DE PAIEMENT SÉCURISÉ (APPARAÎT APRÈS AVOIR CLIQUÉ SUR CONTINUER) -->
+              <div id="checkoutStep2" class="checkout-step-pane" style="display:none;">
+                
+                <!-- Résumé des identifiants saisis avec option modifier -->
+                <div class="step2-member-summary">
+                  <div class="step2-member-data">
+                    <span style="font-size:1.15rem;">👤</span>
+                    <div>
+                      <strong id="step2SummaryName"><?= htmlspecialchars($currentUser['full_name'] ?? 'Membre') ?></strong>
+                      <span id="step2SummaryEmail" style="display:block; font-size:0.78rem; color:#64748b;"><?= htmlspecialchars($currentUser['email'] ?? '') ?></span>
+                    </div>
+                  </div>
+                  <button type="button" id="backToStep1Btn" class="step2-edit-btn">
+                    ✏️ Modifier
+                  </button>
+                </div>
+
+                <!-- 2. PAIEMENT SÉCURISÉ -->
+                <div class="form-section-title">
+                  <span class="section-number">2</span>
+                  <span>Informations de paiement sécurisé</span>
+                </div>
+
+                <input type="hidden" name="paymentMethod" id="paymentMethodHidden" value="card">
 
               <!-- Sélecteur de méthode de paiement -->
               <div class="payment-methods-selector" id="paymentMethodsSelector">
@@ -562,6 +614,7 @@ $pageDescription = "Finalisez votre adhésion à One Vision Community pour 9€ 
                 </div>
               </div>
 
+              </div> <!-- Fin #checkoutStep2 -->
             </form>
 
             <!-- ZONE D'ATTENTE & QR CODE EMBARQUÉE DIRECTEMENT SUR LA PAGE DE CHECKOUT (SANS REDIRECTION) -->
@@ -833,6 +886,6 @@ $pageDescription = "Finalisez votre adhésion à One Vision Community pour 9€ 
     };
   </script>
   <script src="./js/qrcode.min.js"></script>
-  <script src="./js/main.js?v=8"></script>
+  <script src="./js/main.js?v=9"></script>
 </body>
 </html>

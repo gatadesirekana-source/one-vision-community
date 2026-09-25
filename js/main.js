@@ -1503,6 +1503,18 @@ function initCheckoutPage() {
   const momoAmountHidden = document.getElementById('momoAmountHidden');
   const momoCurrencyHidden = document.getElementById('momoCurrencyHidden');
 
+  // Éléments du formulaire multi-étapes
+  const checkoutStep1 = document.getElementById('checkoutStep1');
+  const checkoutStep2 = document.getElementById('checkoutStep2');
+  const stepPill1 = document.getElementById('stepPill1');
+  const stepPill2 = document.getElementById('stepPill2');
+  const stepPillNum1 = document.getElementById('stepPillNum1');
+  const stepPillNum2 = document.getElementById('stepPillNum2');
+  const goToStep2Btn = document.getElementById('goToStep2Btn');
+  const backToStep1Btn = document.getElementById('backToStep1Btn');
+  const step2SummaryName = document.getElementById('step2SummaryName');
+  const step2SummaryEmail = document.getElementById('step2SummaryEmail');
+
   // Modale de traitement
   const processingModal = document.getElementById('paymentProcessingModal');
   const processingTitle = document.getElementById('processingTitle');
@@ -1902,18 +1914,16 @@ function initCheckoutPage() {
     if (inputEl) inputEl.classList.remove('input-error');
   }
 
-  // 4. Soumission et traitement du paiement SANS REDIRECTION PRÉMATURÉE
-  checkoutForm.addEventListener('submit', (e) => {
-    e.preventDefault();
-    let hasError = false;
-
+  // 3. Navigation multi-étapes (Étape 1 : Identifiants -> Étape 2 : Paiement sécurisé)
+  function validateStep1() {
+    let isValid = true;
     const nameVal = nameInput ? nameInput.value.trim() : '';
     const emailVal = emailInput ? emailInput.value.trim() : '';
     const passVal = passwordInput ? passwordInput.value : '';
 
     if (!nameVal || nameVal.length < 2) {
       showError('nameError', nameInput);
-      hasError = true;
+      isValid = false;
     } else {
       hideError('nameError', nameInput);
     }
@@ -1921,17 +1931,111 @@ function initCheckoutPage() {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailVal || !emailRegex.test(emailVal)) {
       showError('emailError', emailInput);
-      hasError = true;
+      isValid = false;
     } else {
       hideError('emailError', emailInput);
     }
 
     if (passwordInput && (!passVal || passVal.length < 6)) {
       showError('passwordError', passwordInput);
-      hasError = true;
+      isValid = false;
     } else if (passwordInput) {
       hideError('passwordError', passwordInput);
     }
+
+    if (!isValid) {
+      const firstError = checkoutStep1 ? checkoutStep1.querySelector('.form-input.input-error') : null;
+      if (firstError) firstError.focus();
+    }
+    return isValid;
+  }
+
+  function goToStep2() {
+    if (!validateStep1()) return;
+
+    const nameVal = nameInput ? nameInput.value.trim() : 'Membre';
+    const emailVal = emailInput ? emailInput.value.trim() : '';
+
+    if (step2SummaryName) step2SummaryName.textContent = nameVal;
+    if (step2SummaryEmail) step2SummaryEmail.textContent = emailVal;
+
+    if (checkoutStep1) checkoutStep1.style.display = 'none';
+    if (checkoutStep2) checkoutStep2.style.display = 'block';
+
+    if (stepPill1) {
+      stepPill1.classList.remove('active');
+      stepPill1.classList.add('completed');
+    }
+    if (stepPillNum1) stepPillNum1.textContent = '✓';
+
+    if (stepPill2) {
+      stepPill2.classList.add('active');
+    }
+
+    const card = document.querySelector('.checkout-card');
+    if (card) card.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+
+  function goToStep1() {
+    if (checkoutStep2) checkoutStep2.style.display = 'none';
+    if (checkoutStep1) checkoutStep1.style.display = 'block';
+
+    if (stepPill2) {
+      stepPill2.classList.remove('active');
+    }
+    if (stepPill1) {
+      stepPill1.classList.remove('completed');
+      stepPill1.classList.add('active');
+    }
+    if (stepPillNum1) stepPillNum1.textContent = '1';
+
+    const card = document.querySelector('.checkout-card');
+    if (card) card.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+
+  if (goToStep2Btn) {
+    goToStep2Btn.addEventListener('click', goToStep2);
+  }
+
+  if (backToStep1Btn) {
+    backToStep1Btn.addEventListener('click', goToStep1);
+  }
+
+  if (stepPill1) {
+    stepPill1.addEventListener('click', () => {
+      if (checkoutStep2 && checkoutStep2.style.display !== 'none') {
+        goToStep1();
+      }
+    });
+  }
+
+  // Appuyer sur Entrée dans les champs de l'étape 1 mène à l'étape 2
+  [nameInput, emailInput, passwordInput].forEach(inp => {
+    if (inp) {
+      inp.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+          e.preventDefault();
+          goToStep2();
+        }
+      });
+    }
+  });
+
+  // 4. Soumission et traitement du paiement SANS REDIRECTION PRÉMATURÉE
+  checkoutForm.addEventListener('submit', (e) => {
+    e.preventDefault();
+
+    // S'assurer que l'étape 1 est valide
+    if (!validateStep1()) {
+      goToStep1();
+      return;
+    }
+
+    let hasError = false;
+
+    const nameVal = nameInput ? nameInput.value.trim() : '';
+    const emailVal = emailInput ? emailInput.value.trim() : '';
+    const passVal = passwordInput ? passwordInput.value : '';
 
     if (currentPaymentMethod === 'card') {
       const cardVal = cardInput ? cardInput.value.replace(/\s/g, '') : '';
@@ -2002,6 +2106,8 @@ function initCheckoutPage() {
       cleanupTimers();
       if (checkoutWaitingArea) checkoutWaitingArea.style.display = 'none';
       if (checkoutPaymentForm) checkoutPaymentForm.style.display = 'block';
+      if (checkoutStep1) checkoutStep1.style.display = 'none';
+      if (checkoutStep2) checkoutStep2.style.display = 'block';
       if (processingModal) {
         processingModal.classList.remove('visible');
         processingModal.setAttribute('aria-hidden', 'true');

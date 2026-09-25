@@ -3110,7 +3110,127 @@ input:checked + .slider:before {
 }
 
 .checkout-steps-badge {
-  margin-bottom: 1.15rem;
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  margin-bottom: 1.25rem;
+  flex-wrap: wrap;
+}
+
+.checkout-step-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: #64748b;
+  background-color: #f1f5f9;
+  padding: 0.35rem 0.85rem;
+  border-radius: var(--radius-full, 999px);
+  cursor: pointer;
+  transition: all 0.25s ease;
+  user-select: none;
+}
+
+.checkout-step-pill.active {
+  color: #0f172a;
+  background-color: #e2e8f0;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.04);
+}
+
+.checkout-step-pill.completed {
+  color: #166534;
+  background-color: #dcfce7;
+}
+
+.checkout-step-num {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background-color: #94a3b8;
+  color: #ffffff;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.68rem;
+  font-weight: 800;
+  transition: all 0.2s ease;
+}
+
+.checkout-step-pill.active .checkout-step-num {
+  background-color: #0f172a;
+}
+
+.checkout-step-pill.completed .checkout-step-num {
+  background-color: #16a34a;
+}
+
+.checkout-step-divider {
+  color: #cbd5e1;
+  font-size: 0.85rem;
+  font-weight: 700;
+}
+
+.step2-member-summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.75rem 1rem;
+  background: #f8fafc;
+  border: 1.5px solid #e2e8f0;
+  border-radius: 12px;
+  margin-bottom: 1.35rem;
+}
+
+.step2-member-data {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+}
+
+.step2-edit-btn {
+  background: #eef2ff;
+  border: 1px solid #c7d2fe;
+  color: #4f46e5;
+  font-size: 0.78rem;
+  font-weight: 700;
+  padding: 0.35rem 0.75rem;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.step2-edit-btn:hover {
+  background: #e0e7ff;
+}
+
+.step1-info-badge {
+  margin-top: 1.15rem;
+  padding: 0.8rem 1rem;
+  background: #f0fdf4;
+  border: 1px solid #bbf7d0;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  font-size: 0.82rem;
+  color: #166534;
+  line-height: 1.45;
+}
+
+.checkout-step-pane {
+  animation: fadeInStep 0.28s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes fadeInStep {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 .step-badge {
