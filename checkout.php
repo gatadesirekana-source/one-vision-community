@@ -570,6 +570,7 @@ $pageDescription = "Finalisez votre adhésion à One Vision Community pour 9€ 
                   <span>🔒 Paiement sécurisé propulsé par</span>
                   <span class="saspay-footer-logo">⚡ SasPay</span>
                 </div>
+              </div> <!-- Fin #mobileMoneyDetailsBox -->
 
               <!-- Message d'erreur global si l'initiation échoue -->
               <div id="checkoutGlobalError" class="checkout-alert-error" style="display:none; background:#fef2f2; border:1px solid #fecaca; border-radius:12px; padding:0.85rem 1rem; margin-bottom:1.15rem; color:#991b1b; font-size:0.88rem; align-items:flex-start; gap:0.6rem;">
@@ -600,8 +601,8 @@ $pageDescription = "Finalisez votre adhésion à One Vision Community pour 9€ 
               </div> <!-- Fin #checkoutStep2 -->
             </form>
 
-            </div>
-          </div>
+            </div> <!-- Fin .checkout-card -->
+          </div> <!-- Fin .checkout-form-column -->
 
         <!-- COLONNE DROITE : RÉCAPITULATIF DE COMMANDE -->
         <div class="checkout-summary-column">
