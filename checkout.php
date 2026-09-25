@@ -245,7 +245,7 @@ $pageDescription = "Finalisez votre adhésion à One Vision Community pour 9€ 
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Great+Vibes&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 
-  <link rel="stylesheet" href="./css/style.css?v=6">
+  <link rel="stylesheet" href="./css/style.css?v=7">
 </head>
 <body class="checkout-body">
 
@@ -306,16 +306,6 @@ $pageDescription = "Finalisez votre adhésion à One Vision Community pour 9€ 
 
             <h1 class="checkout-title" id="checkoutMainTitle">Finaliser votre adhésion</h1>
             <p class="checkout-subtitle" id="checkoutMainSubtitle">Remplissez vos informations pour activer votre accès instantané à la communauté.</p>
-
-            <?php if (defined('SASPAY_TEST_OVERRIDE_AMOUNT') && SASPAY_TEST_OVERRIDE_AMOUNT !== null): ?>
-              <div class="test-override-banner" style="margin-bottom:1.5rem; padding:0.9rem 1.25rem; background:#f0fdf4; border:1.5px solid #86efac; border-radius:14px; display:flex; align-items:flex-start; gap:0.75rem; color:#166534; font-size:0.88rem; box-shadow:0 4px 12px rgba(22, 101, 52, 0.05);">
-                <span style="font-size:1.35rem; line-height:1;">🧪</span>
-                <div>
-                  <strong style="display:block; font-size:0.92rem; color:#14532d; margin-bottom:2px;">Mode Essai Réel SasaPay actif (Production)</strong>
-                  <span>Le montant d'adhésion est temporairement configuré à <strong><?= htmlspecialchars(SASPAY_TEST_OVERRIDE_AMOUNT) ?> <?= htmlspecialchars(SASPAY_TEST_OVERRIDE_CURRENCY) ?> (Francs CFA)</strong> pour vous permettre d'exécuter un test réel à faible coût. (Désactivable dans <code style="background:#dcfce7; padding:2px 5px; border-radius:4px;">.env</code>).</span>
-                </div>
-              </div>
-            <?php endif; ?>
 
             <form id="checkoutPaymentForm" method="POST" action="checkout.php" novalidate>
               <?= csrf_field() ?>
@@ -380,24 +370,13 @@ $pageDescription = "Finalisez votre adhésion à One Vision Community pour 9€ 
                 </div>
 
                 <!-- Bouton Continuer Étape 1 -->
-                <button type="button" id="goToStep2Btn" class="btn btn-primary checkout-submit-btn" style="margin-top:1.5rem;">
+                <button type="button" id="goToStep2Btn" class="btn btn-primary checkout-submit-btn" style="margin-top:1.15rem;">
                   <span>Continuer vers le paiement →</span>
                   <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
                     <line x1="5" y1="12" x2="19" y2="12"></line>
                     <polyline points="12 5 19 12 12 19"></polyline>
                   </svg>
                 </button>
-
-                <div class="checkout-guarantee-note" style="margin-top:1.25rem;">
-                  <div class="guarantee-item">
-                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#16a34a" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg>
-                    <span>Sans engagement • Étape suivante : Choix du moyen de paiement</span>
-                  </div>
-                  <div class="guarantee-item">
-                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#16a34a" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg>
-                    <span>Aucun débit immédiat • Annulation possible en 1 clic</span>
-                  </div>
-                </div>
               </div>
 
               <!-- ÉTAPE 2 : INFORMATIONS DE PAIEMENT SÉCURISÉ (APPARAÎT APRÈS AVOIR CLIQUÉ SUR CONTINUER) -->
@@ -886,6 +865,6 @@ $pageDescription = "Finalisez votre adhésion à One Vision Community pour 9€ 
     };
   </script>
   <script src="./js/qrcode.min.js"></script>
-  <script src="./js/main.js?v=9"></script>
+  <script src="./js/main.js?v=10"></script>
 </body>
 </html>
