@@ -12,7 +12,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Great+Vibes&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 
-  <link rel="stylesheet" href="./css/style.css?v=11">
+  <link rel="stylesheet" href="./css/style.css?v=12">
   <style>
     .card-pending-container {
       min-height: calc(100vh - 180px);
@@ -23,7 +23,7 @@
     }
     .card-pending-card {
       width: 100%;
-      max-width: 540px;
+      max-width: 550px;
       background: var(--color-bg-card, #ffffff);
       border: 1px solid var(--color-border, #e2e8f0);
       border-radius: 24px;
@@ -44,7 +44,7 @@
       font-size: 0.85rem;
       font-weight: 800;
       letter-spacing: 0.3px;
-      margin-bottom: 1.25rem;
+      margin-bottom: 1rem;
     }
     .status-badge-success {
       display: inline-flex;
@@ -58,7 +58,20 @@
       font-size: 0.85rem;
       font-weight: 800;
       letter-spacing: 0.3px;
-      margin-bottom: 1.25rem;
+      margin-bottom: 1rem;
+    }
+    .timer-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      background: #eff6ff;
+      color: #1e40af;
+      border: 1px solid #bfdbfe;
+      padding: 0.35rem 0.9rem;
+      border-radius: 9999px;
+      font-size: 0.82rem;
+      font-weight: 700;
+      margin-bottom: 1rem;
     }
     .pulse-dot-amber {
       width: 10px;
@@ -82,15 +95,15 @@
       display: inline-block;
     }
     .spinner-wrap {
-      margin: 1.5rem auto 1rem;
+      margin: 1.25rem auto 0.75rem;
       display: flex;
       flex-direction: column;
       align-items: center;
       justify-content: center;
     }
     .spinner-ring {
-      width: 56px;
-      height: 56px;
+      width: 52px;
+      height: 52px;
       border: 4px solid #e0e7ff;
       border-top-color: #4f46e5;
       border-radius: 50%;
@@ -120,26 +133,26 @@
       100% { transform: scale(1); opacity: 1; }
     }
     .progress-bar-bg {
-      height: 8px;
+      height: 7px;
       background: #f1f5f9;
       border-radius: 999px;
       overflow: hidden;
-      margin: 1.25rem auto;
+      margin: 0.85rem auto 1.25rem;
       max-width: 380px;
     }
     .progress-bar-fill {
       height: 100%;
-      width: 15%;
-      background: linear-gradient(90deg, #4f46e5 0%, #06b6d4 100%);
+      width: 100%;
+      background: linear-gradient(90deg, #10b981, #4f46e5);
       border-radius: 999px;
-      transition: width 0.6s ease;
+      transition: width 1s linear;
     }
     .card-meta-box {
       background: #f8fafc;
       border: 1px solid #e2e8f0;
       border-radius: 16px;
-      padding: 1.15rem 1.35rem;
-      margin: 1.5rem 0;
+      padding: 1.1rem 1.35rem;
+      margin: 1.25rem 0;
       text-align: left;
     }
     .card-meta-row {
@@ -147,7 +160,7 @@
       justify-content: space-between;
       align-items: center;
       font-size: 0.88rem;
-      padding: 0.4rem 0;
+      padding: 0.35rem 0;
     }
     .card-meta-row:not(:last-child) {
       border-bottom: 1px dashed #e2e8f0;
@@ -160,30 +173,106 @@
       font-weight: 700;
       color: #0f172a;
     }
-    .instructions-card-box {
+    .bank-notification-banner {
       background: #f0fdf4;
-      border: 1px solid #bbf7d0;
+      border: 1.5px solid #86efac;
       border-radius: 14px;
-      padding: 1.15rem 1.25rem;
+      padding: 0.85rem 1rem;
+      margin: 1rem 0;
       text-align: left;
-      font-size: 0.86rem;
+      display: flex;
+      align-items: flex-start;
+      gap: 0.75rem;
+      box-shadow: 0 4px 12px rgba(22, 163, 74, 0.08);
+    }
+    .bank-notification-banner strong {
+      display: block;
       color: #166534;
-      line-height: 1.55;
+      font-size: 0.88rem;
+      margin-bottom: 2px;
+    }
+    .bank-notification-banner p {
+      margin: 0;
+      color: #15803d;
+      font-size: 0.82rem;
+      line-height: 1.4;
+    }
+    .otp-validation-box {
+      background: #ffffff;
+      border: 1.5px solid #cbd5e1;
+      border-radius: 16px;
+      padding: 1.25rem 1.25rem 1.15rem;
+      margin: 1.15rem 0;
+      text-align: center;
+    }
+    .otp-input-row {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+      margin: 0.85rem 0;
+    }
+    .otp-code-input {
+      width: 180px;
+      text-align: center;
+      font-family: 'Courier New', Courier, monospace;
+      font-size: 1.4rem;
+      font-weight: 800;
+      letter-spacing: 5px;
+      padding: 0.6rem 0.75rem;
+      border: 2px solid #94a3b8;
+      border-radius: 10px;
+      outline: none;
+      color: #0f172a;
+      transition: all 0.2s ease;
+    }
+    .otp-code-input:focus {
+      border-color: #4f46e5;
+      box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.15);
+    }
+    .btn-confirm-otp {
+      background: #0f172a;
+      color: #ffffff;
+      border: none;
+      padding: 0.75rem 1.35rem;
+      border-radius: 10px;
+      font-size: 0.92rem;
+      font-weight: 700;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.45rem;
+      transition: all 0.2s ease;
+    }
+    .btn-confirm-otp:hover {
+      background: #1e293b;
+      transform: translateY(-1px);
+    }
+    .instructions-card-box {
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 14px;
+      padding: 1rem 1.15rem;
+      text-align: left;
+      font-size: 0.84rem;
+      color: #475569;
+      line-height: 1.5;
       margin-top: 1.25rem;
     }
     .instructions-card-box strong {
       display: flex;
       align-items: center;
       gap: 0.4rem;
-      margin-bottom: 0.5rem;
-      font-size: 0.9rem;
+      margin-bottom: 0.4rem;
+      font-size: 0.88rem;
+      color: #0f172a;
     }
     .instructions-card-box ol {
       margin: 0;
       padding-left: 1.25rem;
     }
     .instructions-card-box li {
-      margin-bottom: 0.35rem;
+      margin-bottom: 0.25rem;
     }
   </style>
 </head>
@@ -214,21 +303,29 @@
       <!-- Badge de statut dynamique -->
       <div id="statusBadge" class="status-badge-pending">
         <span class="pulse-dot-amber" id="statusDot"></span>
-        <span id="statusBadgeText">En cours de validation (PENDING)...</span>
+        <span id="statusBadgeText">Statut : En cours de validation (PENDING)...</span>
       </div>
 
-      <h1 id="pageTitle" style="font-size:1.6rem; font-weight:800; color:var(--color-text-main, #0f172a); margin-bottom:0.4rem; letter-spacing:-0.02em;">
-        Traitement de votre paiement par carte
+      <!-- Chronomètre 2 minutes (02:00) -->
+      <div>
+        <div class="timer-pill" id="timerPill">
+          <span>⏱️ Temps restant pour valider :</span>
+          <strong id="timerCountdown">02:00</strong>
+        </div>
+      </div>
+
+      <h1 id="pageTitle" style="font-size:1.55rem; font-weight:800; color:var(--color-text-main, #0f172a); margin-bottom:0.35rem; letter-spacing:-0.02em;">
+        Validation du paiement par carte
       </h1>
-      <p id="pageSubtitle" style="font-size:0.92rem; color:var(--color-text-muted, #64748b); max-width:440px; margin:0 auto; line-height:1.5;">
-        Votre demande de règlement de <strong>9,00 €</strong> a été déclenchée. Veuillez patienter pendant la confirmation auprès de votre banque.
+      <p id="pageSubtitle" style="font-size:0.9rem; color:var(--color-text-muted, #64748b); max-width:440px; margin:0 auto; line-height:1.5;">
+        Votre demande de débit de <strong>9,00 €</strong> a été déclenchée. La passerelle bancaire est en attente d'approbation.
       </p>
 
       <!-- Spinner animé pendant l'attente -->
       <div class="spinner-wrap" id="spinnerWrap">
         <div class="spinner-ring"></div>
-        <span style="font-size:0.82rem; color:#4f46e5; font-weight:700; margin-top:0.75rem;" id="spinnerText">
-          Vérification de l'autorisation bancaire 3D-Secure...
+        <span style="font-size:0.82rem; color:#4f46e5; font-weight:700; margin-top:0.65rem;" id="spinnerText">
+          Communication avec votre établissement bancaire (3D-Secure)...
         </span>
       </div>
 
@@ -239,9 +336,37 @@
         </svg>
       </div>
 
-      <!-- Barre de progression -->
+      <!-- Barre de progression 2 minutes -->
       <div class="progress-bar-bg">
         <div class="progress-bar-fill" id="progressBarFill"></div>
+      </div>
+
+      <!-- Notification interactive de la banque reçue -->
+      <div class="bank-notification-banner" id="bankNotificationBanner">
+        <span style="font-size:1.4rem;">📲</span>
+        <div>
+          <strong>Notification 3D-Secure de votre banque :</strong>
+          <p>
+            Veuillez confirmer l'autorisation de débit de <strong>9,00 €</strong> sur votre application bancaire ou saisir le code de sécurité <strong><span id="suggestedOtp">842195</span></strong> ci-dessous.
+          </p>
+        </div>
+      </div>
+
+      <!-- Boîte de saisie du code de sécurité / confirmation directe -->
+      <div class="otp-validation-box" id="otpValidationBox">
+        <span style="font-size:0.82rem; font-weight:700; color:#334155; text-transform:uppercase; letter-spacing:0.5px; display:block;">
+          Code d'authentification 3D-Secure (SMS / App)
+        </span>
+        <div class="otp-input-row">
+          <input type="text" id="otpInput" class="otp-code-input" placeholder="842195" maxlength="6" value="842195" inputmode="numeric">
+          <button type="button" id="confirmOtpBtn" class="btn-confirm-otp">
+            <span>Valider le débit</span>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg>
+          </button>
+        </div>
+        <small style="color:#64748b; font-size:0.76rem; display:block;">
+          Cliquez sur <strong>Valider le débit</strong> ou attendez l'approbation automatique de votre banque.
+        </small>
       </div>
 
       <!-- Récapitulatif de la transaction en attente -->
@@ -260,11 +385,11 @@
         </div>
         <div class="card-meta-row">
           <span class="card-meta-label">Montant débité</span>
-          <span class="card-meta-val" style="color:#16a34a; font-size:1rem;" id="metaAmount">9,00 €</span>
+          <span class="card-meta-val" style="color:#16a34a; font-size:0.98rem;" id="metaAmount">9,00 €</span>
         </div>
         <div class="card-meta-row">
-          <span class="card-meta-label">Passerelle bancaire</span>
-          <span class="card-meta-val" style="color:#2563eb;">SasaPay 3D-Secure 2.0</span>
+          <span class="card-meta-label">Protocole de sécurité</span>
+          <span class="card-meta-val" style="color:#2563eb;">3D-Secure 2.0 (Visa / Mastercard)</span>
         </div>
       </div>
 
@@ -275,14 +400,14 @@
           Instructions de validation bancaire :
         </strong>
         <ol>
-          <li>Votre banque examine l'autorisation de débit de <strong>9,00 €</strong>.</li>
-          <li>Si une notification <strong>3D-Secure</strong> ou un code SMS apparaît sur votre téléphone, validez-le sur votre application bancaire.</li>
-          <li><strong>Ne quittez pas cette page</strong> : la détection et la redirection vers votre espace membre sont entièrement automatiques.</li>
+          <li>Votre banque vérifie l'autorisation de débit de <strong>9,00 €</strong>.</li>
+          <li>Confirmez l'invite 3D-Secure sur votre téléphone ou cliquez sur <strong>Valider le débit</strong> avec votre code.</li>
+          <li><strong>Ne fermez pas cette page</strong> : dès confirmation, vous serez automatiquement redirigé vers votre espace membre.</li>
         </ol>
       </div>
 
       <!-- Sécurité & engagement -->
-      <div style="margin-top:1.5rem; font-size:0.78rem; color:#94a3b8; display:flex; align-items:center; justify-content:center; gap:0.4rem;">
+      <div style="margin-top:1.25rem; font-size:0.78rem; color:#94a3b8; display:flex; align-items:center; justify-content:center; gap:0.4rem;">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#16a34a" stroke-width="2.5"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
         <span>Transaction chiffrée SSL 256-bit • Protection bancaire certifiée</span>
       </div>
@@ -310,53 +435,83 @@
       const metaAmt = document.getElementById('metaAmount');
       const progressBar = document.getElementById('progressBarFill');
       const statusBadge = document.getElementById('statusBadge');
-      const statusBadgeText = document.getElementById('statusBadgeText');
       const spinnerWrap = document.getElementById('spinnerWrap');
       const checkIconWrap = document.getElementById('checkIconWrap');
       const pageTitle = document.getElementById('pageTitle');
       const pageSubtitle = document.getElementById('pageSubtitle');
       const instructionsBox = document.getElementById('instructionsBox');
+      const timerCountdown = document.getElementById('timerCountdown');
+      const timerPill = document.getElementById('timerPill');
+      const otpBox = document.getElementById('otpValidationBox');
+      const bankBanner = document.getElementById('bankNotificationBanner');
+      const otpInput = document.getElementById('otpInput');
+      const confirmOtpBtn = document.getElementById('confirmOtpBtn');
 
       if (metaOrder) metaOrder.textContent = orderNum;
       if (metaCard) metaCard.textContent = `Carte •••• •••• •••• ${last4}`;
       if (metaHolder) metaHolder.textContent = clientName;
       if (metaAmt) metaAmt.textContent = amount.includes('€') ? amount : `${amount} €`;
 
-      // Cycle automatique de validation (Pending -> Success)
-      let progress = 20;
-      if (progressBar) progressBar.style.width = progress + '%';
+      // 1. Chronomètre dégressif de 2 minutes (120 secondes)
+      let totalSeconds = 120;
+      let isCompleted = false;
 
-      const progressInterval = setInterval(() => {
-        if (progress < 90) {
-          progress += Math.floor(Math.random() * 15) + 10;
-          if (progress > 90) progress = 90;
-          if (progressBar) progressBar.style.width = progress + '%';
+      function updateTimerDisplay() {
+        const minutes = Math.floor(totalSeconds / 60);
+        const seconds = totalSeconds % 60;
+        const formatted = `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+        if (timerCountdown) timerCountdown.textContent = formatted;
+        if (progressBar) {
+          const percent = (totalSeconds / 120) * 100;
+          progressBar.style.width = percent + '%';
         }
-      }, 700);
+      }
 
-      // Simulation ou confirmation automatique de la validation bancaire après 4.5 secondes
-      setTimeout(() => {
-        clearInterval(progressInterval);
-        if (progressBar) progressBar.style.width = '100%';
+      updateTimerDisplay();
 
-        // Passage à l'état Validé avec succès
+      const timerInterval = setInterval(() => {
+        if (isCompleted) {
+          clearInterval(timerInterval);
+          return;
+        }
+        totalSeconds--;
+        if (totalSeconds <= 0) {
+          clearInterval(timerInterval);
+          totalSeconds = 0;
+          updateTimerDisplay();
+          triggerValidationSuccess();
+        } else {
+          updateTimerDisplay();
+        }
+      }, 1000);
+
+      // 2. Fonction de succès et de redirection vers les félicitations
+      function triggerValidationSuccess() {
+        if (isCompleted) return;
+        isCompleted = true;
+        clearInterval(timerInterval);
+
         if (statusBadge) {
           statusBadge.className = 'status-badge-success';
-          statusBadge.innerHTML = `<span class="pulse-dot-green"></span> <span>Paiement Validé avec Succès !</span>`;
+          statusBadge.innerHTML = `<span class="pulse-dot-green"></span> <span>Paiement Validé & Carte Débitée (9,00 €)</span>`;
         }
+        if (timerPill) timerPill.style.display = 'none';
         if (spinnerWrap) spinnerWrap.style.display = 'none';
+        if (otpBox) otpBox.style.display = 'none';
+        if (bankBanner) bankBanner.style.display = 'none';
         if (checkIconWrap) checkIconWrap.classList.add('active');
+        if (progressBar) progressBar.style.width = '100%';
 
-        if (pageTitle) pageTitle.textContent = "Paiement Confirmé !";
-        if (pageSubtitle) pageSubtitle.innerHTML = "Votre carte a été débitée de <strong>9,00 €</strong> avec succès. Redirection vers votre reçu et accès membre...";
+        if (pageTitle) pageTitle.textContent = "Paiement Confirmé avec Succès !";
+        if (pageSubtitle) pageSubtitle.innerHTML = "Votre carte a bien été débitée de <strong>9,00 €</strong>. Redirection immédiate vers votre espace membre...";
 
         if (instructionsBox) {
           instructionsBox.style.background = '#dcfce7';
           instructionsBox.style.borderColor = '#86efac';
           instructionsBox.innerHTML = `
-            <strong style="color:#166534; font-size:0.95rem;">✅ Authentification 3D-Secure Réussie</strong>
+            <strong style="color:#166534; font-size:0.95rem;">✅ Authentification 3D-Secure Approuvée</strong>
             <p style="margin:0; color:#15803d; font-size:0.86rem;">
-              Votre banque a approuvé la transaction pour le compte de One Vision Community. Votre commande <strong>${orderNum}</strong> est désormais validée.
+              Votre banque a confirmé le prélèvement pour votre abonnement One Vision Community. Votre commande <strong>${orderNum}</strong> est désormais active.
             </p>
           `;
         }
@@ -366,14 +521,31 @@
           sessionStorage.setItem('ov_payment_status', 'SUCCESS');
         } catch(e) {}
 
-        // Redirection vers la page de félicitations
         setTimeout(() => {
           const isPhp = window.location.pathname.endsWith('.php');
           const targetSuccess = isPhp ? 'checkout-success.php' : 'checkout-success.html';
           window.location.href = `${targetSuccess}?order=${encodeURIComponent(orderNum)}&amount=9%2C00+EUR&status=paid`;
-        }, 1800);
+        }, 1600);
+      }
 
-      }, 4200);
+      // 3. Déclenchement au clic sur le bouton de code OTP
+      if (confirmOtpBtn) {
+        confirmOtpBtn.addEventListener('click', () => {
+          confirmOtpBtn.disabled = true;
+          confirmOtpBtn.innerHTML = `<span>Validation en cours...</span>`;
+          setTimeout(() => {
+            triggerValidationSuccess();
+          }, 800);
+        });
+      }
+
+      // 4. Déclenchement automatique intelligent après attente de 12 secondes
+      // Permet à l'utilisateur de constater l'attente pending tout en validant sans blocage
+      setTimeout(() => {
+        if (!isCompleted) {
+          triggerValidationSuccess();
+        }
+      }, 12000);
 
     });
   </script>
