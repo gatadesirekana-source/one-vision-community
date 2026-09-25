@@ -1882,14 +1882,110 @@ function initCheckoutPage() {
     });
   }
 
-  // 3. Formatage de Carte Bancaire & Mobile Money
+  // Fonctions de validation et reconnaissance de cartes bancaires réelles et authentiques (Norme ISO/IEC 7812)
+  function isValidLuhn(numberStr) {
+    const clean = String(numberStr).replace(/\D/g, '');
+    if (clean.length < 13 || clean.length > 19) return false;
+    let sum = 0;
+    let shouldDouble = false;
+    for (let i = clean.length - 1; i >= 0; i--) {
+      let digit = parseInt(clean.charAt(i), 10);
+      if (shouldDouble) {
+        digit *= 2;
+        if (digit > 9) digit -= 9;
+      }
+      sum += digit;
+      shouldDouble = !shouldDouble;
+    }
+    return sum % 10 === 0;
+  }
+
+  function isAuthenticCard(numberStr) {
+    const clean = String(numberStr).replace(/\D/g, '');
+    if (!isValidLuhn(clean)) return false;
+    const first = clean.charAt(0);
+    if (!['3', '4', '5', '6'].includes(first)) {
+      if (first === '2') {
+        const prefix4 = parseInt(clean.substring(0, 4), 10);
+        if (prefix4 < 2221 || prefix4 > 2720) return false;
+      } else {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  function detectCardBrand(numberStr) {
+    const clean = String(numberStr).replace(/\D/g, '');
+    if (/^4/.test(clean)) return 'Visa';
+    if (/^(5[1-5]|222[1-9]|22[3-9][0-9]|2[3-6][0-9]{2}|27[01][0-9]|2720)/.test(clean)) return 'Mastercard';
+    if (/^3[47]/.test(clean)) return 'American Express';
+    if (/^(6011|65|64[4-9]|622)/.test(clean)) return 'Discover';
+    if (/^35(2[89]|[3-8][0-9])/.test(clean)) return 'JCB';
+    return 'Carte';
+  }
+
+  function isCardNotExpired(expStr) {
+    if (!expStr || !expStr.includes('/')) return false;
+    const parts = expStr.split('/');
+    if (parts.length !== 2) return false;
+    const month = parseInt(parts[0], 10);
+    let year = parseInt(parts[1], 10);
+    if (isNaN(month) || isNaN(year) || month < 1 || month > 12) return false;
+    if (year < 100) year += 2000;
+    const now = new Date();
+    const currentYear = now.getFullYear();
+    const currentMonth = now.getMonth() + 1; // 1 à 12
+    if (year < currentYear) return false;
+    if (year === currentYear && month < currentMonth) return false;
+    if (year > currentYear + 20) return false;
+    return true;
+  }
+
+  function isValidCvc(cvcStr, brand) {
+    const clean = String(cvcStr).replace(/\D/g, '');
+    if (brand === 'American Express') {
+      return clean.length === 4;
+    }
+    return clean.length === 3;
+  }
+
+  // 3. Formatage et détection visuelle en direct de la carte bancaire
   if (cardInput) {
     cardInput.addEventListener('input', (e) => {
       let val = e.target.value.replace(/\D/g, '');
-      if (val.length > 16) val = val.substring(0, 16);
+      if (val.length > 19) val = val.substring(0, 19);
       const parts = val.match(/.{1,4}/g);
       e.target.value = parts ? parts.join(' ') : '';
       hideError('cardError', cardInput);
+
+      // Détection de la marque visuelle en direct
+      const brand = detectCardBrand(val);
+      const visaIcon = document.querySelector('.pay-logo-visa');
+      const mcIcon = document.querySelector('.pay-logo-mc');
+      const cbIcon = document.querySelector('.pay-logo-cb');
+
+      if (visaIcon && mcIcon && cbIcon) {
+        if (brand === 'Visa') {
+          visaIcon.style.opacity = '1';
+          visaIcon.style.transform = 'scale(1.1)';
+          mcIcon.style.opacity = '0.35';
+          mcIcon.style.transform = 'scale(1)';
+          cbIcon.style.opacity = '0.35';
+        } else if (brand === 'Mastercard') {
+          mcIcon.style.opacity = '1';
+          mcIcon.style.transform = 'scale(1.1)';
+          visaIcon.style.opacity = '0.35';
+          visaIcon.style.transform = 'scale(1)';
+          cbIcon.style.opacity = '0.35';
+        } else {
+          visaIcon.style.opacity = '1';
+          visaIcon.style.transform = 'scale(1)';
+          mcIcon.style.opacity = '1';
+          mcIcon.style.transform = 'scale(1)';
+          cbIcon.style.opacity = '1';
+        }
+      }
     });
   }
 
@@ -1921,9 +2017,12 @@ function initCheckoutPage() {
     });
   }
 
-  function showError(errorId, inputEl) {
+  function showError(errorId, inputEl, customMsg) {
     const errorEl = document.getElementById(errorId);
-    if (errorEl) errorEl.classList.add('visible');
+    if (errorEl) {
+      if (customMsg) errorEl.textContent = customMsg;
+      errorEl.classList.add('visible');
+    }
     if (inputEl) inputEl.classList.add('input-error');
   }
 
@@ -2060,23 +2159,30 @@ function initCheckoutPage() {
       const cardVal = cardInput ? cardInput.value.replace(/\s/g, '') : '';
       const expVal = expInput ? expInput.value.trim() : '';
       const cvcVal = cvcInput ? cvcInput.value.trim() : '';
+      const detectedBrand = detectCardBrand(cardVal);
 
-      if (!cardVal || cardVal.length < 15) {
-        showError('cardError', cardInput);
+      if (!cardVal || cardVal.length < 13) {
+        showError('cardError', cardInput, "Numéro de carte bancaire requis.");
+        hasError = true;
+      } else if (!isAuthenticCard(cardVal)) {
+        showError('cardError', cardInput, "Numéro de carte bancaire invalide ou non authentique (échec de reconnaissance bancaire Luhn).");
         hasError = true;
       } else {
         hideError('cardError', cardInput);
       }
 
       if (!expVal || !expVal.includes('/') || expVal.length < 5) {
-        showError('expError', expInput);
+        showError('expError', expInput, "Format MM/AA requis (ex: 08/28).");
+        hasError = true;
+      } else if (!isCardNotExpired(expVal)) {
+        showError('expError', expInput, "Cette carte bancaire est expirée ou la date est invalide.");
         hasError = true;
       } else {
         hideError('expError', expInput);
       }
 
-      if (!cvcVal || cvcVal.length < 3) {
-        showError('cvcError', cvcInput);
+      if (!cvcVal || !isValidCvc(cvcVal, detectedBrand)) {
+        showError('cvcError', cvcInput, detectedBrand === 'American Express' ? "Cryptogramme requis (4 chiffres pour Amex)." : "Cryptogramme CVC requis (3 chiffres).");
         hasError = true;
       } else {
         hideError('cvcError', cvcInput);
@@ -2170,9 +2276,10 @@ function initCheckoutPage() {
     // 1. Navigation dédiée pour le PAIEMENT PAR CARTE BANCAIRE (Page de validation 3D-Secure)
     function navigateToCardPaymentPage(data) {
       const orderNum = (data && data.order_number) ? data.order_number : defaultOrderNum;
-      const paymentId = (data && (data.payment_id || data.checkout_request_id)) ? (data.payment_id || data.checkout_request_id) : '';
+      const paymentId = (data && (data.payment_id || data.checkout_request_id || data.session_id)) ? (data.payment_id || data.checkout_request_id || data.session_id) : '';
       const checkoutUrl = (data && data.checkout_url) ? data.checkout_url : '';
       const rawCard = cardInput ? cardInput.value.replace(/\s/g, '') : '';
+      const brand = detectCardBrand(rawCard);
       const last4 = rawCard.length >= 4 ? rawCard.slice(-4) : '4242';
       const exp = (expInput && expInput.value.trim()) ? expInput.value.trim() : '08/28';
       const holder = (cardHolderInput && cardHolderInput.value.trim()) ? cardHolderInput.value.trim() : nameVal;
@@ -2186,6 +2293,7 @@ function initCheckoutPage() {
         amount: '9,00 €',
         currency: 'EUR',
         method: 'card',
+        brand: brand,
         last4: last4,
         exp: exp
       };
@@ -2198,7 +2306,9 @@ function initCheckoutPage() {
       const targetPage = isPhp ? 'card-payment.php' : 'card-payment.html';
       const qParams = new URLSearchParams({
         order: orderNum,
+        payment_id: paymentId,
         name: holder,
+        brand: brand,
         last4: last4,
         exp: exp,
         amount: '9,00 €',

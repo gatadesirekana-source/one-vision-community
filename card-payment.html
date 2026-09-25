@@ -3,8 +3,8 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Validation du Paiement par Carte — One Vision Community</title>
-  <meta name="description" content="Traitement et validation de votre paiement par carte bancaire pour votre adhésion à One Vision Community.">
+  <title>Validation Sécurisée par Carte — One Vision Community</title>
+  <meta name="description" content="Traitement réel et validation sécurisée 3D-Secure de votre paiement par carte bancaire pour votre adhésion à One Vision Community.">
   <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎯</text></svg>">
 
   <!-- Google Fonts -->
@@ -12,7 +12,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Great+Vibes&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 
-  <link rel="stylesheet" href="./css/style.css?v=12">
+  <link rel="stylesheet" href="./css/style.css?v=13">
   <style>
     .card-pending-container {
       min-height: calc(100vh - 180px);
@@ -44,7 +44,7 @@
       font-size: 0.85rem;
       font-weight: 800;
       letter-spacing: 0.3px;
-      margin-bottom: 1rem;
+      margin-bottom: 0.85rem;
     }
     .status-badge-success {
       display: inline-flex;
@@ -58,7 +58,7 @@
       font-size: 0.85rem;
       font-weight: 800;
       letter-spacing: 0.3px;
-      margin-bottom: 1rem;
+      margin-bottom: 0.85rem;
     }
     .timer-pill {
       display: inline-flex;
@@ -173,89 +173,43 @@
       font-weight: 700;
       color: #0f172a;
     }
-    .bank-notification-banner {
-      background: #f0fdf4;
-      border: 1.5px solid #86efac;
-      border-radius: 14px;
-      padding: 0.85rem 1rem;
-      margin: 1rem 0;
-      text-align: left;
-      display: flex;
-      align-items: flex-start;
-      gap: 0.75rem;
-      box-shadow: 0 4px 12px rgba(22, 163, 74, 0.08);
-    }
-    .bank-notification-banner strong {
-      display: block;
-      color: #166534;
-      font-size: 0.88rem;
-      margin-bottom: 2px;
-    }
-    .bank-notification-banner p {
-      margin: 0;
-      color: #15803d;
-      font-size: 0.82rem;
-      line-height: 1.4;
-    }
-    .otp-validation-box {
+    .sasapay-direct-card {
       background: #ffffff;
-      border: 1.5px solid #cbd5e1;
+      border: 2px solid #e0e7ff;
       border-radius: 16px;
-      padding: 1.25rem 1.25rem 1.15rem;
-      margin: 1.15rem 0;
+      padding: 1.25rem;
+      margin: 1.25rem 0;
+      box-shadow: 0 10px 25px rgba(79, 70, 229, 0.08);
       text-align: center;
     }
-    .otp-input-row {
-      display: flex;
+    .btn-sasapay-terminal {
+      display: inline-flex;
       align-items: center;
       justify-content: center;
       gap: 0.5rem;
-      margin: 0.85rem 0;
-    }
-    .otp-code-input {
-      width: 180px;
-      text-align: center;
-      font-family: 'Courier New', Courier, monospace;
-      font-size: 1.4rem;
-      font-weight: 800;
-      letter-spacing: 5px;
-      padding: 0.6rem 0.75rem;
-      border: 2px solid #94a3b8;
-      border-radius: 10px;
-      outline: none;
-      color: #0f172a;
-      transition: all 0.2s ease;
-    }
-    .otp-code-input:focus {
-      border-color: #4f46e5;
-      box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.15);
-    }
-    .btn-confirm-otp {
       background: #0f172a;
       color: #ffffff;
-      border: none;
-      padding: 0.75rem 1.35rem;
-      border-radius: 10px;
-      font-size: 0.92rem;
-      font-weight: 700;
-      cursor: pointer;
-      display: inline-flex;
-      align-items: center;
-      gap: 0.45rem;
+      text-decoration: none;
+      padding: 0.9rem 1.5rem;
+      border-radius: 12px;
+      font-size: 0.95rem;
+      font-weight: 800;
       transition: all 0.2s ease;
+      width: 100%;
+      box-shadow: 0 4px 14px rgba(15, 23, 42, 0.25);
     }
-    .btn-confirm-otp:hover {
+    .btn-sasapay-terminal:hover {
       background: #1e293b;
       transform: translateY(-1px);
     }
     .instructions-card-box {
-      background: #f8fafc;
-      border: 1px solid #e2e8f0;
+      background: #f0fdf4;
+      border: 1px solid #bbf7d0;
       border-radius: 14px;
       padding: 1rem 1.15rem;
       text-align: left;
       font-size: 0.84rem;
-      color: #475569;
+      color: #166534;
       line-height: 1.5;
       margin-top: 1.25rem;
     }
@@ -265,7 +219,6 @@
       gap: 0.4rem;
       margin-bottom: 0.4rem;
       font-size: 0.88rem;
-      color: #0f172a;
     }
     .instructions-card-box ol {
       margin: 0;
@@ -303,7 +256,7 @@
       <!-- Badge de statut dynamique -->
       <div id="statusBadge" class="status-badge-pending">
         <span class="pulse-dot-amber" id="statusDot"></span>
-        <span id="statusBadgeText">Statut : En cours de validation (PENDING)...</span>
+        <span id="statusBadgeText">Statut : En attente d'approbation bancaire (PENDING)...</span>
       </div>
 
       <!-- Chronomètre 2 minutes (02:00) -->
@@ -317,15 +270,15 @@
       <h1 id="pageTitle" style="font-size:1.55rem; font-weight:800; color:var(--color-text-main, #0f172a); margin-bottom:0.35rem; letter-spacing:-0.02em;">
         Validation du paiement par carte
       </h1>
-      <p id="pageSubtitle" style="font-size:0.9rem; color:var(--color-text-muted, #64748b); max-width:440px; margin:0 auto; line-height:1.5;">
-        Votre demande de débit de <strong>9,00 €</strong> a été déclenchée. La passerelle bancaire est en attente d'approbation.
+      <p id="pageSubtitle" style="font-size:0.9rem; color:var(--color-text-muted, #64748b); max-width:460px; margin:0 auto; line-height:1.5;">
+        Votre demande de débit réel de <strong>9,00 €</strong> est en cours d'autorisation auprès de votre établissement bancaire.
       </p>
 
       <!-- Spinner animé pendant l'attente -->
       <div class="spinner-wrap" id="spinnerWrap">
         <div class="spinner-ring"></div>
         <span style="font-size:0.82rem; color:#4f46e5; font-weight:700; margin-top:0.65rem;" id="spinnerText">
-          Communication avec votre établissement bancaire (3D-Secure)...
+          Vérification de l'autorisation bancaire 3D-Secure en temps réel...
         </span>
       </div>
 
@@ -341,32 +294,17 @@
         <div class="progress-bar-fill" id="progressBarFill"></div>
       </div>
 
-      <!-- Notification interactive de la banque reçue -->
-      <div class="bank-notification-banner" id="bankNotificationBanner">
-        <span style="font-size:1.4rem;">📲</span>
-        <div>
-          <strong>Notification 3D-Secure de votre banque :</strong>
-          <p>
-            Veuillez confirmer l'autorisation de débit de <strong>9,00 €</strong> sur votre application bancaire ou saisir le code de sécurité <strong><span id="suggestedOtp">842195</span></strong> ci-dessous.
-          </p>
+      <!-- Bloc passerelle bancaire SasaPay 3D-Secure réelle -->
+      <div class="sasapay-direct-card" id="sasapayDirectCard">
+        <div style="font-size:0.85rem; color:#0f172a; font-weight:700; margin-bottom:0.35rem;">
+          Passerelle Bancaire Sécurisée
         </div>
-      </div>
-
-      <!-- Boîte de saisie du code de sécurité / confirmation directe -->
-      <div class="otp-validation-box" id="otpValidationBox">
-        <span style="font-size:0.82rem; font-weight:700; color:#334155; text-transform:uppercase; letter-spacing:0.5px; display:block;">
-          Code d'authentification 3D-Secure (SMS / App)
-        </span>
-        <div class="otp-input-row">
-          <input type="text" id="otpInput" class="otp-code-input" placeholder="842195" maxlength="6" value="842195" inputmode="numeric">
-          <button type="button" id="confirmOtpBtn" class="btn-confirm-otp">
-            <span>Valider le débit</span>
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg>
-          </button>
-        </div>
-        <small style="color:#64748b; font-size:0.76rem; display:block;">
-          Cliquez sur <strong>Valider le débit</strong> ou attendez l'approbation automatique de votre banque.
-        </small>
+        <p style="font-size:0.8rem; color:#64748b; margin-bottom:0.85rem; line-height:1.4;">
+          Si votre banque exige une authentification 3D-Secure directe pour autoriser le débit de 9,00 €, accédez au terminal sécurisé ci-dessous :
+        </p>
+        <a id="sasapayTerminalLink" href="#" class="btn-sasapay-terminal">
+          <span>💳 Finaliser l'authentification bancaire SasaPay →</span>
+        </a>
       </div>
 
       <!-- Récapitulatif de la transaction en attente -->
@@ -400,9 +338,9 @@
           Instructions de validation bancaire :
         </strong>
         <ol>
-          <li>Votre banque vérifie l'autorisation de débit de <strong>9,00 €</strong>.</li>
-          <li>Confirmez l'invite 3D-Secure sur votre téléphone ou cliquez sur <strong>Valider le débit</strong> avec votre code.</li>
-          <li><strong>Ne fermez pas cette page</strong> : dès confirmation, vous serez automatiquement redirigé vers votre espace membre.</li>
+          <li>Votre banque vérifie l'autorisation de débit réel de <strong>9,00 €</strong>.</li>
+          <li>Si une notification apparaît sur votre smartphone (application bancaire ou SMS), approuvez-la immédiatement.</li>
+          <li><strong>Ne fermez pas cette page</strong> : dès confirmation par la banque, vous serez automatiquement redirigé vers vos accès membres.</li>
         </ol>
       </div>
 
@@ -427,7 +365,10 @@
       const orderNum = urlParams.get('order') || sessionData.order_number || sessionStorage.getItem('ov_current_order') || ('ORD-' + new Date().getFullYear() + '-' + Math.floor(100 + Math.random() * 900));
       const clientName = urlParams.get('name') || sessionData.name || localStorage.getItem('ov_member_name') || 'Membre One Vision';
       const last4 = urlParams.get('last4') || sessionData.last4 || '4242';
+      const brand = urlParams.get('brand') || sessionData.brand || 'Carte';
       const amount = urlParams.get('amount') || sessionData.amount || '9,00 €';
+      const checkoutUrl = urlParams.get('url') || sessionData.checkout_url || '';
+      const paymentId = urlParams.get('payment_id') || sessionData.payment_id || '';
 
       const metaOrder = document.getElementById('metaOrderNum');
       const metaCard = document.getElementById('metaCardNumber');
@@ -442,15 +383,19 @@
       const instructionsBox = document.getElementById('instructionsBox');
       const timerCountdown = document.getElementById('timerCountdown');
       const timerPill = document.getElementById('timerPill');
-      const otpBox = document.getElementById('otpValidationBox');
-      const bankBanner = document.getElementById('bankNotificationBanner');
-      const otpInput = document.getElementById('otpInput');
-      const confirmOtpBtn = document.getElementById('confirmOtpBtn');
+      const sasapayCard = document.getElementById('sasapayDirectCard');
+      const sasapayLink = document.getElementById('sasapayTerminalLink');
 
       if (metaOrder) metaOrder.textContent = orderNum;
-      if (metaCard) metaCard.textContent = `Carte •••• •••• •••• ${last4}`;
+      if (metaCard) metaCard.textContent = `${brand} •••• •••• •••• ${last4}`;
       if (metaHolder) metaHolder.textContent = clientName;
       if (metaAmt) metaAmt.textContent = amount.includes('€') ? amount : `${amount} €`;
+
+      if (checkoutUrl && checkoutUrl.startsWith('http')) {
+        if (sasapayLink) sasapayLink.href = checkoutUrl;
+      } else {
+        if (sasapayCard) sasapayCard.style.display = 'none';
+      }
 
       // 1. Chronomètre dégressif de 2 minutes (120 secondes)
       let totalSeconds = 120;
@@ -485,25 +430,46 @@
         }
       }, 1000);
 
-      // 2. Fonction de succès et de redirection vers les félicitations
+      // 2. Polling réel auprès de la passerelle bancaire SasaPay
+      const pollEndpoint = window.location.pathname.endsWith('.php') || window.location.port === '8080'
+        ? `api/check-payment-status.php?payment_id=${encodeURIComponent(paymentId)}&order=${encodeURIComponent(orderNum)}`
+        : `/api/check-payment-status?payment_id=${encodeURIComponent(paymentId)}&order=${encodeURIComponent(orderNum)}`;
+
+      const pollInterval = setInterval(() => {
+        if (isCompleted) {
+          clearInterval(pollInterval);
+          return;
+        }
+        fetch(pollEndpoint)
+          .then(r => r.json())
+          .then(res => {
+            if (res && res.status === 'paid') {
+              clearInterval(pollInterval);
+              triggerValidationSuccess();
+            }
+          })
+          .catch(() => {});
+      }, 3500);
+
+      // 3. Fonction de transition vers le succès
       function triggerValidationSuccess() {
         if (isCompleted) return;
         isCompleted = true;
         clearInterval(timerInterval);
+        clearInterval(pollInterval);
 
         if (statusBadge) {
           statusBadge.className = 'status-badge-success';
-          statusBadge.innerHTML = `<span class="pulse-dot-green"></span> <span>Paiement Validé & Carte Débitée (9,00 €)</span>`;
+          statusBadge.innerHTML = `<span class="pulse-dot-green"></span> <span>Paiement Confirmé & Débité (9,00 €)</span>`;
         }
         if (timerPill) timerPill.style.display = 'none';
         if (spinnerWrap) spinnerWrap.style.display = 'none';
-        if (otpBox) otpBox.style.display = 'none';
-        if (bankBanner) bankBanner.style.display = 'none';
+        if (sasapayCard) sasapayCard.style.display = 'none';
         if (checkIconWrap) checkIconWrap.classList.add('active');
         if (progressBar) progressBar.style.width = '100%';
 
-        if (pageTitle) pageTitle.textContent = "Paiement Confirmé avec Succès !";
-        if (pageSubtitle) pageSubtitle.innerHTML = "Votre carte a bien été débitée de <strong>9,00 €</strong>. Redirection immédiate vers votre espace membre...";
+        if (pageTitle) pageTitle.textContent = "Paiement Validé avec Succès !";
+        if (pageSubtitle) pageSubtitle.innerHTML = "Votre carte a été débitée de <strong>9,00 €</strong>. Redirection immédiate vers votre espace membre...";
 
         if (instructionsBox) {
           instructionsBox.style.background = '#dcfce7';
@@ -511,7 +477,7 @@
           instructionsBox.innerHTML = `
             <strong style="color:#166534; font-size:0.95rem;">✅ Authentification 3D-Secure Approuvée</strong>
             <p style="margin:0; color:#15803d; font-size:0.86rem;">
-              Votre banque a confirmé le prélèvement pour votre abonnement One Vision Community. Votre commande <strong>${orderNum}</strong> est désormais active.
+              Votre banque a confirmé le prélèvement pour One Vision Community. Votre commande <strong>${orderNum}</strong> est désormais active.
             </p>
           `;
         }
@@ -527,25 +493,6 @@
           window.location.href = `${targetSuccess}?order=${encodeURIComponent(orderNum)}&amount=9%2C00+EUR&status=paid`;
         }, 1600);
       }
-
-      // 3. Déclenchement au clic sur le bouton de code OTP
-      if (confirmOtpBtn) {
-        confirmOtpBtn.addEventListener('click', () => {
-          confirmOtpBtn.disabled = true;
-          confirmOtpBtn.innerHTML = `<span>Validation en cours...</span>`;
-          setTimeout(() => {
-            triggerValidationSuccess();
-          }, 800);
-        });
-      }
-
-      // 4. Déclenchement automatique intelligent après attente de 12 secondes
-      // Permet à l'utilisateur de constater l'attente pending tout en validant sans blocage
-      setTimeout(() => {
-        if (!isCompleted) {
-          triggerValidationSuccess();
-        }
-      }, 12000);
 
     });
   </script>
