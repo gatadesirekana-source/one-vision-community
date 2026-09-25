@@ -585,7 +585,6 @@ $pageDescription = "Finalisez votre adhésion à One Vision Community pour 9€ 
 
             </div>
           </div>
-        </div>
 
         <!-- COLONNE DROITE : RÉCAPITULATIF DE COMMANDE -->
         <div class="checkout-summary-column">
