@@ -2098,13 +2098,7 @@ function initCheckoutPage() {
       return;
     }
 
-    // Données relatives au pays et à l'opérateur
-    const selCountry = saspayCountrySelect ? saspayCountrySelect.value : "Cameroun";
-    const countryData = saspayCountries[selCountry] || saspayCountries["Cameroun"];
-    const opVal = saspaySelectedOperator ? saspaySelectedOperator.value : "MTN MoMo";
-    const phoneVal = saspayPhoneInput ? saspayPhoneInput.value.trim() : "";
-
-    // Données relatives au montant et à l'opérateur
+    // Données relatives au montant, pays et opérateur
     const selCountry = saspayCountrySelect ? saspayCountrySelect.value : "Cameroun";
     const countryData = saspayCountries[selCountry] || saspayCountries["Cameroun"];
     const opVal = saspaySelectedOperator ? saspaySelectedOperator.value : "MTN MoMo";
