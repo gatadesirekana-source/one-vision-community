@@ -251,13 +251,6 @@ if (!empty($orderNumber)) {
           <div id="paymentQrCanvas"></div>
         </div>
 
-        <!-- Bouton d'accès direct mobile -->
-        <div>
-          <a id="paymentDirectLinkBtn" href="#" target="_blank" rel="noopener noreferrer" class="direct-app-btn">
-            <span>📱 Ouvrir directement dans l'application →</span>
-          </a>
-        </div>
-
         <!-- Instructions pas à pas -->
         <div class="steps-instructions">
           <strong><span class="pulse-dot"></span>Instructions de validation :</strong>
@@ -290,10 +283,6 @@ if (!empty($orderNumber)) {
         <button type="button" id="sandboxValidateBtn" class="btn btn-primary btn-block" style="background:#4f46e5; border-color:#4f46e5; font-size:0.95rem; padding:0.85rem 1.25rem; border-radius:12px;">
           <span>🧪 Test Sandbox : Simuler validation mobile (PIN saisi)</span>
         </button>
-
-        <a href="checkout.php" class="btn btn-secondary btn-block" style="font-size:0.88rem; padding:0.75rem 1rem; text-decoration:none; text-align:center; border-radius:12px;">
-          ← Revenir au formulaire ou changer de mode
-        </a>
       </div>
 
       <div style="margin-top:1.25rem; font-size:0.78rem; color:#94a3b8; display:flex; align-items:center; justify-content:center; gap:0.4rem;">
