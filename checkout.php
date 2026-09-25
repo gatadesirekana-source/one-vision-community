@@ -24,7 +24,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $momoCountry = trim($_POST['momoCountry'] ?? 'Cameroun');
     $momoOperator = trim($_POST['momoOperator'] ?? 'MTN MoMo');
     $momoPhone = trim($_POST['momoPhone'] ?? '');
-    $momoAmount = trim($_POST['momoAmount'] ?? '200');
+    $momoAmount = trim($_POST['momoAmount'] ?? '5904');
     $momoCurrency = trim($_POST['momoCurrency'] ?? 'XAF');
 
     if (empty($name) || empty($email) || !filter_var($email, FILTER_VALIDATE_EMAIL)) {
@@ -69,7 +69,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             try {
                 $returnUrl = APP_URL . '/checkout-success.php?order=' . urlencode($orderNumber);
                 
-                $orderAmount = ($method === 'mobile_money' && !empty($momoAmount)) ? (float)$momoAmount : 0.30;
+                $orderAmount = ($method === 'mobile_money' && !empty($momoAmount)) ? (float)$momoAmount : 9.00;
                 $orderCurrency = ($method === 'mobile_money' && !empty($momoCurrency)) ? $momoCurrency : 'EUR';
 
                 if ($method === 'mobile_money') {
@@ -456,25 +456,25 @@ $pageDescription = "Finalisez votre adhésion à One Vision Community pour 9€ 
                       <span class="saspay-brand-sub">à One Vision</span>
                     </div>
                   </div>
-                  <div class="saspay-header-price" id="saspayHeaderAmount">200 XAF</div>
+                  <div class="saspay-header-price" id="saspayHeaderAmount">5 904 XAF</div>
                 </div>
 
                 <!-- 1. Sélection du Pays -->
                 <label class="saspay-field-label" for="saspayCountrySelect">Pays</label>
                 <div class="saspay-country-select-wrapper">
                   <select id="saspayCountrySelect" name="momoCountry" class="saspay-country-select" aria-label="Choisir votre pays">
-                    <option value="Cameroun" data-currency="XAF" data-amount="200" data-fee="0" data-total="200" data-prefix="+237" selected>🇨🇲 Cameroun</option>
-                    <option value="Côte d'Ivoire" data-currency="XOF" data-amount="200" data-fee="0" data-total="200" data-prefix="+225">🇨🇮 Côte d'Ivoire</option>
-                    <option value="Sénégal" data-currency="XOF" data-amount="200" data-fee="0" data-total="200" data-prefix="+221">🇸🇳 Sénégal</option>
-                    <option value="Bénin" data-currency="XOF" data-amount="200" data-fee="0" data-total="200" data-prefix="+229">🇧🇯 Bénin</option>
-                    <option value="Burkina Faso" data-currency="XOF" data-amount="200" data-fee="0" data-total="200" data-prefix="+226">🇧🇫 Burkina Faso</option>
-                    <option value="Mali" data-currency="XOF" data-amount="200" data-fee="0" data-total="200" data-prefix="+223">🇲🇱 Mali</option>
-                    <option value="Togo" data-currency="XOF" data-amount="200" data-fee="0" data-total="200" data-prefix="+228">🇹🇬 Togo</option>
-                    <option value="Guinée" data-currency="GNF" data-amount="200" data-fee="0" data-total="200" data-prefix="+224">🇬🇳 Guinée</option>
-                    <option value="RDC" data-currency="USD" data-amount="0.30" data-fee="0.00" data-total="0.30" data-prefix="+243">🇨🇩 RDC</option>
-                    <option value="Congo" data-currency="XAF" data-amount="200" data-fee="0" data-total="200" data-prefix="+242">🇨🇬 Congo</option>
-                    <option value="Gabon" data-currency="XAF" data-amount="200" data-fee="0" data-total="200" data-prefix="+241">🇬🇦 Gabon</option>
-                    <option value="France" data-currency="EUR" data-amount="0.30" data-fee="0.00" data-total="0.30" data-prefix="+33">🌍 International (EUR)</option>
+                    <option value="Cameroun" data-currency="XAF" data-amount="5904" data-fee="0" data-total="5904" data-prefix="+237" selected>🇨🇲 Cameroun</option>
+                    <option value="Côte d'Ivoire" data-currency="XOF" data-amount="5900" data-fee="0" data-total="5900" data-prefix="+225">🇨🇮 Côte d'Ivoire</option>
+                    <option value="Sénégal" data-currency="XOF" data-amount="5900" data-fee="0" data-total="5900" data-prefix="+221">🇸🇳 Sénégal</option>
+                    <option value="Bénin" data-currency="XOF" data-amount="5900" data-fee="0" data-total="5900" data-prefix="+229">🇧🇯 Bénin</option>
+                    <option value="Burkina Faso" data-currency="XOF" data-amount="5900" data-fee="0" data-total="5900" data-prefix="+226">🇧🇫 Burkina Faso</option>
+                    <option value="Mali" data-currency="XOF" data-amount="5900" data-fee="0" data-total="5900" data-prefix="+223">🇲🇱 Mali</option>
+                    <option value="Togo" data-currency="XOF" data-amount="5900" data-fee="0" data-total="5900" data-prefix="+228">🇹🇬 Togo</option>
+                    <option value="Guinée" data-currency="GNF" data-amount="84000" data-fee="0" data-total="84000" data-prefix="+224">🇬🇳 Guinée</option>
+                    <option value="RDC" data-currency="USD" data-amount="9.80" data-fee="0.00" data-total="9.80" data-prefix="+243">🇨🇩 RDC</option>
+                    <option value="Congo" data-currency="XAF" data-amount="5904" data-fee="0" data-total="5904" data-prefix="+242">🇨🇬 Congo</option>
+                    <option value="Gabon" data-currency="XAF" data-amount="5904" data-fee="0" data-total="5904" data-prefix="+241">🇬🇦 Gabon</option>
+                    <option value="France" data-currency="EUR" data-amount="9.00" data-fee="0.00" data-total="9.00" data-prefix="+33">🌍 International (EUR)</option>
                   </select>
                   <span class="saspay-select-arrow">▼</span>
                 </div>
@@ -500,22 +500,22 @@ $pageDescription = "Finalisez votre adhésion à One Vision Community pour 9€ 
                 </div>
                 <div class="field-error" id="momoPhoneError" style="margin-top:-0.9rem; margin-bottom:1rem;">Numéro de téléphone Mobile Money requis.</div>
 
-                <input type="hidden" name="momoAmount" id="momoAmountHidden" value="200">
+                <input type="hidden" name="momoAmount" id="momoAmountHidden" value="5904">
                 <input type="hidden" name="momoCurrency" id="momoCurrencyHidden" value="XAF">
 
                 <!-- 4. Récapitulatif tarifaire exact -->
                 <div class="saspay-breakdown-box">
                   <div class="saspay-breakdown-row">
                     <span>Montant</span>
-                    <strong id="saspayBreakdownAmount">200 XAF</strong>
+                    <strong id="saspayBreakdownAmount">5 904 XAF</strong>
                   </div>
                   <div class="saspay-breakdown-row">
                     <span>Frais</span>
-                    <span id="saspayBreakdownFee">+0 XAF</span>
+                    <span id="saspayBreakdownFee">0 XAF</span>
                   </div>
                   <div class="saspay-breakdown-row saspay-breakdown-total">
                     <span>Total à payer</span>
-                    <strong id="saspayBreakdownTotal">200 XAF</strong>
+                    <strong id="saspayBreakdownTotal">5 904 XAF</strong>
                   </div>
                 </div>
 
@@ -529,7 +529,7 @@ $pageDescription = "Finalisez votre adhésion à One Vision Community pour 9€ 
 
               <!-- Bouton de paiement CTA Principal -->
               <button type="submit" id="submitPaymentBtn" class="btn btn-primary checkout-submit-btn">
-                <span id="submitPaymentText">Payer 0,30 € par Carte Bancaire →</span>
+                <span id="submitPaymentText">Payer 9,00 € par Carte Bancaire →</span>
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
                   <line x1="5" y1="12" x2="19" y2="12"></line>
                   <polyline points="12 5 19 12 12 19"></polyline>
@@ -583,7 +583,7 @@ $pageDescription = "Finalisez votre adhésion à One Vision Community pour 9€ 
             <div class="summary-pricing-box">
               <div class="pricing-line">
                 <span>Adhésion mensuelle</span>
-                <span class="price-val">200 FCFA <small>(~0,30 €)</small></span>
+                <span class="price-val">9,00 € <small>(~5 900 FCFA)</small></span>
               </div>
               <div class="pricing-line">
                 <span>Frais d'activation</span>
@@ -591,7 +591,7 @@ $pageDescription = "Finalisez votre adhésion à One Vision Community pour 9€ 
               </div>
               <div class="pricing-line total-line">
                 <span>Total à régler aujourd'hui</span>
-                <span class="total-amount">200 FCFA <span class="recur-text">(Tarif test)</span></span>
+                <span class="total-amount">9,00 € <span class="recur-text">/ mois</span></span>
               </div>
             </div>
 
@@ -637,6 +637,32 @@ $pageDescription = "Finalisez votre adhésion à One Vision Community pour 9€ 
             <span style="color:#166534; font-size:0.82rem; line-height:1.4; display:block;" id="processingAlertMsg">
               Veuillez saisir votre code PIN Mobile Money sur votre mobile pour approuver le paiement.
             </span>
+          </div>
+        </div>
+
+        <!-- BLOC QR CODE WAVE EMBARQUÉ DANS LA MODALE -->
+        <div class="processing-qr-card" id="processingQrCard" style="display:none; margin: 1rem 0 1.25rem; padding: 1.25rem; background: #ffffff; border: 2px solid #e0e7ff; border-radius: 18px; box-shadow: 0 10px 25px rgba(79, 70, 229, 0.08); text-align: center;">
+          <div style="display:inline-flex; align-items:center; gap:0.4rem; background:#eef2ff; color:#4338ca; padding:0.35rem 0.85rem; border-radius:20px; font-size:0.8rem; font-weight:700; margin-bottom:0.75rem;">
+            <span>📸</span>
+            <span>Scan Wave Instantané</span>
+          </div>
+          <h4 style="font-size:1.05rem; font-weight:800; color:#0f172a; margin-bottom:0.35rem;">
+            Scannez ce QR Code avec votre téléphone
+          </h4>
+          <p style="font-size:0.82rem; color:#64748b; margin-bottom:1rem; line-height:1.45; max-width:340px; margin-left:auto; margin-right:auto;">
+            1. Ouvrez l'application <strong>Wave</strong> sur votre mobile<br>
+            2. Appuyez sur <strong>Scanner</strong> et pointez vers ce QR Code<br>
+            3. Validez avec votre code PIN secret
+          </p>
+
+          <div style="display:inline-block; padding:12px; background:#ffffff; border-radius:14px; box-shadow: 0 4px 15px rgba(0,0,0,0.08); border:1px solid #e2e8f0; margin-bottom:0.85rem;">
+            <img id="processingQrImg" src="" alt="QR Code Wave" style="width:190px; height:190px; display:block; border-radius:8px;" />
+          </div>
+
+          <div>
+            <a id="processingQrDirectBtn" href="#" target="_blank" rel="noopener noreferrer" style="display:inline-flex; align-items:center; gap:0.4rem; font-size:0.82rem; font-weight:700; color:#4f46e5; text-decoration:none; padding:0.45rem 0.9rem; background:#f8fafc; border:1px solid #cbd5e1; border-radius:8px;">
+              <span>📱 Ouvrir Wave directement sur cet appareil →</span>
+            </a>
           </div>
         </div>
 

@@ -1517,6 +1517,9 @@ function initCheckoutPage() {
   const processingActions = document.getElementById('processingActions');
   const processingRetryBtn = document.getElementById('processingRetryBtn');
   const processingCancelBtn = document.getElementById('processingCancelBtn');
+  const processingQrCard = document.getElementById('processingQrCard');
+  const processingQrImg = document.getElementById('processingQrImg');
+  const processingQrDirectBtn = document.getElementById('processingQrDirectBtn');
 
   // Soumission
   const submitBtn = document.getElementById('submitPaymentBtn');
@@ -1524,15 +1527,15 @@ function initCheckoutPage() {
 
   let currentPaymentMethod = 'card'; // 'card' ou 'mobile_money'
 
-  // Configuration exacte des pays et opérateurs SasPay (conforme à la capture d'écran)
+  // Configuration officielle des pays et opérateurs SasPay
   const saspayCountries = {
     "Cameroun": {
       currency: "XAF",
-      amount: "200",
-      amountRaw: 200,
+      amount: "5 904",
+      amountRaw: 5904,
       fee: "0 XAF",
       feeRaw: 0,
-      total: "200 XAF",
+      total: "5 904 XAF",
       prefix: "+237",
       phonePlaceholder: "67 12 34 56 7",
       operators: [
@@ -1543,11 +1546,11 @@ function initCheckoutPage() {
     },
     "Côte d'Ivoire": {
       currency: "XOF",
-      amount: "200",
-      amountRaw: 200,
+      amount: "5 900",
+      amountRaw: 5900,
       fee: "0 XOF",
       feeRaw: 0,
-      total: "200 XOF",
+      total: "5 900 XOF",
       prefix: "+225",
       phonePlaceholder: "07 77 95 73 37",
       operators: [
@@ -1559,11 +1562,11 @@ function initCheckoutPage() {
     },
     "Sénégal": {
       currency: "XOF",
-      amount: "200",
-      amountRaw: 200,
+      amount: "5 900",
+      amountRaw: 5900,
       fee: "0 XOF",
       feeRaw: 0,
-      total: "200 XOF",
+      total: "5 900 XOF",
       prefix: "+221",
       phonePlaceholder: "77 123 45 67",
       operators: [
@@ -1574,11 +1577,11 @@ function initCheckoutPage() {
     },
     "Bénin": {
       currency: "XOF",
-      amount: "200",
-      amountRaw: 200,
+      amount: "5 900",
+      amountRaw: 5900,
       fee: "0 XOF",
       feeRaw: 0,
-      total: "200 XOF",
+      total: "5 900 XOF",
       prefix: "+229",
       phonePlaceholder: "97 12 34 56",
       operators: [
@@ -1588,11 +1591,11 @@ function initCheckoutPage() {
     },
     "Burkina Faso": {
       currency: "XOF",
-      amount: "200",
-      amountRaw: 200,
+      amount: "5 900",
+      amountRaw: 5900,
       fee: "0 XOF",
       feeRaw: 0,
-      total: "200 XOF",
+      total: "5 900 XOF",
       prefix: "+226",
       phonePlaceholder: "70 12 34 56",
       operators: [
@@ -1602,11 +1605,11 @@ function initCheckoutPage() {
     },
     "Mali": {
       currency: "XOF",
-      amount: "200",
-      amountRaw: 200,
+      amount: "5 900",
+      amountRaw: 5900,
       fee: "0 XOF",
       feeRaw: 0,
-      total: "200 XOF",
+      total: "5 900 XOF",
       prefix: "+223",
       phonePlaceholder: "70 12 34 56",
       operators: [
@@ -1616,11 +1619,11 @@ function initCheckoutPage() {
     },
     "Togo": {
       currency: "XOF",
-      amount: "200",
-      amountRaw: 200,
+      amount: "5 900",
+      amountRaw: 5900,
       fee: "0 XOF",
       feeRaw: 0,
-      total: "200 XOF",
+      total: "5 900 XOF",
       prefix: "+228",
       phonePlaceholder: "90 12 34 56",
       operators: [
@@ -1630,11 +1633,11 @@ function initCheckoutPage() {
     },
     "Guinée": {
       currency: "GNF",
-      amount: "3 000",
-      amountRaw: 3000,
+      amount: "84 000",
+      amountRaw: 84000,
       fee: "0 GNF",
       feeRaw: 0,
-      total: "3 000 GNF",
+      total: "84 000 GNF",
       prefix: "+224",
       phonePlaceholder: "620 12 34 56",
       operators: [
@@ -1644,11 +1647,11 @@ function initCheckoutPage() {
     },
     "RDC": {
       currency: "USD",
-      amount: "0.50",
-      amountRaw: 0.50,
+      amount: "9.80",
+      amountRaw: 9.80,
       fee: "0.00 USD",
       feeRaw: 0.00,
-      total: "0.50 USD",
+      total: "9.80 USD",
       prefix: "+243",
       phonePlaceholder: "81 234 5678",
       operators: [
@@ -1659,11 +1662,11 @@ function initCheckoutPage() {
     },
     "Congo": {
       currency: "XAF",
-      amount: "200",
-      amountRaw: 200,
+      amount: "5 904",
+      amountRaw: 5904,
       fee: "0 XAF",
       feeRaw: 0,
-      total: "200 XAF",
+      total: "5 904 XAF",
       prefix: "+242",
       phonePlaceholder: "06 123 4567",
       operators: [
@@ -1673,11 +1676,11 @@ function initCheckoutPage() {
     },
     "Gabon": {
       currency: "XAF",
-      amount: "200",
-      amountRaw: 200,
+      amount: "5 904",
+      amountRaw: 5904,
       fee: "0 XAF",
       feeRaw: 0,
-      total: "200 XAF",
+      total: "5 904 XAF",
       prefix: "+241",
       phonePlaceholder: "074 12 34 56",
       operators: [
@@ -1687,11 +1690,11 @@ function initCheckoutPage() {
     },
     "France": {
       currency: "EUR",
-      amount: "0.30",
-      amountRaw: 0.30,
+      amount: "9.00",
+      amountRaw: 9.00,
       fee: "0.00 EUR",
       feeRaw: 0.00,
-      total: "0.30 EUR",
+      total: "9.00 EUR",
       prefix: "+33",
       phonePlaceholder: "06 12 34 56 78",
       operators: [
@@ -1786,7 +1789,7 @@ function initCheckoutPage() {
       if (methodMobileMoney) methodMobileMoney.classList.remove('selected');
       if (cardDetailsBox) cardDetailsBox.style.display = 'block';
       if (mobileMoneyDetailsBox) mobileMoneyDetailsBox.style.display = 'none';
-      if (submitText) submitText.textContent = "Payer 0,30 € par Carte Bancaire →";
+      if (submitText) submitText.textContent = "Payer 9,00 € par Carte Bancaire →";
     } else {
       if (methodMobileMoney) methodMobileMoney.classList.add('selected');
       if (methodCard) methodCard.classList.remove('selected');
@@ -1957,6 +1960,7 @@ function initCheckoutPage() {
     function cleanupTimers() {
       if (activePollInterval) { clearInterval(activePollInterval); activePollInterval = null; }
       if (activeCountdownInterval) { clearInterval(activeCountdownInterval); activeCountdownInterval = null; }
+      if (processingQrCard) processingQrCard.style.display = 'none';
     }
 
     function formatTime(s) {
@@ -1973,7 +1977,7 @@ function initCheckoutPage() {
           processingModal.setAttribute('aria-hidden', 'true');
         }
         if (submitBtn) submitBtn.disabled = false;
-        if (submitText) submitText.textContent = (currentPaymentMethod === 'mobile_money') ? "Payer via Mobile Money" : "Payer 0,30 €";
+        if (submitText) submitText.textContent = (currentPaymentMethod === 'mobile_money') ? "Payer via Mobile Money" : "Payer 9,00 €";
       };
     }
 
@@ -1985,7 +1989,7 @@ function initCheckoutPage() {
           processingModal.setAttribute('aria-hidden', 'true');
         }
         if (submitBtn) submitBtn.disabled = false;
-        if (submitText) submitText.textContent = (currentPaymentMethod === 'mobile_money') ? "Payer via Mobile Money" : "Payer 0,30 €";
+        if (submitText) submitText.textContent = (currentPaymentMethod === 'mobile_money') ? "Payer via Mobile Money" : "Payer 9,00 €";
       };
     }
 
@@ -1993,6 +1997,8 @@ function initCheckoutPage() {
     if (processingModal) {
       processingModal.classList.add('visible');
       processingModal.setAttribute('aria-hidden', 'false');
+
+      if (processingQrCard) processingQrCard.style.display = 'none';
 
       if (currentPaymentMethod === 'mobile_money') {
         if (processingTitle) processingTitle.textContent = "⏳ En attente de confirmation sur votre téléphone...";
@@ -2009,7 +2015,7 @@ function initCheckoutPage() {
       } else {
         if (processingTitle) processingTitle.textContent = "⏳ En attente d'authentification bancaire...";
         if (processingDesc) {
-          processingDesc.textContent = "Initialisation de la session sécurisée (3D Secure)... Votre propre banque va vous demander de valider le règlement (via une notification push dans votre application bancaire ou par un code SMS secret). Redirection vers l'espace sécurisé...";
+          processingDesc.textContent = "Initialisation de la session sécurisée (3D Secure)... Votre propre banque va vous demander de valider le règlement (via une notification push dans votre application bancaire ou par un code SMS secret).";
         }
         if (processingDeviceAlert) {
           processingDeviceAlert.style.display = 'flex';
@@ -2064,10 +2070,12 @@ function initCheckoutPage() {
       // LE STATUT PAYÉ EST ACTIVÉ UNIQUEMENT LORSQUE CE SUCCÈS RÉEL EST REÇU
       localStorage.setItem('ov_has_paid', 'true');
 
+      if (processingQrCard) processingQrCard.style.display = 'none';
       if (processingProgressBar) processingProgressBar.style.width = '100%';
       if (processingTitle) processingTitle.textContent = "✅ Paiement validé avec succès !";
       if (processingDesc) processingDesc.textContent = "Votre transaction a été confirmée. Votre adhésion est active. Redirection...";
       if (processingTimerBadge) processingTimerBadge.style.display = 'none';
+      if (processingDeviceAlert) processingDeviceAlert.style.display = 'none';
       if (processingActions) processingActions.style.display = 'none';
       if (processingSpinnerIcon) {
         processingSpinnerIcon.innerHTML = `<polyline points="20 6 9 17 4 12" stroke="#16a34a" stroke-width="3"></polyline>`;
@@ -2080,6 +2088,7 @@ function initCheckoutPage() {
 
     function handlePaymentFailed(msg) {
       cleanupTimers();
+      if (processingQrCard) processingQrCard.style.display = 'none';
       if (processingProgressBar) processingProgressBar.style.width = '100%';
       if (processingTitle) processingTitle.textContent = "❌ Échec du paiement";
       if (processingDesc) processingDesc.textContent = msg || "La transaction a été refusée ou annulée depuis votre téléphone. Votre compte n'a pas été débité.";
@@ -2097,6 +2106,7 @@ function initCheckoutPage() {
 
     function handlePaymentTimeout() {
       cleanupTimers();
+      if (processingQrCard) processingQrCard.style.display = 'none';
       if (processingTitle) processingTitle.textContent = "⏱️ Délai de confirmation dépassé";
       if (processingDesc) processingDesc.textContent = "Aucune validation n'a été reçue sur votre téléphone dans les délais. La transaction a expiré sans aucun prélèvement.";
       if (processingTimerBadge) processingTimerBadge.style.display = 'none';
@@ -2146,46 +2156,55 @@ function initCheckoutPage() {
           const orderNum = initData.order_number;
           sessionStorage.setItem('ov_current_order', orderNum);
 
-          // Si SasPay renvoie un checkout_url (Carte Bancaire 3D Secure ou redirection Wave):
+          // Si SasPay renvoie un checkout_url (Carte Bancaire 3D Secure ou Wave):
           if (initData.checkout_url) {
-            if (currentPaymentMethod === 'card') {
+            const isWave = opVal.toLowerCase().includes('wave') || initData.checkout_url.toLowerCase().includes('wave');
+
+            if (isWave) {
+              // UX EMBARQUÉE : AFFICHER LE QR CODE WAVE DIRECTEMENT DANS LA MODALE SANS REDIRIGER !
+              if (processingQrCard) {
+                processingQrCard.style.display = 'block';
+              }
+              if (processingQrImg) {
+                processingQrImg.src = 'https://api.qrserver.com/v1/create-qr-code/?size=220x220&margin=8&data=' + encodeURIComponent(initData.checkout_url);
+              }
+              if (processingQrDirectBtn) {
+                processingQrDirectBtn.href = initData.checkout_url;
+              }
+              if (processingDeviceAlert) {
+                processingDeviceAlert.style.display = 'none';
+              }
+              if (processingTitle) {
+                processingTitle.textContent = "📸 Scannez le QR Code Wave avec votre téléphone";
+              }
+              if (processingDesc) {
+                processingDesc.textContent = "Ouvrez l'application Wave sur votre mobile, appuyez sur Scanner et validez avec votre code PIN secret. Votre confirmation sera détectée automatiquement en temps réel !";
+              }
+            } else if (currentPaymentMethod === 'card') {
+              // Carte Bancaire 3D Secure
               if (processingTitle) processingTitle.textContent = "⏳ Authentification 3D Secure requise...";
-              if (processingDesc) processingDesc.textContent = "Veuillez autoriser l'opération sur l'espace sécurisé de votre banque. Si la page ne s'est pas ouverte, cliquez sur le bouton ci-dessous.";
-            } else {
-              if (processingTitle) processingTitle.textContent = "⏳ Validation requise sur votre application mobile...";
-              if (processingDesc) processingDesc.textContent = "Confirmez le débit avec votre code PIN secret sur l'application Wave ou Mobile Money. Cette page se mettra à jour automatiquement dès votre confirmation.";
-            }
-
-            // Ajouter un bouton d'accès direct dans la modale
-            if (processingActions) {
-              let directPayBtn = document.getElementById('saspayDirectOpenBtn');
-              if (!directPayBtn) {
-                directPayBtn = document.createElement('a');
-                directPayBtn.id = 'saspayDirectOpenBtn';
-                directPayBtn.className = 'btn btn-primary';
-                directPayBtn.target = '_blank';
-                directPayBtn.rel = 'noopener noreferrer';
-                directPayBtn.style.cssText = 'display:inline-flex; align-items:center; gap:0.5rem; padding:0.75rem 1.25rem; font-weight:700; border-radius:10px; margin-bottom:0.6rem; text-decoration:none; font-size:0.95rem;';
-                processingActions.insertBefore(directPayBtn, processingActions.firstChild);
+              if (processingDesc) processingDesc.textContent = "Veuillez autoriser l'opération sur l'espace sécurisé de votre banque. Si la fenêtre ne s'est pas ouverte automatiquement, cliquez sur le bouton ci-dessous.";
+              
+              if (processingActions) {
+                let directPayBtn = document.getElementById('saspayDirectOpenBtn');
+                if (!directPayBtn) {
+                  directPayBtn = document.createElement('a');
+                  directPayBtn.id = 'saspayDirectOpenBtn';
+                  directPayBtn.className = 'btn btn-primary';
+                  directPayBtn.target = '_blank';
+                  directPayBtn.rel = 'noopener noreferrer';
+                  directPayBtn.style.cssText = 'display:inline-flex; align-items:center; gap:0.5rem; padding:0.75rem 1.25rem; font-weight:700; border-radius:10px; margin-bottom:0.6rem; text-decoration:none; font-size:0.95rem;';
+                  processingActions.insertBefore(directPayBtn, processingActions.firstChild);
+                }
+                directPayBtn.href = initData.checkout_url;
+                directPayBtn.innerHTML = '💳 Ouvrir la validation 3D Secure →';
               }
-              directPayBtn.href = initData.checkout_url;
-              directPayBtn.innerHTML = (currentPaymentMethod === 'card') 
-                ? '💳 Ouvrir la validation 3D Secure →' 
-                : '📲 Ouvrir Wave / Confirmer le paiement →';
-            }
 
-            // Tenter d'ouvrir l'URL de paiement dans un nouvel onglet ou rediriger
-            try {
-              const payWindow = window.open(initData.checkout_url, '_blank');
-              if (!payWindow || payWindow.closed || typeof payWindow.closed === 'undefined') {
-                setTimeout(() => {
-                  window.location.href = initData.checkout_url;
-                }, 1200);
+              try {
+                window.open(initData.checkout_url, '_blank');
+              } catch (e) {
+                console.log("3DS popup blocked", e);
               }
-            } catch (e) {
-              setTimeout(() => {
-                window.location.href = initData.checkout_url;
-              }, 1200);
             }
           }
 

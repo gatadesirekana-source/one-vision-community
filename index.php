@@ -57,7 +57,7 @@ $livesCount = (int)$db->query("SELECT COUNT(*) FROM lives")->fetchColumn();
       <div class="nav-actions">
         <!-- CTA Direct : Rejoindre pour 9€/mois -->
         <a href="checkout.php" class="btn btn-primary open-checkout-btn">
-          <span>Rejoindre — 200 FCFA (Test)</span>
+          <span>Rejoindre — 9€/mois</span>
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
             <line x1="5" y1="12" x2="19" y2="12"></line>
             <polyline points="12 5 19 12 12 19"></polyline>
@@ -147,7 +147,7 @@ $livesCount = (int)$db->query("SELECT COUNT(*) FROM lives")->fetchColumn();
       <!-- Actions de conversion (CTA sous la vidéo VSL) -->
       <div class="hero-actions">
         <a href="checkout.php" class="btn btn-primary btn-lg btn-pulse open-checkout-btn">
-          <span>Rejoindre One Vision — 200 FCFA (Test)</span>
+          <span>Rejoindre One Vision Community — 9€/mois</span>
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
             <line x1="5" y1="12" x2="19" y2="12"></line>
             <polyline points="12 5 19 12 12 19"></polyline>
@@ -465,9 +465,9 @@ $livesCount = (int)$db->query("SELECT COUNT(*) FROM lives")->fetchColumn();
       <div class="comparison-grid single-card-grid">
         <!-- Formule Unique : One Vision Community -->
         <div class="comparison-card card-highlight">
-          <div class="comparison-badge">Tarif Spécial Test & Démonstration</div>
+          <div class="comparison-badge">Notre Formule Unique & Complète</div>
           <h3 class="comparison-title"><span class="logo-one-script">One</span><span class="vision-text">Vision Community</span></h3>
-          <div class="comparison-price">200 FCFA <span style="font-size:1rem;color:#94a3b8;">(~0,30 € - Tarif Test)</span></div>
+          <div class="comparison-price">9€ <span>/mois</span></div>
           <p style="font-size:0.9rem;color:var(--color-gray-300);margin-bottom:1.5rem;text-align:center;">Un tarif unique, tout inclus, sans engagement</p>
           <ul class="comparison-features">
             <li>
@@ -497,7 +497,7 @@ $livesCount = (int)$db->query("SELECT COUNT(*) FROM lives")->fetchColumn();
           </ul>
           <div style="margin-top:2rem;">
             <a href="checkout.php" class="btn btn-primary open-checkout-btn" style="width:100%; display:inline-flex; align-items:center; justify-content:center; text-decoration:none;">
-              Rejoindre pour 200 FCFA (Tarif Test)
+              Rejoindre pour 9€/mois
             </a>
           </div>
         </div>
