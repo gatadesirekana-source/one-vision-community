@@ -2106,6 +2106,7 @@ function initCheckoutPage() {
     const cleanPhone = `${countryData.prefix} ${phoneVal}`.trim();
 
     const isTestOverride = window.SASPAY_CONFIG && window.SASPAY_CONFIG.testOverrideActive;
+    const activeAmountRaw = isTestOverride ? Number(window.SASPAY_CONFIG.testOverrideAmount) : (currentPaymentMethod === 'mobile_money' ? countryData.amountRaw : 9.00);
     const activeAmount = isTestOverride ? String(window.SASPAY_CONFIG.testOverrideAmount) : (currentPaymentMethod === 'mobile_money' ? countryData.amount : '9,00');
     const activeCurrency = isTestOverride ? (window.SASPAY_CONFIG.testOverrideCurrency || 'XOF') : (currentPaymentMethod === 'mobile_money' ? countryData.currency : 'EUR');
 
@@ -2133,7 +2134,7 @@ function initCheckoutPage() {
       formData.set('momoCountry', selCountry);
       formData.set('momoOperator', opVal);
       formData.set('momoPhone', cleanPhone);
-      formData.set('momoAmount', activeAmount);
+      formData.set('momoAmount', activeAmountRaw);
       formData.set('momoCurrency', activeCurrency);
     }
 

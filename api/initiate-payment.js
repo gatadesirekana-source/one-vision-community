@@ -35,12 +35,13 @@ module.exports = async function handler(req, res) {
     const country = (body.momoCountry || body.country || 'Côte d\'Ivoire').trim();
     const operator = (body.momoOperator || body.operator || 'Wave').trim();
 
-    // SasaPay impose un montant minimum strict de 200 XOF (environ 0,30 €)
-    let amount = parseFloat(body.momoAmount || process.env.SASAPAY_TEST_OVERRIDE_AMOUNT || 200);
-    if (isNaN(amount) || amount < 200) {
-      amount = 200;
+    // Nettoyage et conversion du montant réel (ex: 5900 XOF, 5904 XAF, 9.00 EUR)
+    let rawAmountStr = String(body.momoAmount || process.env.SASAPAY_TEST_OVERRIDE_AMOUNT || '').replace(/\s/g, '').replace(',', '.');
+    let amount = parseFloat(rawAmountStr);
+    if (isNaN(amount) || amount <= 0) {
+      amount = 5900;
     }
-    let currency = body.momoCurrency || process.env.SASAPAY_TEST_OVERRIDE_CURRENCY || 'XOF';
+    let currency = (body.momoCurrency || process.env.SASAPAY_TEST_OVERRIDE_CURRENCY || 'XOF').toUpperCase();
 
     // Extraction prénom et nom
     const nameParts = name.split(/\s+/);
