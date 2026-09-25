@@ -3376,7 +3376,9 @@ input:checked + .slider:before {
 
 .card-icons-row {
   display: flex;
+  align-items: center;
   gap: 0.35rem;
+  flex-shrink: 0;
 }
 
 .card-chip-icon {
@@ -3391,8 +3393,25 @@ input:checked + .slider:before {
 /* Badges Mobile Money (Orange, MTN, Wave, Moov) */
 .momo-badges-row {
   display: flex;
+  align-items: center;
   gap: 0.35rem;
   flex-wrap: wrap;
+  flex-shrink: 0;
+}
+
+/* Logos vectoriels officiels des moyens de paiement */
+.pay-logo {
+  display: inline-block;
+  vertical-align: middle;
+  border-radius: 4px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+  flex-shrink: 0;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.pay-logo:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.12);
 }
 
 .momo-chip-badge {
@@ -3716,15 +3735,15 @@ input:checked + .slider:before {
 }
 
 .saspay-method-icon {
-  width: 32px;
-  height: 32px;
-  border-radius: 8px;
+  width: 42px;
+  height: 26px;
+  border-radius: 6px;
   display: flex;
   align-items: center;
   justify-content: center;
   font-size: 1.05rem;
   flex-shrink: 0;
-  background: #f1f5f9;
+  background: transparent;
 }
 
 .saspay-method-info {
@@ -6026,6 +6045,11 @@ input:checked + .slider:before {
 @media (max-width: 1024px) {
   .checkout-grid {
     grid-template-columns: 1fr;
+    gap: 2rem;
+  }
+
+  .checkout-main {
+    padding: 2rem 0 4rem;
   }
   
   .dash-layout {
@@ -6141,6 +6165,93 @@ input:checked + .slider:before {
     border-right: none;
     border-bottom: 1px solid var(--border-light);
     padding-bottom: 1rem;
+  }
+}
+
+/* Responsive Checkout & Paiement Mobile / Tablette */
+@media (max-width: 768px) {
+  .checkout-main {
+    padding: 1.25rem 0 3.5rem;
+  }
+
+  .checkout-grid {
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
+  }
+
+  .checkout-card {
+    padding: 1.35rem 1.15rem;
+    border-radius: 16px;
+  }
+
+  .checkout-title {
+    font-size: 1.35rem;
+  }
+
+  .checkout-subtitle {
+    font-size: 0.82rem;
+    margin-bottom: 1rem;
+  }
+
+  .payment-method-item {
+    padding: 0.75rem 0.95rem;
+  }
+
+  .form-row-dual {
+    grid-template-columns: 1fr;
+    gap: 0.65rem;
+  }
+
+  .saspay-methods-grid {
+    grid-template-columns: repeat(auto-fit, minmax(115px, 1fr));
+    gap: 0.5rem;
+  }
+
+  .saspay-method-card {
+    padding: 0.6rem 0.7rem;
+    gap: 0.45rem;
+  }
+
+  .saspay-method-name {
+    font-size: 0.75rem;
+  }
+
+  .saspay-breakdown-box {
+    padding: 0.85rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .checkout-card {
+    padding: 1.1rem 0.85rem;
+  }
+
+  .payment-method-item {
+    flex-wrap: wrap;
+    gap: 0.55rem;
+    align-items: flex-start;
+  }
+
+  .card-icons-row,
+  .momo-badges-row {
+    width: 100%;
+    margin-left: 2rem;
+    justify-content: flex-start;
+  }
+
+  .pay-logo {
+    height: 20px;
+    width: auto;
+  }
+
+  .step2-member-summary {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5rem;
+  }
+
+  .step2-edit-btn {
+    align-self: flex-end;
   }
 }
 

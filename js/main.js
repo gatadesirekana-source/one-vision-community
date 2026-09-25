@@ -1754,15 +1754,36 @@ function initCheckoutPage() {
     if (momoAmountHidden) momoAmountHidden.value = activeAmountRaw;
     if (momoCurrencyHidden) momoCurrencyHidden.value = activeCurrency;
 
-    function updateOperatorTip(opId) {
-      const tipText = document.getElementById('saspayOperatorTipText');
-      if (!tipText) return;
-      const isWave = (opId || '').toLowerCase().includes('wave');
-      if (isWave) {
-        tipText.innerHTML = `<strong>📲 Wave :</strong> Sur smartphone, l'application Wave s'ouvre automatiquement. Sur ordinateur, Wave affiche un QR code sécurisé directement sur la page à scanner avec votre application Wave. <em>(Pour un push direct sur votre écran sans scan, choisissez MTN MoMo ou Moov).</em>`;
-      } else {
-        tipText.innerHTML = `<strong>⚡ Push direct (${escapeHtml(opId || 'Mobile Money')}) :</strong> Une invite USSD s'affichera directement sur l'écran de votre téléphone pour saisir votre code PIN secret (sans quitter la page).`;
+    function getOperatorIconSvg(opId) {
+      const lower = (opId || '').toLowerCase();
+      if (lower.includes('mtn')) {
+        return `<svg class="pay-logo pay-logo-mtn" viewBox="0 0 44 24" width="38" height="22" fill="none"><rect width="44" height="24" rx="4" fill="#FFCC00"/><ellipse cx="11.5" cy="12" rx="8" ry="7.5" fill="#002F6C"/><text x="11.5" y="14.5" font-family="sans-serif" font-weight="900" font-size="6" fill="#FFCC00" text-anchor="middle">MTN</text><text x="22" y="15.5" font-family="sans-serif" font-weight="900" font-size="8.5" fill="#002F6C" letter-spacing="-0.5">MoMo</text></svg>`;
       }
+      if (lower.includes('orange')) {
+        return `<svg class="pay-logo pay-logo-orange" viewBox="0 0 44 24" width="38" height="22" fill="none"><rect width="44" height="24" rx="4" fill="#000000"/><rect x="3" y="3.5" width="17" height="17" rx="2" fill="#FF7900"/><text x="23" y="11.5" font-family="sans-serif" font-weight="900" font-size="6.5" fill="#FF7900">orange</text><text x="23" y="18" font-family="sans-serif" font-weight="800" font-size="5.5" fill="#FFFFFF">money</text></svg>`;
+      }
+      if (lower.includes('wave')) {
+        return `<svg class="pay-logo pay-logo-wave" viewBox="0 0 44 24" width="38" height="22" fill="none"><rect width="44" height="24" rx="4" fill="#1DC4FF"/><g transform="translate(3, 2.5) scale(0.8)"><path d="M12 2C9.5 2 7.5 4 7.5 6.5C7.5 7.7 8 8.8 8.7 9.6C8 10.9 7.5 12.6 7.5 14.6C7.5 18.5 9.5 21.6 12 21.6C14.5 21.6 16.5 18.5 16.5 14.6C16.5 12.6 16 10.9 15.3 9.6C16 8.8 16.5 7.7 16.5 6.5C16.5 4 14.5 2 12 2Z" fill="#FFFFFF"/><circle cx="10.5" cy="5.5" r="0.8" fill="#1DC4FF"/><circle cx="13.5" cy="5.5" r="0.8" fill="#1DC4FF"/><path d="M11 7L12 8.2L13 7Z" fill="#FF9900"/></g><text x="20" y="15.5" font-family="sans-serif" font-weight="900" font-size="9.5" fill="#FFFFFF" letter-spacing="-0.5">wave</text></svg>`;
+      }
+      if (lower.includes('moov')) {
+        return `<svg class="pay-logo pay-logo-moov" viewBox="0 0 46 24" width="40" height="22" fill="none"><rect width="46" height="24" rx="4" fill="#005BAA"/><circle cx="10" cy="12" r="6" fill="#F37021"/><text x="10" y="15.2" font-family="sans-serif" font-weight="900" font-size="8" fill="#FFFFFF" text-anchor="middle">M</text><text x="18" y="13" font-family="sans-serif" font-weight="900" font-size="6.5" fill="#FFFFFF">moov</text><text x="18" y="19" font-family="sans-serif" font-weight="800" font-size="5" fill="#F37021">MONEY</text></svg>`;
+      }
+      if (lower.includes('airtel')) {
+        return `<svg class="pay-logo pay-logo-airtel" viewBox="0 0 44 24" width="38" height="22" fill="none"><rect width="44" height="24" rx="4" fill="#ED1C24"/><text x="22" y="16" font-family="sans-serif" font-weight="900" font-size="9" fill="#FFFFFF" text-anchor="middle">airtel</text></svg>`;
+      }
+      if (lower.includes('free')) {
+        return `<svg class="pay-logo pay-logo-free" viewBox="0 0 44 24" width="38" height="22" fill="none"><rect width="44" height="24" rx="4" fill="#CC0000"/><text x="22" y="16" font-family="sans-serif" font-weight="900" font-size="9.5" fill="#FFFFFF" font-style="italic" text-anchor="middle">free</text></svg>`;
+      }
+      if (lower.includes('t-money') || lower.includes('togocom')) {
+        return `<svg class="pay-logo pay-logo-tmoney" viewBox="0 0 44 24" width="38" height="22" fill="none"><rect width="44" height="24" rx="4" fill="#F9A825"/><text x="22" y="16" font-family="sans-serif" font-weight="900" font-size="8" fill="#004D40" text-anchor="middle">T-Money</text></svg>`;
+      }
+      if (lower.includes('mpesa') || lower.includes('m-pesa')) {
+        return `<svg class="pay-logo pay-logo-mpesa" viewBox="0 0 44 24" width="38" height="22" fill="none"><rect width="44" height="24" rx="4" fill="#009639"/><text x="22" y="16" font-family="sans-serif" font-weight="900" font-size="8" fill="#FFFFFF" text-anchor="middle">M-PESA</text></svg>`;
+      }
+      if (lower.includes('crypto')) {
+        return `<svg class="pay-logo pay-logo-crypto" viewBox="0 0 44 24" width="38" height="22" fill="none"><rect width="44" height="24" rx="4" fill="#26A17B"/><circle cx="12" cy="12" r="7" fill="#FFFFFF"/><text x="12" y="15.5" font-family="sans-serif" font-weight="900" font-size="9" fill="#26A17B" text-anchor="middle">₮</text><text x="22" y="15.5" font-family="sans-serif" font-weight="900" font-size="8.5" fill="#FFFFFF">USDT</text></svg>`;
+      }
+      return `<span style="font-size:1.1rem;">📱</span>`;
     }
 
     // Rendu des boutons opérateurs
@@ -1777,7 +1798,7 @@ function initCheckoutPage() {
         card.className = `saspay-method-card ${index === 0 ? 'active' : ''}`;
         card.dataset.operator = op.id;
         card.innerHTML = `
-          <div class="saspay-method-icon">${op.icon}</div>
+          <div class="saspay-method-icon">${getOperatorIconSvg(op.id)}</div>
           <div class="saspay-method-info">
             <span class="saspay-method-name">${escapeHtml(op.name)}</span>
             <span class="saspay-method-fee">${escapeHtml(op.fee)}</span>
@@ -1789,7 +1810,6 @@ function initCheckoutPage() {
           document.querySelectorAll('.saspay-method-card').forEach(c => c.classList.remove('active'));
           card.classList.add('active');
           if (saspaySelectedOperator) saspaySelectedOperator.value = op.id;
-          updateOperatorTip(op.id);
         });
 
         saspayMethodsGrid.appendChild(card);
@@ -1797,12 +1817,11 @@ function initCheckoutPage() {
 
       if (saspaySelectedOperator && data.operators.length > 0) {
         saspaySelectedOperator.value = data.operators[0].id;
-        updateOperatorTip(data.operators[0].id);
       }
     }
 
     if (currentPaymentMethod === 'mobile_money' && submitText) {
-      submitText.textContent = `Payer ${activeTotal} via Mobile Money →`;
+      submitText.textContent = `Payer ${activeTotal} via Mobile Money`;
     }
   }
 
@@ -1828,7 +1847,7 @@ function initCheckoutPage() {
       if (cardDetailsBox) cardDetailsBox.style.display = 'block';
       if (mobileMoneyDetailsBox) mobileMoneyDetailsBox.style.display = 'none';
       if (submitText) {
-        submitText.textContent = testAmountStr ? `Payer ${testAmountStr} par Carte Bancaire →` : "Payer 9,00 € par Carte Bancaire →";
+        submitText.textContent = testAmountStr ? `Payer ${testAmountStr} par Carte Bancaire` : "Payer 9,00 € par Carte Bancaire";
       }
     } else {
       if (methodMobileMoney) methodMobileMoney.classList.add('selected');
@@ -1839,7 +1858,7 @@ function initCheckoutPage() {
       const selCountry = saspayCountrySelect ? saspayCountrySelect.value : "Cameroun";
       const data = saspayCountries[selCountry] || saspayCountries["Cameroun"];
       const activeTotal = testAmountStr || data.total;
-      if (submitText) submitText.textContent = `Payer ${activeTotal} via Mobile Money →`;
+      if (submitText) submitText.textContent = `Payer ${activeTotal} via Mobile Money`;
     }
   }
 
