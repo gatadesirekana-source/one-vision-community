@@ -1462,7 +1462,7 @@ function initCheckoutPage() {
   // Si une commande était en cours ou vient d'être payée, rediriger vers le succès
   const checkPendingOrder = new URLSearchParams(window.location.search).get('order') || sessionStorage.getItem('ov_current_order');
   if (checkPendingOrder && isPhpEnvironment()) {
-    fetch(`api/check-payment-status.php?order=${encodeURIComponent(checkPendingOrder)}`)
+    fetch(`api/check-order-status.php?order=${encodeURIComponent(checkPendingOrder)}`)
       .then(res => res.json())
       .then(statusData => {
         if (statusData && statusData.status === 'paid') {
@@ -2400,7 +2400,7 @@ function initCheckoutPage() {
 
         // 2. Lancer IMMÉDIATEMENT le polling toutes les 2.5 secondes du statut réel
         const pollEndpoint = isPhpEnvironment() 
-          ? `api/check-payment-status.php?order=${encodeURIComponent(orderNum)}&payment_id=${encodeURIComponent(paymentId)}`
+          ? `api/check-order-status.php?order=${encodeURIComponent(orderNum)}&payment_id=${encodeURIComponent(paymentId)}`
           : `/api/check-payment-status?order=${encodeURIComponent(orderNum)}&payment_id=${encodeURIComponent(paymentId)}`;
 
         activePollInterval = setInterval(() => {

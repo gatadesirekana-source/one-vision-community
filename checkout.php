@@ -209,7 +209,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     'order_id'            => $orderId,
                     'checkout_request_id' => $saspayRequestId,
                     'checkout_url'        => $saspayCheckoutUrl,
-                    'poll_url'            => 'api/check-payment-status.php?order=' . urlencode($orderNumber),
+                    'poll_url'            => 'api/check-order-status.php?order=' . urlencode($orderNumber),
                     'message'             => $pendingMsg
                 ]);
                 exit;

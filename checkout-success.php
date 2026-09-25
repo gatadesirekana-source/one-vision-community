@@ -201,7 +201,7 @@ require_once __DIR__ . '/includes/header.php';
         // Polling automatique toutes les 3 secondes
         const pollOrder = "<?= htmlspecialchars($order['order_number']) ?>";
         const pollTimer = setInterval(() => {
-          fetch('api/check-payment-status.php?order=' + encodeURIComponent(pollOrder))
+          fetch('api/check-order-status.php?order=' + encodeURIComponent(pollOrder))
             .then(r => r.json())
             .then(data => {
               if (data && data.status === 'paid') {
