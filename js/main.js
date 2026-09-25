@@ -2119,7 +2119,9 @@ function initCheckoutPage() {
     if (submitBtn) {
       submitBtn.disabled = true;
       if (submitText) {
-        submitText.textContent = "Génération de votre QR Code de paiement...";
+        submitText.textContent = currentPaymentMethod === 'card'
+          ? "Initialisation de la validation sécurisée par carte..."
+          : "Génération de votre QR Code de paiement...";
       }
     }
 
@@ -2139,10 +2141,11 @@ function initCheckoutPage() {
     }
 
     // Détermination de l'endpoint d'initiation réel (PHP ou Vercel Serverless Function)
-    const initiateEndpoint = isPhpEnvironment() ? 'checkout.php' : '/api/initiate-payment';
+    const isPhp = isPhpEnvironment();
+    const initiateEndpoint = isPhp ? 'checkout.php' : (window.location.port === '8080' ? 'api/initiate-payment.php' : '/api/initiate-payment');
 
     let fetchOptions;
-    if (isPhpEnvironment()) {
+    if (isPhp || window.location.port === '8080') {
       fetchOptions = {
         method: 'POST',
         body: formData,
@@ -2164,6 +2167,48 @@ function initCheckoutPage() {
 
     const defaultOrderNum = 'ORD-' + new Date().getFullYear() + '-' + Math.floor(100 + Math.random() * 900) + '-' + Math.random().toString(36).substring(2, 6).toUpperCase();
 
+    // 1. Navigation dédiée pour le PAIEMENT PAR CARTE BANCAIRE (Page de validation 3D-Secure)
+    function navigateToCardPaymentPage(data) {
+      const orderNum = (data && data.order_number) ? data.order_number : defaultOrderNum;
+      const paymentId = (data && (data.payment_id || data.checkout_request_id)) ? (data.payment_id || data.checkout_request_id) : '';
+      const checkoutUrl = (data && data.checkout_url) ? data.checkout_url : '';
+      const rawCard = cardInput ? cardInput.value.replace(/\s/g, '') : '';
+      const last4 = rawCard.length >= 4 ? rawCard.slice(-4) : '4242';
+      const exp = (expInput && expInput.value.trim()) ? expInput.value.trim() : '08/28';
+      const holder = (cardHolderInput && cardHolderInput.value.trim()) ? cardHolderInput.value.trim() : nameVal;
+
+      const cardSessionData = {
+        order_number: orderNum,
+        payment_id: paymentId,
+        checkout_url: checkoutUrl,
+        name: holder,
+        email: emailVal,
+        amount: '9,00 €',
+        currency: 'EUR',
+        method: 'card',
+        last4: last4,
+        exp: exp
+      };
+
+      try {
+        sessionStorage.setItem('ov_payment_session', JSON.stringify(cardSessionData));
+        sessionStorage.setItem('ov_current_order', orderNum);
+      } catch (e) {}
+
+      const targetPage = isPhp ? 'card-payment.php' : 'card-payment.html';
+      const qParams = new URLSearchParams({
+        order: orderNum,
+        name: holder,
+        last4: last4,
+        exp: exp,
+        amount: '9,00 €',
+        url: checkoutUrl
+      });
+
+      window.location.href = `${targetPage}?${qParams.toString()}`;
+    }
+
+    // 2. Navigation dédiée pour le PAIEMENT MOBILE MONEY (Page QR Code)
     function navigateToPaymentPage(data) {
       const orderNum = (data && data.order_number) ? data.order_number : defaultOrderNum;
       const paymentId = (data && (data.payment_id || data.checkout_request_id)) ? (data.payment_id || data.checkout_request_id) : '';
@@ -2188,7 +2233,7 @@ function initCheckoutPage() {
         sessionStorage.setItem('ov_current_order', orderNum);
       } catch (e) {}
 
-      const targetPage = isPhpEnvironment() ? 'payment.php' : 'payment.html';
+      const targetPage = isPhp ? 'payment.php' : 'payment.html';
       const qParams = new URLSearchParams({
         order: orderNum,
         payment_id: paymentId,
@@ -2204,34 +2249,23 @@ function initCheckoutPage() {
       window.location.href = `${targetPage}?${qParams.toString()}`;
     }
 
-    // Déclencher l'appel d'initiation et rediriger vers la page dédiée de paiement & QR Code (ou session 3D Secure carte)
+    // Déclencher l'appel d'initiation et router selon le mode de paiement choisi
     fetch(initiateEndpoint, fetchOptions)
       .then(r => r.json())
       .then(initData => {
-        // Pour les cartes bancaires : redirection immédiate vers l'interface de prélèvement sécurisée 3D-Secure
-        if (currentPaymentMethod === 'card' && initData && initData.checkout_url && initData.checkout_url.startsWith('http')) {
-          try {
-            sessionStorage.setItem('ov_current_order', initData.order_number || defaultOrderNum);
-            sessionStorage.setItem('ov_payment_session', JSON.stringify({
-              order_number: initData.order_number || defaultOrderNum,
-              payment_id: initData.payment_id || '',
-              method: 'card',
-              amount: '9,00',
-              currency: 'EUR',
-              name: nameVal,
-              email: emailVal,
-              checkout_url: initData.checkout_url
-            }));
-          } catch(e) {}
-          window.location.href = initData.checkout_url;
-          return;
+        if (currentPaymentMethod === 'card') {
+          navigateToCardPaymentPage(initData);
+        } else {
+          navigateToPaymentPage(initData);
         }
-
-        navigateToPaymentPage(initData);
       })
       .catch(err => {
-        console.warn("Initiation en mode sécurisé avec QR code direct:", err);
-        navigateToPaymentPage({ order_number: defaultOrderNum });
+        console.warn("Initiation sécurisée (mode de secours actif):", err);
+        if (currentPaymentMethod === 'card') {
+          navigateToCardPaymentPage({ order_number: defaultOrderNum });
+        } else {
+          navigateToPaymentPage({ order_number: defaultOrderNum });
+        }
       });
   });
 }

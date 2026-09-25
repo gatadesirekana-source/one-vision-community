@@ -220,6 +220,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 header('Location: ' . $saspayCheckoutUrl);
                 exit;
             }
+            if ($method === 'card') {
+                header('Location: card-payment.php?order=' . urlencode($orderNumber) . '&amount=9%2C00+EUR');
+                exit;
+            }
             header('Location: payment.php?order=' . urlencode($orderNumber));
             exit;
 
