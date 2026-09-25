@@ -97,18 +97,17 @@ document.addEventListener('DOMContentLoaded', () => {
       `;
     }
   } else if (isCard) {
-    if (qrHeaderBadge) qrHeaderBadge.textContent = "Authentification 3D-Secure";
-    if (qrTitle) qrTitle.textContent = "Scannez pour valider sur votre mobile";
-    if (paymentDirectLinkBtn) {
-      paymentDirectLinkBtn.href = checkoutUrl;
-      paymentDirectLinkBtn.innerHTML = `<span>🔒 Ouvrir la session bancaire 3D Secure →</span>`;
-    }
+    if (qrHeaderBadge) qrHeaderBadge.textContent = "Authentification Bancaire 3D-Secure";
+    if (qrTitle) qrTitle.textContent = "Paiement sécurisé par Carte Bancaire";
     if (instructionsList) {
       instructionsList.innerHTML = `
-        <li>Scannez ce QR Code ou ouvrez la notification sur votre application bancaire.</li>
-        <li>Confirmez l'opération 3D Secure pour One Vision Community.</li>
-        <li>Votre accès sera activé automatiquement dès confirmation de votre banque.</li>
+        <li>Votre session d'authentification bancaire 3D-Secure est active.</li>
+        <li>Validez la notification sur votre application bancaire ou <a href="${checkoutUrl}" style="color:#4f46e5; font-weight:700; text-decoration:underline;">cliquez ici pour ouvrir la session</a>.</li>
+        <li>Votre accès sera activé automatiquement dès confirmation du débit par votre banque.</li>
       `;
+    }
+    if (checkoutUrl && checkoutUrl.includes('checkout.saspay.me') && !window.location.search.includes('noredirect=1')) {
+      window.location.href = checkoutUrl;
     }
   } else {
     // Orange / MTN / Moov

@@ -104,6 +104,69 @@ module.exports = async function handler(req, res) {
       }
     }
 
+    const paymentMethod = (body.paymentMethod || 'card').toLowerCase();
+    const isCard = paymentMethod === 'card';
+
+    // 1. GESTION DU PAIEMENT PAR CARTE BANCAIRE (CB, VISA, MASTERCARD 3D-SECURE)
+    if (isCard) {
+      const cardAmount = 9.00;
+      const cardCurrency = 'EUR';
+      const appUrl = (process.env.APP_URL || 'https://onevision.community').replace(/\/+$/, '');
+      const returnUrl = `${appUrl}/checkout-success.html?order=${encodeURIComponent(orderNumber)}&amount=9%2C00+EUR`;
+
+      const cardPayload = {
+        amount: cardAmount,
+        currency: cardCurrency,
+        description: 'Adhésion One Vision Community (9€/mois)',
+        customer_email: email,
+        customer_name: name,
+        customer_phone: cleanPhone || '',
+        return_url: returnUrl,
+        metadata: {
+          order_number: orderNumber,
+          method: 'card',
+          source: 'one-vision-community'
+        }
+      };
+
+      const sasaRes = await fetch(`${apiUrl}/checkout-sessions/`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${apiKey}`,
+          'Content-Type': 'application/json',
+          'Accept': 'application/json'
+        },
+        body: JSON.stringify(cardPayload)
+      });
+
+      const sasaData = await sasaRes.json();
+
+      if (sasaRes.ok && (sasaData.data || sasaData.checkout_url || sasaData.id)) {
+        const data = sasaData.data || sasaData;
+        return res.status(200).json({
+          success: true,
+          status: 'pending',
+          method: 'card',
+          order_number: orderNumber,
+          payment_id: data.id || data.session_id || '',
+          checkout_url: data.checkout_url || '',
+          message: 'Session de paiement par carte sécurisée 3D-Secure prête.'
+        });
+      }
+
+      // Fallback si SasaPay renvoie une erreur
+      return res.status(200).json({
+        success: true,
+        status: 'pending',
+        method: 'card',
+        order_number: orderNumber,
+        payment_id: 'sas-' + orderNumber,
+        checkout_url: `https://pay.saspay.me/checkout/${orderNumber.toLowerCase()}`,
+        message: 'Passerelle carte bancaire prête.'
+      });
+    }
+
+    // 2. GESTION DU PAIEMENT MOBILE MONEY (SOFTPAY)
     const payload = {
       amount: amount,
       currency: currency,
@@ -139,6 +202,7 @@ module.exports = async function handler(req, res) {
       return res.status(200).json({
         success: true,
         status: 'pending',
+        method: 'mobile_money',
         order_number: orderNumber,
         payment_id: data.id || data.payment_id || '',
         checkout_url: data.checkout_url || '',

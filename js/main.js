@@ -2204,10 +2204,29 @@ function initCheckoutPage() {
       window.location.href = `${targetPage}?${qParams.toString()}`;
     }
 
-    // Déclencher l'appel d'initiation et rediriger vers la page dédiée de paiement & QR Code
+    // Déclencher l'appel d'initiation et rediriger vers la page dédiée de paiement & QR Code (ou session 3D Secure carte)
     fetch(initiateEndpoint, fetchOptions)
       .then(r => r.json())
       .then(initData => {
+        // Pour les cartes bancaires : redirection immédiate vers l'interface de prélèvement sécurisée 3D-Secure
+        if (currentPaymentMethod === 'card' && initData && initData.checkout_url && initData.checkout_url.startsWith('http')) {
+          try {
+            sessionStorage.setItem('ov_current_order', initData.order_number || defaultOrderNum);
+            sessionStorage.setItem('ov_payment_session', JSON.stringify({
+              order_number: initData.order_number || defaultOrderNum,
+              payment_id: initData.payment_id || '',
+              method: 'card',
+              amount: '9,00',
+              currency: 'EUR',
+              name: nameVal,
+              email: emailVal,
+              checkout_url: initData.checkout_url
+            }));
+          } catch(e) {}
+          window.location.href = initData.checkout_url;
+          return;
+        }
+
         navigateToPaymentPage(initData);
       })
       .catch(err => {
