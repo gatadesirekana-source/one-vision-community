@@ -2179,131 +2179,136 @@ function initCheckoutPage() {
     localStorage.setItem('ov_member_name', nameVal);
     localStorage.setItem('ov_member_email', emailVal);
 
+    // Détermination de l'endpoint d'initiation réel (PHP ou Vercel Serverless Function)
+    const initiateEndpoint = isPhpEnvironment() ? 'checkout.php' : '/api/initiate-payment';
+
+    let fetchOptions;
     if (isPhpEnvironment()) {
-      // 1. Déclencher l'appel d'initiation au backend PHP (C2B / Session)
-      fetch('checkout.php', {
+      fetchOptions = {
         method: 'POST',
         body: formData,
         headers: { 'X-Requested-With': 'XMLHttpRequest' }
-      })
-      .then(r => {
-        if (!r.ok) throw new Error('Erreur HTTP ' + r.status);
-        return r.json();
-      })
-      .then(initData => {
-        if (initData && initData.success && initData.order_number) {
-          const orderNum = initData.order_number;
-          sessionStorage.setItem('ov_current_order', orderNum);
+      };
+    } else {
+      const payloadObj = {};
+      formData.forEach((val, key) => { payloadObj[key] = val; });
+      fetchOptions = {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+          'X-Requested-With': 'XMLHttpRequest'
+        },
+        body: JSON.stringify(payloadObj)
+      };
+    }
 
-          // Si SasPay renvoie un checkout_url (Wave, Mobile ou Carte Bancaire 3DS) :
-          if (initData.checkout_url) {
-            const isWave = opVal.toLowerCase().includes('wave') || initData.checkout_url.toLowerCase().includes('wave');
+    // 1. Déclencher l'appel d'initiation réel auprès de SasPay
+    fetch(initiateEndpoint, fetchOptions)
+    .then(r => {
+      if (!r.ok) {
+        return r.json().catch(() => ({})).then(errData => {
+          throw new Error(errData.error || ('Erreur HTTP ' + r.status));
+        });
+      }
+      return r.json();
+    })
+    .then(initData => {
+      if (initData && initData.success && initData.order_number) {
+        const orderNum = initData.order_number;
+        const paymentId = initData.payment_id || '';
+        sessionStorage.setItem('ov_current_order', orderNum);
 
-            // AFFICHER LE QR CODE DIRECTEMENT SUR LA PAGE DE CHECKOUT (SANS REDIRECTION)
-            if (inpageQrCanvas) {
-              inpageQrCanvas.innerHTML = '';
-              if (typeof QRCode !== 'undefined') {
-                try {
-                  new QRCode(inpageQrCanvas, {
-                    text: initData.checkout_url,
-                    width: 220,
-                    height: 220,
-                    colorDark: "#0f172a",
-                    colorLight: "#ffffff",
-                    correctLevel: QRCode.CorrectLevel.M
-                  });
-                } catch (qrErr) {
-                  console.warn("Erreur QRCode canvas:", qrErr);
-                  inpageQrCanvas.innerHTML = `<img src="https://api.qrserver.com/v1/create-qr-code/?size=220x220&margin=8&data=${encodeURIComponent(initData.checkout_url)}" alt="QR Code" style="width:220px;height:220px;display:block;border-radius:10px;" />`;
-                }
-              } else {
+        // Si SasPay renvoie un checkout_url (Wave, Mobile ou Carte Bancaire 3DS) :
+        if (initData.checkout_url) {
+          const isWave = opVal.toLowerCase().includes('wave') || initData.checkout_url.toLowerCase().includes('wave');
+
+          // AFFICHER LE QR CODE DIRECTEMENT SUR LA PAGE DE CHECKOUT (SANS REDIRECTION)
+          if (inpageQrCanvas) {
+            inpageQrCanvas.innerHTML = '';
+            if (typeof QRCode !== 'undefined') {
+              try {
+                new QRCode(inpageQrCanvas, {
+                  text: initData.checkout_url,
+                  width: 220,
+                  height: 220,
+                  colorDark: "#0f172a",
+                  colorLight: "#ffffff",
+                  correctLevel: QRCode.CorrectLevel.M
+                });
+              } catch (qrErr) {
+                console.warn("Erreur QRCode canvas:", qrErr);
                 inpageQrCanvas.innerHTML = `<img src="https://api.qrserver.com/v1/create-qr-code/?size=220x220&margin=8&data=${encodeURIComponent(initData.checkout_url)}" alt="QR Code" style="width:220px;height:220px;display:block;border-radius:10px;" />`;
               }
+            } else {
+              inpageQrCanvas.innerHTML = `<img src="https://api.qrserver.com/v1/create-qr-code/?size=220x220&margin=8&data=${encodeURIComponent(initData.checkout_url)}" alt="QR Code" style="width:220px;height:220px;display:block;border-radius:10px;" />`;
             }
-
-            if (inpageDirectLinkBtn) {
-              inpageDirectLinkBtn.href = initData.checkout_url;
-            }
-
-            if (inpageQrSection) {
-              inpageQrSection.style.display = 'block';
-            }
-
-            if (isWave) {
-              if (inpageWaitingTitle) inpageWaitingTitle.textContent = "📸 Scannez le QR Code Wave avec votre téléphone";
-              if (inpageWaitingDesc) inpageWaitingDesc.innerHTML = "Ouvrez votre application <strong>Wave</strong> sur votre téléphone, appuyez sur <strong>Scanner</strong> et validez avec votre code PIN secret.<br>Votre statut se mettra à jour automatiquement dès confirmation.";
-            } else if (currentPaymentMethod === 'card') {
-              if (inpageWaitingTitle) inpageWaitingTitle.textContent = "⏳ Authentification 3D Secure";
-              if (inpageWaitingDesc) inpageWaitingDesc.innerHTML = "Scannez le QR code ou confirmez sur votre application bancaire.<br>Votre statut se mettra à jour en direct dès validation.";
-            }
-
-            // Support miroir dans la modale si fallback
-            if (processingQrCard) processingQrCard.style.display = 'block';
-            if (processingQrImg) processingQrImg.src = 'https://api.qrserver.com/v1/create-qr-code/?size=220x220&margin=8&data=' + encodeURIComponent(initData.checkout_url);
-            if (processingQrDirectBtn) processingQrDirectBtn.href = initData.checkout_url;
-
-          } else {
-            // Aucun checkout_url : Push USSD direct sur le téléphone
-            if (inpageQrSection) inpageQrSection.style.display = 'none';
-            if (inpageWaitingTitle) inpageWaitingTitle.textContent = "⏳ Invite envoyée sur votre mobile...";
-            if (inpageWaitingDesc) inpageWaitingDesc.textContent = `Consultez l'écran de votre téléphone (${phoneVal}) et saisissez votre code PIN secret pour approuver le règlement.`;
           }
 
-          // 2. Lancer IMMÉDIATEMENT le polling toutes les 2.5 secondes du statut réel
-          activePollInterval = setInterval(() => {
-            fetch(`api/check-payment-status.php?order=${encodeURIComponent(orderNum)}`)
-              .then(res => res.json())
-              .then(statusData => {
-                if (statusData && statusData.status === 'paid') {
-                  // Confirmation réelle reçue (soit via webhook IPN, soit via SasPay verify) :
-                  // AFFICHAGE EN DIRECT DU SUCCÈS SANS REDIRECTION NI RECHARGEMENT
-                  handlePaymentSuccessInPage(orderNum);
-                } else if (statusData && statusData.status === 'failed') {
-                  handlePaymentFailed(statusData.message || "La transaction a été refusée ou rejetée.");
-                } else if (statusData && statusData.status === 'expired') {
-                  handlePaymentTimeout();
-                } else {
-                  // Toujours en attente : mise à jour visuelle fluide
-                  const progPct = Math.min(85, 25 + (180 - secondsRemaining) * 0.35) + '%';
-                  if (processingProgressBar) processingProgressBar.style.width = progPct;
-                  if (inpageProgressBar) inpageProgressBar.style.width = progPct;
-                }
-              })
-              .catch(pollErr => {
-                console.log("Polling en attente...", pollErr);
-              });
-          }, 2500);
+          if (inpageDirectLinkBtn) {
+            inpageDirectLinkBtn.href = initData.checkout_url;
+          }
+
+          if (inpageQrSection) {
+            inpageQrSection.style.display = 'block';
+          }
+
+          if (isWave) {
+            if (inpageWaitingTitle) inpageWaitingTitle.textContent = "📸 Scannez le QR Code Wave avec votre téléphone";
+            if (inpageWaitingDesc) inpageWaitingDesc.innerHTML = "Ouvrez votre application <strong>Wave</strong> sur votre téléphone, appuyez sur <strong>Scanner</strong> et validez avec votre code PIN secret.<br>Votre statut se mettra à jour automatiquement dès confirmation.";
+          } else if (currentPaymentMethod === 'card') {
+            if (inpageWaitingTitle) inpageWaitingTitle.textContent = "⏳ Authentification 3D Secure";
+            if (inpageWaitingDesc) inpageWaitingDesc.innerHTML = "Scannez le QR code ou confirmez sur votre application bancaire.<br>Votre statut se mettra à jour en direct dès validation.";
+          }
+
+          // Support miroir dans la modale si fallback
+          if (processingQrCard) processingQrCard.style.display = 'block';
+          if (processingQrImg) processingQrImg.src = 'https://api.qrserver.com/v1/create-qr-code/?size=220x220&margin=8&data=' + encodeURIComponent(initData.checkout_url);
+          if (processingQrDirectBtn) processingQrDirectBtn.href = initData.checkout_url;
 
         } else {
-          handlePaymentFailed(initData.error || "Impossible d'initier la demande de paiement SasPay.");
+          // Aucun checkout_url : Push USSD direct sur le téléphone
+          if (inpageQrSection) inpageQrSection.style.display = 'none';
+          if (inpageWaitingTitle) inpageWaitingTitle.textContent = "⏳ Invite envoyée sur votre mobile...";
+          if (inpageWaitingDesc) inpageWaitingDesc.textContent = `Consultez l'écran de votre téléphone (${phoneVal}) et saisissez votre code PIN secret pour approuver le règlement.`;
         }
-      })
-      .catch(err => {
-        console.warn("Échec d'initiation AJAX:", err);
-        handlePaymentFailed("Erreur lors de la communication avec le serveur de paiement.");
-      });
 
-    } else {
-      // Mode statique (GitHub Pages / test sans backend PHP) :
-      // RÈGLE : Cliquer sur "Payer" sans valider sur le téléphone ne doit JAMAIS afficher "paiement réussi".
-      // La page reste en attente jusqu'à expiration, sauf si un testeur clique manuellement sur le bouton de test.
-      if (processingActions) {
-        let testSimBtn = document.getElementById('testSimulateMobileConfirmBtn');
-        if (!testSimBtn) {
-          testSimBtn = document.createElement('button');
-          testSimBtn.id = 'testSimulateMobileConfirmBtn';
-          testSimBtn.type = 'button';
-          testSimBtn.className = 'processing-retry-btn';
-          testSimBtn.style.cssText = 'background:#4f46e5; font-size:0.78rem; padding:0.45rem 0.8rem; margin-top:0.4rem;';
-          testSimBtn.innerHTML = '🧪 Test Sandbox : Simuler validation mobile (PIN saisi)';
-          testSimBtn.onclick = () => {
-            const fakeOrder = 'ORD-' + Math.floor(100000 + Math.random() * 900000);
-            handlePaymentSuccess(`checkout-success.html?order=${encodeURIComponent(fakeOrder)}`);
-          };
-          processingActions.insertBefore(testSimBtn, processingActions.firstChild);
-        }
+        // 2. Lancer IMMÉDIATEMENT le polling toutes les 2.5 secondes du statut réel
+        const pollEndpoint = isPhpEnvironment() 
+          ? `api/check-payment-status.php?order=${encodeURIComponent(orderNum)}&payment_id=${encodeURIComponent(paymentId)}`
+          : `/api/check-payment-status?order=${encodeURIComponent(orderNum)}&payment_id=${encodeURIComponent(paymentId)}`;
+
+        activePollInterval = setInterval(() => {
+          fetch(pollEndpoint)
+            .then(res => res.json())
+            .then(statusData => {
+              if (statusData && statusData.status === 'paid') {
+                // Confirmation réelle reçue : AFFICHAGE EN DIRECT DU SUCCÈS SANS REDIRECTION NI RECHARGEMENT
+                handlePaymentSuccessInPage(orderNum);
+              } else if (statusData && statusData.status === 'failed') {
+                handlePaymentFailed(statusData.message || "La transaction a été refusée ou rejetée.");
+              } else if (statusData && statusData.status === 'expired') {
+                handlePaymentTimeout();
+              } else {
+                // Toujours en attente : mise à jour visuelle fluide
+                const progPct = Math.min(85, 25 + (180 - secondsRemaining) * 0.35) + '%';
+                if (processingProgressBar) processingProgressBar.style.width = progPct;
+                if (inpageProgressBar) inpageProgressBar.style.width = progPct;
+              }
+            })
+            .catch(pollErr => {
+              console.log("Polling en attente...", pollErr);
+            });
+        }, 2500);
+
+      } else {
+        handlePaymentFailed(initData.error || "Impossible d'initier la demande de paiement SasPay.");
       }
-    }
+    })
+    .catch(err => {
+      console.warn("Échec d'initiation:", err);
+      handlePaymentFailed(err.message || "Erreur lors de la communication avec le serveur de paiement.");
+    });
   });
 }
 

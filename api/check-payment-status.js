@@ -1,0 +1,70 @@
+// api/check-payment-status.js — Vercel Serverless Function pour vérifier le statut de paiement
+module.exports = async function handler(req, res) {
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, X-Requested-With');
+  res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate');
+
+  if (req.method === 'OPTIONS') {
+    return res.status(200).end();
+  }
+
+  const order = req.query.order || (req.body && req.body.order) || '';
+  const paymentId = req.query.payment_id || (req.body && req.body.payment_id) || '';
+  const apiKey = process.env.SASAPAY_API_KEY || '';
+  const apiUrl = (process.env.SASAPAY_API_URL || "https://api.saspay.me/api/v1").replace(/\/+$/, '');
+
+  if (!paymentId && !order) {
+    return res.status(400).json({ success: false, status: 'error', message: 'Paramètre order manquant' });
+  }
+
+  try {
+    if (paymentId) {
+      const sasaRes = await fetch(`${apiUrl}/payments/${encodeURIComponent(paymentId)}/verify/`, {
+        headers: {
+          'Authorization': `Bearer ${apiKey}`,
+          'Accept': 'application/json'
+        }
+      });
+
+      if (sasaRes.ok) {
+        const data = await sasaRes.json();
+        const rawStatus = ((data.data && data.data.status) || data.status || '').toUpperCase();
+
+        if (['SUCCESS', 'PAID', 'COMPLETED'].includes(rawStatus)) {
+          return res.status(200).json({
+            success: true,
+            status: 'paid',
+            order_number: order,
+            message: 'Paiement confirmé avec succès !'
+          });
+        }
+
+        if (['FAILED', 'CANCELLED', 'REJECTED'].includes(rawStatus)) {
+          return res.status(200).json({
+            success: false,
+            status: 'failed',
+            order_number: order,
+            message: 'La transaction a été refusée ou annulée.'
+          });
+        }
+      }
+    }
+
+    // Par défaut, toujours en attente
+    return res.status(200).json({
+      success: true,
+      status: 'pending',
+      order_number: order,
+      message: 'En attente de confirmation sur votre téléphone...'
+    });
+
+  } catch (err) {
+    return res.status(200).json({
+      success: true,
+      status: 'pending',
+      order_number: order,
+      message: 'En attente de confirmation...'
+    });
+  }
+};

@@ -833,6 +833,6 @@ $pageDescription = "Finalisez votre adhésion à One Vision Community pour 9€ 
     };
   </script>
   <script src="./js/qrcode.min.js"></script>
-  <script src="./js/main.js?v=7"></script>
+  <script src="./js/main.js?v=8"></script>
 </body>
 </html>

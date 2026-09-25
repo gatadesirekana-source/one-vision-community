@@ -125,8 +125,16 @@ function saspay_request(string $endpoint, string $method = 'GET', ?array $data =
 
     $errorMsg = 'Erreur SasPay (' . $httpCode . ')';
     if (is_array($json)) {
-        if (!empty($json['error']['detail'])) {
-            $errorMsg = $json['error']['detail'];
+        if (!empty($json['error'])) {
+            if (is_string($json['error'])) {
+                $errorMsg = $json['error'];
+            } elseif (!empty($json['error']['message'])) {
+                $errorMsg = $json['error']['message'];
+            } elseif (!empty($json['error']['detail'])) {
+                $errorMsg = $json['error']['detail'];
+            } else {
+                $errorMsg = json_encode($json['error'], JSON_UNESCAPED_UNICODE);
+            }
         } elseif (!empty($json['message'])) {
             $errorMsg = $json['message'];
         } elseif (!empty($json['detail'])) {
@@ -267,7 +275,7 @@ function saspay_initiate_softpay(array $params): array {
     $country = $params['country_iso'] ?? $resolved['country'];
 
     $payload = [
-        'amount'      => number_format((float)($params['amount'] ?? 9.00), 2, '.', ''),
+        'amount'      => (float)($params['amount'] ?? 200),
         'currency'    => $params['currency'] ?? 'XOF',
         'country'     => $country,
         'network'     => $network,
@@ -277,9 +285,12 @@ function saspay_initiate_softpay(array $params): array {
             'first_name' => $firstName,
             'last_name'  => $lastName,
             'phone'      => $phone
-        ],
-        'metadata'    => $params['metadata'] ?? []
+        ]
     ];
+
+    if (!empty($params['metadata'])) {
+        $payload['metadata'] = (object)$params['metadata'];
+    }
 
     if (!empty($params['return_url'])) {
         $payload['return_url'] = $params['return_url'];
