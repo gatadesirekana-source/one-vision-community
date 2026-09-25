@@ -86,6 +86,17 @@ if (!defined('SASPAY_WEBHOOK_SECRET')) {
 
 define('SASPAY_CURRENCY', getenv('SASPAY_CURRENCY') ?: 'EUR');
 
+// 5b. Montant temporaire d'essai réel (ex: 100 Francs CFA)
+// Configurable dans le fichier .env (SASAPAY_TEST_OVERRIDE_AMOUNT=100)
+// Pour revenir au montant normal (9€ / 5 900 FCFA), il suffit de vider ou commenter la variable dans .env
+$testOverrideRaw = getenv('SASAPAY_TEST_OVERRIDE_AMOUNT') ?: getenv('SASPAY_TEST_OVERRIDE_AMOUNT');
+if ($testOverrideRaw !== false && $testOverrideRaw !== null && trim($testOverrideRaw) !== '' && is_numeric(trim($testOverrideRaw))) {
+    define('SASPAY_TEST_OVERRIDE_AMOUNT', (float)trim($testOverrideRaw));
+} else {
+    define('SASPAY_TEST_OVERRIDE_AMOUNT', null);
+}
+define('SASPAY_TEST_OVERRIDE_CURRENCY', getenv('SASAPAY_TEST_OVERRIDE_CURRENCY') ?: getenv('SASPAY_TEST_OVERRIDE_CURRENCY') ?: 'XOF');
+
 // 6. Détection et configuration des URLs publiques (APP_URL et CALLBACK/WEBHOOK URL)
 $currentHost = $_SERVER['HTTP_HOST'] ?? '';
 $protocol = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') || (isset($_SERVER['SERVER_PORT']) && $_SERVER['SERVER_PORT'] == 443) ? 'https' : 'http';

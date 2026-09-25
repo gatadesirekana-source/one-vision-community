@@ -69,8 +69,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             try {
                 $returnUrl = APP_URL . '/checkout-success.php?order=' . urlencode($orderNumber);
                 
-                $orderAmount = ($method === 'mobile_money' && !empty($momoAmount)) ? (float)$momoAmount : 9.00;
-                $orderCurrency = ($method === 'mobile_money' && !empty($momoCurrency)) ? $momoCurrency : 'EUR';
+                if (defined('SASPAY_TEST_OVERRIDE_AMOUNT') && SASPAY_TEST_OVERRIDE_AMOUNT !== null) {
+                    $orderAmount = (float)SASPAY_TEST_OVERRIDE_AMOUNT;
+                    $orderCurrency = defined('SASPAY_TEST_OVERRIDE_CURRENCY') ? SASPAY_TEST_OVERRIDE_CURRENCY : 'XOF';
+                } else {
+                    $orderAmount = ($method === 'mobile_money' && !empty($momoAmount)) ? (float)$momoAmount : 9.00;
+                    $orderCurrency = ($method === 'mobile_money' && !empty($momoCurrency)) ? $momoCurrency : 'EUR';
+                }
 
                 if ($method === 'mobile_money') {
                     // Appel C2B / SoftPay Mobile Money
@@ -293,6 +298,16 @@ $pageDescription = "Finalisez votre adhésion à One Vision Community pour 9€ 
 
             <h1 class="checkout-title">Finaliser votre adhésion</h1>
             <p class="checkout-subtitle">Remplissez vos informations pour activer votre accès instantané à la communauté.</p>
+
+            <?php if (defined('SASPAY_TEST_OVERRIDE_AMOUNT') && SASPAY_TEST_OVERRIDE_AMOUNT !== null): ?>
+              <div class="test-override-banner" style="margin-bottom:1.5rem; padding:0.9rem 1.25rem; background:#f0fdf4; border:1.5px solid #86efac; border-radius:14px; display:flex; align-items:flex-start; gap:0.75rem; color:#166534; font-size:0.88rem; box-shadow:0 4px 12px rgba(22, 101, 52, 0.05);">
+                <span style="font-size:1.35rem; line-height:1;">🧪</span>
+                <div>
+                  <strong style="display:block; font-size:0.92rem; color:#14532d; margin-bottom:2px;">Mode Essai Réel SasaPay actif (Production)</strong>
+                  <span>Le montant d'adhésion est temporairement configuré à <strong><?= htmlspecialchars(SASPAY_TEST_OVERRIDE_AMOUNT) ?> <?= htmlspecialchars(SASPAY_TEST_OVERRIDE_CURRENCY) ?> (Francs CFA)</strong> pour vous permettre d'exécuter un test réel à faible coût. (Désactivable dans <code style="background:#dcfce7; padding:2px 5px; border-radius:4px;">.env</code>).</span>
+                </div>
+              </div>
+            <?php endif; ?>
 
             <form id="checkoutPaymentForm" method="POST" action="checkout.php" novalidate>
               <?= csrf_field() ?>
@@ -548,6 +563,116 @@ $pageDescription = "Finalisez votre adhésion à One Vision Community pour 9€ 
               </div>
 
             </form>
+
+            <!-- ZONE D'ATTENTE & QR CODE EMBARQUÉE DIRECTEMENT SUR LA PAGE DE CHECKOUT (SANS REDIRECTION) -->
+            <div id="checkoutWaitingArea" class="checkout-waiting-area" style="display:none; padding: 1.5rem 0.5rem; text-align: center;">
+              
+              <!-- ÉTAT 1 : EN ATTENTE / SCAN DU QR CODE -->
+              <div id="inpageStatePending">
+                <div class="processing-pulse-ring" style="margin: 0 auto 1.25rem;">
+                  <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#6366f1" stroke-width="2.5" id="inpageSpinnerIcon">
+                    <circle cx="12" cy="12" r="10" stroke-opacity="0.25"></circle>
+                    <path d="M12 2a10 10 0 0 1 10 10" stroke-linecap="round"></path>
+                  </svg>
+                </div>
+
+                <h3 class="waiting-title" id="inpageWaitingTitle" style="font-size:1.3rem; font-weight:800; color:#0f172a; margin-bottom:0.5rem;">
+                  ⏳ En attente de confirmation sur votre téléphone...
+                </h3>
+                <p class="waiting-desc" id="inpageWaitingDesc" style="font-size:0.9rem; color:#64748b; max-width:440px; margin:0 auto 1.25rem; line-height:1.5;">
+                  Une demande a été initiée auprès de SasPay. Scannez le QR Code ci-dessous ou confirmez l'invite sur votre mobile.
+                </p>
+
+                <!-- BLOC QR CODE GÉNÉRÉ LOCALEMENT EN CANVAS SANS DÉPENDANCE EXTERNE -->
+                <div id="inpageQrSection" style="margin: 1.25rem auto; padding: 1.5rem; background: #ffffff; border: 2px solid #e0e7ff; border-radius: 20px; box-shadow: 0 10px 30px rgba(79, 70, 229, 0.08); text-align: center; max-width: 440px;">
+                  <div style="display:inline-flex; align-items:center; gap:0.4rem; background:#eef2ff; color:#4338ca; padding:0.35rem 0.85rem; border-radius:20px; font-size:0.8rem; font-weight:700; margin-bottom:0.75rem;">
+                    <span>📸</span>
+                    <span>QR Code de Paiement Instantané</span>
+                  </div>
+
+                  <h4 style="font-size:1.05rem; font-weight:800; color:#0f172a; margin-bottom:0.35rem;">
+                    Scannez avec votre téléphone (Wave ou Mobile)
+                  </h4>
+                  <p style="font-size:0.82rem; color:#64748b; margin-bottom:1rem; line-height:1.45; max-width:360px; margin-left:auto; margin-right:auto;">
+                    1. Ouvrez l'application <strong>Wave</strong> ou votre scanner mobile<br>
+                    2. Appuyez sur <strong>Scanner</strong> et visez ce QR Code<br>
+                    3. Confirmez avec votre code PIN secret
+                  </p>
+
+                  <!-- Rendu local du QR Code par QRCode.js -->
+                  <div id="inpageQrCanvasWrap" style="display:inline-flex; align-items:center; justify-content:center; padding:14px; background:#ffffff; border-radius:16px; box-shadow: 0 4px 18px rgba(0,0,0,0.08); border:1.5px solid #e2e8f0; margin-bottom:0.85rem; min-width:220px; min-height:220px;">
+                    <div id="inpageQrCanvas"></div>
+                  </div>
+
+                  <div>
+                    <a id="inpageDirectLinkBtn" href="#" target="_blank" rel="noopener noreferrer" style="display:inline-flex; align-items:center; gap:0.4rem; font-size:0.82rem; font-weight:700; color:#4f46e5; text-decoration:none; padding:0.5rem 1rem; background:#f8fafc; border:1px solid #cbd5e1; border-radius:10px;">
+                      <span>📱 Ouvrir directement sur cet appareil →</span>
+                    </a>
+                  </div>
+                </div>
+
+                <div class="processing-timer-badge" style="display:inline-flex; align-items:center; gap:0.4rem; background:#fef3c7; color:#b45309; padding:0.4rem 0.9rem; border-radius:20px; font-size:0.82rem; font-weight:700; margin-bottom:1rem;">
+                  <span>⏳</span>
+                  <span id="inpageTimerText">Temps restant pour valider : 03:00</span>
+                </div>
+
+                <div class="processing-progress-bar-wrap" style="height:6px; background:#f1f5f9; border-radius:999px; overflow:hidden; max-width:320px; margin:0 auto 1.25rem;">
+                  <div class="processing-progress-bar-fill" id="inpageProgressBar" style="height:100%; width:30%; background:linear-gradient(90deg, #6366f1, #10b981); transition:width 0.4s ease;"></div>
+                </div>
+
+                <div style="margin-top:1.25rem;">
+                  <button type="button" id="inpageCancelBtn" class="btn btn-secondary" style="font-size:0.85rem; padding:0.5rem 1.25rem;">
+                    ← Revenir au formulaire
+                  </button>
+                </div>
+              </div>
+
+              <!-- ÉTAT 2 : SUCCÈS CONFIRMÉ EN DIRECT (SANS REDIRECTION NI RECHARGEMENT) -->
+              <div id="inpageStateSuccess" style="display:none; text-align:center; padding: 1.5rem 0;">
+                <div style="width:72px; height:72px; background:#dcfce7; color:#15803d; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:2.4rem; margin:0 auto 1rem; box-shadow:0 8px 25px rgba(22, 163, 74, 0.2);">
+                  ✓
+                </div>
+                <h3 style="font-size:1.5rem; font-weight:800; color:#15803d; margin-bottom:0.5rem;">
+                  Paiement validé avec succès !
+                </h3>
+                <p style="font-size:0.95rem; color:#475569; max-width:440px; margin:0 auto 1.5rem; line-height:1.5;">
+                  Votre transaction a été confirmée en temps réel par SasPay. Votre adhésion à <strong>One Vision Community</strong> est active !
+                </p>
+
+                <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:14px; padding:1.25rem; max-width:420px; margin:0 auto 1.5rem; text-align:left; font-size:0.88rem;">
+                  <div style="display:flex; justify-content:space-between; margin-bottom:0.5rem;">
+                    <span style="color:#64748b;">N° Commande :</span>
+                    <strong style="color:#0f172a;" id="inpageSuccessOrder">ORD-2026</strong>
+                  </div>
+                  <div style="display:flex; justify-content:space-between; margin-bottom:0.5rem;">
+                    <span style="color:#64748b;">Montant réglé :</span>
+                    <strong style="color:#15803d;" id="inpageSuccessAmount">
+                      <?= (defined('SASPAY_TEST_OVERRIDE_AMOUNT') && SASPAY_TEST_OVERRIDE_AMOUNT !== null) ? htmlspecialchars(SASPAY_TEST_OVERRIDE_AMOUNT) . ' ' . htmlspecialchars(SASPAY_TEST_OVERRIDE_CURRENCY) : '9,00 €' ?>
+                    </strong>
+                  </div>
+                  <div style="display:flex; justify-content:space-between; margin-bottom:0.5rem;">
+                    <span style="color:#64748b;">Statut :</span>
+                    <span style="color:#15803d; font-weight:700; background:#dcfce7; padding:2px 8px; border-radius:6px;">Confirmé & Payé</span>
+                  </div>
+                  <div style="display:flex; justify-content:space-between;">
+                    <span style="color:#64748b;">Accès membre :</span>
+                    <strong style="color:#4f46e5;">Immédiat</strong>
+                  </div>
+                </div>
+
+                <div style="display:flex; flex-direction:column; gap:0.75rem; max-width:380px; margin:0 auto;">
+                  <a href="dashboard.php" class="btn btn-primary btn-lg" style="text-decoration:none; display:inline-flex; align-items:center; justify-content:center; gap:0.5rem; font-weight:700;">
+                    <span>Accéder à mon Dashboard Membre</span>
+                    <span>→</span>
+                  </a>
+                  <a href="index.php" style="color:#64748b; font-size:0.85rem; text-decoration:none;">
+                    Retourner à la page d'accueil
+                  </a>
+                </div>
+              </div>
+
+            </div>
+
           </div>
         </div>
 
@@ -583,7 +708,13 @@ $pageDescription = "Finalisez votre adhésion à One Vision Community pour 9€ 
             <div class="summary-pricing-box">
               <div class="pricing-line">
                 <span>Adhésion mensuelle</span>
-                <span class="price-val">9,00 € <small>(~5 900 FCFA)</small></span>
+                <span class="price-val">
+                  <?php if (defined('SASPAY_TEST_OVERRIDE_AMOUNT') && SASPAY_TEST_OVERRIDE_AMOUNT !== null): ?>
+                    <?= htmlspecialchars(SASPAY_TEST_OVERRIDE_AMOUNT) ?> <?= htmlspecialchars(SASPAY_TEST_OVERRIDE_CURRENCY) ?> <small>(Essai réel)</small>
+                  <?php else: ?>
+                    9,00 € <small>(~5 900 FCFA)</small>
+                  <?php endif; ?>
+                </span>
               </div>
               <div class="pricing-line">
                 <span>Frais d'activation</span>
@@ -591,7 +722,13 @@ $pageDescription = "Finalisez votre adhésion à One Vision Community pour 9€ 
               </div>
               <div class="pricing-line total-line">
                 <span>Total à régler aujourd'hui</span>
-                <span class="total-amount">9,00 € <span class="recur-text">/ mois</span></span>
+                <span class="total-amount">
+                  <?php if (defined('SASPAY_TEST_OVERRIDE_AMOUNT') && SASPAY_TEST_OVERRIDE_AMOUNT !== null): ?>
+                    <?= htmlspecialchars(SASPAY_TEST_OVERRIDE_AMOUNT) ?> <?= htmlspecialchars(SASPAY_TEST_OVERRIDE_CURRENCY) ?> <span class="recur-text">(Essai réel)</span>
+                  <?php else: ?>
+                    9,00 € <span class="recur-text">/ mois</span>
+                  <?php endif; ?>
+                </span>
               </div>
             </div>
 
@@ -688,6 +825,14 @@ $pageDescription = "Finalisez votre adhésion à One Vision Community pour 9€ 
     </div>
   </main>
 
-  <script src="./js/main.js?v=5"></script>
+  <script>
+    window.SASPAY_CONFIG = {
+      testOverrideActive: <?= (defined('SASPAY_TEST_OVERRIDE_AMOUNT') && SASPAY_TEST_OVERRIDE_AMOUNT !== null) ? 'true' : 'false' ?>,
+      testOverrideAmount: <?= (defined('SASPAY_TEST_OVERRIDE_AMOUNT') && SASPAY_TEST_OVERRIDE_AMOUNT !== null) ? json_encode(SASPAY_TEST_OVERRIDE_AMOUNT) : 'null' ?>,
+      testOverrideCurrency: <?= json_encode(defined('SASPAY_TEST_OVERRIDE_CURRENCY') ? SASPAY_TEST_OVERRIDE_CURRENCY : 'XOF') ?>
+    };
+  </script>
+  <script src="./js/qrcode.min.js"></script>
+  <script src="./js/main.js?v=7"></script>
 </body>
 </html>
