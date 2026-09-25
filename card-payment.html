@@ -432,7 +432,7 @@
 
       // 2. Polling réel auprès de la passerelle bancaire SasaPay
       const pollEndpoint = window.location.pathname.endsWith('.php') || window.location.port === '8080'
-        ? `api/check-payment-status.php?payment_id=${encodeURIComponent(paymentId)}&order=${encodeURIComponent(orderNum)}`
+        ? `api/check-payment-status-php.php?payment_id=${encodeURIComponent(paymentId)}&order=${encodeURIComponent(orderNum)}`
         : `/api/check-payment-status?payment_id=${encodeURIComponent(paymentId)}&order=${encodeURIComponent(orderNum)}`;
 
       const pollInterval = setInterval(() => {

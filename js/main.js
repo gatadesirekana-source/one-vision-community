@@ -2248,7 +2248,7 @@ function initCheckoutPage() {
 
     // Détermination de l'endpoint d'initiation réel (PHP ou Vercel Serverless Function)
     const isPhp = isPhpEnvironment();
-    const initiateEndpoint = isPhp ? 'checkout.php' : (window.location.port === '8080' ? 'api/initiate-payment.php' : '/api/initiate-payment');
+    const initiateEndpoint = isPhp ? 'checkout.php' : (window.location.port === '8080' ? 'api/initiate-payment-php.php' : '/api/initiate-payment');
 
     let fetchOptions;
     if (isPhp || window.location.port === '8080') {

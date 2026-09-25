@@ -450,7 +450,7 @@ $last4 = '4242';
         }
       }, 1000);
 
-      const pollEndpoint = `api/check-payment-status.php?payment_id=${encodeURIComponent(paymentId)}&order=${encodeURIComponent(orderNum)}`;
+      const pollEndpoint = `api/check-payment-status-php.php?payment_id=${encodeURIComponent(paymentId)}&order=${encodeURIComponent(orderNum)}`;
 
       const pollInterval = setInterval(() => {
         if (isCompleted) {

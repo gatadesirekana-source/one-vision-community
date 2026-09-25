@@ -1,0 +1,12 @@
+# ==============================================================================
+# VERCEL DEPLOYMENT IGNORE
+# Empêche Vercel de scanner les scripts PHP locaux et d'entrer en conflit avec les fonctions Serverless JS
+# ==============================================================================
+
+*.php
+api/*.php
+includes/
+database/
+scratch/
+.env
+.env.example
