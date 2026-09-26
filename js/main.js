@@ -1453,25 +1453,11 @@ function triggerInvoiceDownload(invoiceOrCode, optionalDate) {
 }
 
 /* ==========================================================================
-   PAGE CHECKOUT DÉDIÉE (CHECKOUT.HTML)
+   PAGE CHECKOUT DÉDIÉE (CHECKOUT.HTML / CHECKOUT.PHP)
    ========================================================================== */
 function initCheckoutPage() {
   const checkoutForm = document.getElementById('checkoutPaymentForm');
   if (!checkoutForm) return;
-
-  // Si une commande était en cours ou vient d'être payée, rediriger vers le succès
-  const checkPendingOrder = new URLSearchParams(window.location.search).get('order') || sessionStorage.getItem('ov_current_order');
-  if (checkPendingOrder && isPhpEnvironment()) {
-    fetch(`api/check-order-status.php?order=${encodeURIComponent(checkPendingOrder)}`)
-      .then(res => res.json())
-      .then(statusData => {
-        if (statusData && statusData.status === 'paid') {
-          sessionStorage.removeItem('ov_current_order');
-          window.location.href = statusData.redirect_url || `checkout-success.php?order=${encodeURIComponent(checkPendingOrder)}`;
-        }
-      })
-      .catch(() => {});
-  }
 
   const nameInput = document.getElementById('checkoutName');
   const emailInput = document.getElementById('checkoutEmail');
@@ -1490,18 +1476,10 @@ function initCheckoutPage() {
   const cvcInput = document.getElementById('cardCvc');
   const cardHolderInput = document.getElementById('cardHolder');
 
-  // Widget SasPay Mobile Money
-  const saspayCountrySelect = document.getElementById('saspayCountrySelect');
-  const saspayMethodsGrid = document.getElementById('saspayMethodsGrid');
-  const saspayPhonePrefix = document.getElementById('saspayPhonePrefix');
-  const saspayPhoneInput = document.getElementById('saspayPhoneInput');
-  const saspaySelectedOperator = document.getElementById('saspaySelectedOperator');
-  const saspayHeaderAmount = document.getElementById('saspayHeaderAmount');
-  const saspayBreakdownAmount = document.getElementById('saspayBreakdownAmount');
-  const saspayBreakdownFee = document.getElementById('saspayBreakdownFee');
-  const saspayBreakdownTotal = document.getElementById('saspayBreakdownTotal');
-  const momoAmountHidden = document.getElementById('momoAmountHidden');
-  const momoCurrencyHidden = document.getElementById('momoCurrencyHidden');
+  // Champs Mobile Money
+  const momoCountryPrefix = document.getElementById('momoCountryPrefix');
+  const momoPhone = document.getElementById('momoPhone');
+  const momoOperatorCards = document.querySelectorAll('.momo-operator-card');
 
   // Éléments du formulaire multi-étapes
   const checkoutStep1 = document.getElementById('checkoutStep1');
@@ -1515,350 +1493,35 @@ function initCheckoutPage() {
   const step2SummaryName = document.getElementById('step2SummaryName');
   const step2SummaryEmail = document.getElementById('step2SummaryEmail');
 
-  // Modale de traitement
-  const processingModal = document.getElementById('paymentProcessingModal');
-  const processingTitle = document.getElementById('processingTitle');
-  const processingDesc = document.getElementById('processingDesc');
-  const processingDeviceAlert = document.getElementById('processingDeviceAlert');
-  const processingAlertTitle = document.getElementById('processingAlertTitle');
-  const processingAlertMsg = document.getElementById('processingAlertMsg');
-  const processingProgressBar = document.getElementById('processingProgressBar');
-  const processingSpinnerIcon = document.getElementById('processingSpinnerIcon');
-  const processingTimerBadge = document.getElementById('processingTimerBadge');
-  const processingTimerText = document.getElementById('processingTimerText');
-  const processingActions = document.getElementById('processingActions');
-  const processingRetryBtn = document.getElementById('processingRetryBtn');
-  const processingCancelBtn = document.getElementById('processingCancelBtn');
-  const processingQrCard = document.getElementById('processingQrCard');
-  const processingQrImg = document.getElementById('processingQrImg');
-  const processingQrDirectBtn = document.getElementById('processingQrDirectBtn');
-
-  // Zone d'attente et QR code embarquée directement sur la page (sans redirection)
-  const checkoutPaymentForm = document.getElementById('checkoutPaymentForm');
-  const checkoutWaitingArea = document.getElementById('checkoutWaitingArea');
-  const inpageStatePending = document.getElementById('inpageStatePending');
-  const inpageStateSuccess = document.getElementById('inpageStateSuccess');
-  const inpageWaitingTitle = document.getElementById('inpageWaitingTitle');
-  const inpageWaitingDesc = document.getElementById('inpageWaitingDesc');
-  const inpageQrSection = document.getElementById('inpageQrSection');
-  const inpageQrCanvas = document.getElementById('inpageQrCanvas');
-  const inpageDirectLinkBtn = document.getElementById('inpageDirectLinkBtn');
-  const inpageTimerText = document.getElementById('inpageTimerText');
-  const inpageProgressBar = document.getElementById('inpageProgressBar');
-  const inpageCancelBtn = document.getElementById('inpageCancelBtn');
-  const inpageSuccessOrder = document.getElementById('inpageSuccessOrder');
-  const inpageSuccessAmount = document.getElementById('inpageSuccessAmount');
-
   // Soumission
   const submitBtn = document.getElementById('submitPaymentBtn');
   const submitText = document.getElementById('submitPaymentText');
 
   let currentPaymentMethod = 'card'; // 'card' ou 'mobile_money'
 
-  // Configuration officielle des pays et opérateurs SasPay
-  const saspayCountries = {
-    "Cameroun": {
-      currency: "XAF",
-      amount: "5 904",
-      amountRaw: 5904,
-      fee: "0 XAF",
-      feeRaw: 0,
-      total: "5 904 XAF",
-      prefix: "+237",
-      phonePlaceholder: "67 12 34 56 7",
-      operators: [
-        { id: "MTN MoMo", name: "MTN MoMo Cameroun", fee: "0 XAF de frais", icon: "🟡" },
-        { id: "Orange Money", name: "Orange Money Cameroun", fee: "0 XAF de frais", icon: "🟠" },
-        { id: "Crypto", name: "Crypto / Stablecoin", fee: "0 USD de frais", icon: "🟣" }
-      ]
-    },
-    "Côte d'Ivoire": {
-      currency: "XOF",
-      amount: "5 900",
-      amountRaw: 5900,
-      fee: "0 XOF",
-      feeRaw: 0,
-      total: "5 900 XOF",
-      prefix: "+225",
-      phonePlaceholder: "07 77 95 73 37",
-      operators: [
-        { id: "Wave", name: "Wave CI", fee: "0 XOF de frais", icon: "🔵" },
-        { id: "MTN MoMo", name: "MTN MoMo CI", fee: "0 XOF de frais", icon: "🟡" },
-        { id: "Orange Money", name: "Orange Money CI", fee: "0 XOF de frais", icon: "🟠" },
-        { id: "Moov Money", name: "Moov Money CI", fee: "0 XOF de frais", icon: "🟢" }
-      ]
-    },
-    "Sénégal": {
-      currency: "XOF",
-      amount: "5 900",
-      amountRaw: 5900,
-      fee: "0 XOF",
-      feeRaw: 0,
-      total: "5 900 XOF",
-      prefix: "+221",
-      phonePlaceholder: "77 123 45 67",
-      operators: [
-        { id: "Wave", name: "Wave Sénégal", fee: "0 XOF de frais", icon: "🔵" },
-        { id: "Orange Money", name: "Orange Money SN", fee: "0 XOF de frais", icon: "🟠" },
-        { id: "Free Money", name: "Free Money SN", fee: "0 XOF de frais", icon: "🔴" }
-      ]
-    },
-    "Bénin": {
-      currency: "XOF",
-      amount: "5 900",
-      amountRaw: 5900,
-      fee: "0 XOF",
-      feeRaw: 0,
-      total: "5 900 XOF",
-      prefix: "+229",
-      phonePlaceholder: "97 12 34 56",
-      operators: [
-        { id: "MTN MoMo", name: "MTN MoMo Bénin", fee: "0 XOF de frais", icon: "🟡" },
-        { id: "Moov Money", name: "Moov Money Bénin", fee: "0 XOF de frais", icon: "🟢" }
-      ]
-    },
-    "Burkina Faso": {
-      currency: "XOF",
-      amount: "5 900",
-      amountRaw: 5900,
-      fee: "0 XOF",
-      feeRaw: 0,
-      total: "5 900 XOF",
-      prefix: "+226",
-      phonePlaceholder: "70 12 34 56",
-      operators: [
-        { id: "Orange Money", name: "Orange Money BF", fee: "0 XOF de frais", icon: "🟠" },
-        { id: "Moov Money", name: "Moov Money BF", fee: "0 XOF de frais", icon: "🟢" }
-      ]
-    },
-    "Mali": {
-      currency: "XOF",
-      amount: "5 900",
-      amountRaw: 5900,
-      fee: "0 XOF",
-      feeRaw: 0,
-      total: "5 900 XOF",
-      prefix: "+223",
-      phonePlaceholder: "70 12 34 56",
-      operators: [
-        { id: "Orange Money", name: "Orange Money Mali", fee: "0 XOF de frais", icon: "🟠" },
-        { id: "Moov Money", name: "Moov Money Mali", fee: "0 XOF de frais", icon: "🟢" }
-      ]
-    },
-    "Togo": {
-      currency: "XOF",
-      amount: "5 900",
-      amountRaw: 5900,
-      fee: "0 XOF",
-      feeRaw: 0,
-      total: "5 900 XOF",
-      prefix: "+228",
-      phonePlaceholder: "90 12 34 56",
-      operators: [
-        { id: "T-Money", name: "T-Money Togo", fee: "0 XOF de frais", icon: "🟡" },
-        { id: "Moov Money", name: "Moov Money Togo", fee: "0 XOF de frais", icon: "🟢" }
-      ]
-    },
-    "Guinée": {
-      currency: "GNF",
-      amount: "84 000",
-      amountRaw: 84000,
-      fee: "0 GNF",
-      feeRaw: 0,
-      total: "84 000 GNF",
-      prefix: "+224",
-      phonePlaceholder: "620 12 34 56",
-      operators: [
-        { id: "Orange Money", name: "Orange Money GN", fee: "0 GNF de frais", icon: "🟠" },
-        { id: "MTN MoMo", name: "MTN MoMo GN", fee: "0 GNF de frais", icon: "🟡" }
-      ]
-    },
-    "RDC": {
-      currency: "USD",
-      amount: "9.80",
-      amountRaw: 9.80,
-      fee: "0.00 USD",
-      feeRaw: 0.00,
-      total: "9.80 USD",
-      prefix: "+243",
-      phonePlaceholder: "81 234 5678",
-      operators: [
-        { id: "Vodacom M-Pesa", name: "Vodacom M-Pesa", fee: "0 USD de frais", icon: "🔴" },
-        { id: "Airtel Money", name: "Airtel Money RDC", fee: "0 USD de frais", icon: "🔴" },
-        { id: "Orange Money", name: "Orange Money RDC", fee: "0 USD de frais", icon: "🟠" }
-      ]
-    },
-    "Congo": {
-      currency: "XAF",
-      amount: "5 904",
-      amountRaw: 5904,
-      fee: "0 XAF",
-      feeRaw: 0,
-      total: "5 904 XAF",
-      prefix: "+242",
-      phonePlaceholder: "06 123 4567",
-      operators: [
-        { id: "MTN MoMo", name: "MTN MoMo Congo", fee: "0 XAF de frais", icon: "🟡" },
-        { id: "Airtel Money", name: "Airtel Money Congo", fee: "0 XAF de frais", icon: "🔴" }
-      ]
-    },
-    "Gabon": {
-      currency: "XAF",
-      amount: "5 904",
-      amountRaw: 5904,
-      fee: "0 XAF",
-      feeRaw: 0,
-      total: "5 904 XAF",
-      prefix: "+241",
-      phonePlaceholder: "074 12 34 56",
-      operators: [
-        { id: "Airtel Money", name: "Airtel Money Gabon", fee: "0 XAF de frais", icon: "🔴" },
-        { id: "Moov Money", name: "Moov Money Gabon", fee: "0 XAF de frais", icon: "🟢" }
-      ]
-    },
-    "France": {
-      currency: "EUR",
-      amount: "9.00",
-      amountRaw: 9.00,
-      fee: "0.00 EUR",
-      feeRaw: 0.00,
-      total: "9.00 EUR",
-      prefix: "+33",
-      phonePlaceholder: "06 12 34 56 78",
-      operators: [
-        { id: "Orange Money", name: "Orange Money Europe", fee: "0,00 € de frais", icon: "🟠" },
-        { id: "Crypto", name: "Crypto / Stablecoin", fee: "0,00 € de frais", icon: "🟣" }
-      ]
-    }
-  };
+  // Pré-remplissage si déjà sauvegardé
+  const savedName = localStorage.getItem('ov_member_name') || localStorage.getItem('ov_captured_name');
+  const savedEmail = localStorage.getItem('ov_member_email') || localStorage.getItem('ov_captured_email');
+  if (savedName && nameInput && !nameInput.value) nameInput.value = savedName;
+  if (savedEmail && emailInput && !emailInput.value) emailInput.value = savedEmail;
 
-  // 1. Rendu dynamique du widget SasPay en fonction du pays sélectionné
-  function updateSaspayWidget(countryKey) {
-    const data = saspayCountries[countryKey] || saspayCountries["Cameroun"];
-
-    // Prise en compte du montant de test surchargé (ex: 100 XOF)
-    const isTestOverride = window.SASPAY_CONFIG && window.SASPAY_CONFIG.testOverrideActive;
-    const activeAmount = isTestOverride ? String(window.SASPAY_CONFIG.testOverrideAmount) : data.amount;
-    const activeCurrency = isTestOverride ? (window.SASPAY_CONFIG.testOverrideCurrency || 'XOF') : data.currency;
-    const activeTotal = `${activeAmount} ${activeCurrency}`;
-    const activeAmountRaw = isTestOverride ? Number(window.SASPAY_CONFIG.testOverrideAmount) : data.amountRaw;
-
-    if (saspayHeaderAmount) saspayHeaderAmount.textContent = activeTotal;
-    if (saspayPhonePrefix) saspayPhonePrefix.textContent = `📱 ${data.prefix}`;
-    if (saspayPhoneInput) saspayPhoneInput.placeholder = data.phonePlaceholder;
-
-    if (saspayBreakdownAmount) saspayBreakdownAmount.textContent = activeTotal;
-    if (saspayBreakdownFee) saspayBreakdownFee.textContent = isTestOverride ? `0 ${activeCurrency}` : data.fee;
-    if (saspayBreakdownTotal) saspayBreakdownTotal.textContent = activeTotal;
-
-    if (momoAmountHidden) momoAmountHidden.value = activeAmountRaw;
-    if (momoCurrencyHidden) momoCurrencyHidden.value = activeCurrency;
-
-    function getOperatorIconSvg(opId) {
-      const lower = (opId || '').toLowerCase();
-      if (lower.includes('mtn')) {
-        return `<svg class="pay-logo pay-logo-mtn" viewBox="0 0 44 24" width="38" height="22" fill="none"><rect width="44" height="24" rx="4" fill="#FFCC00"/><ellipse cx="11.5" cy="12" rx="8" ry="7.5" fill="#002F6C"/><text x="11.5" y="14.5" font-family="sans-serif" font-weight="900" font-size="6" fill="#FFCC00" text-anchor="middle">MTN</text><text x="22" y="15.5" font-family="sans-serif" font-weight="900" font-size="8.5" fill="#002F6C" letter-spacing="-0.5">MoMo</text></svg>`;
-      }
-      if (lower.includes('orange')) {
-        return `<svg class="pay-logo pay-logo-orange" viewBox="0 0 44 24" width="38" height="22" fill="none"><rect width="44" height="24" rx="4" fill="#000000"/><rect x="3" y="3.5" width="17" height="17" rx="2" fill="#FF7900"/><text x="23" y="11.5" font-family="sans-serif" font-weight="900" font-size="6.5" fill="#FF7900">orange</text><text x="23" y="18" font-family="sans-serif" font-weight="800" font-size="5.5" fill="#FFFFFF">money</text></svg>`;
-      }
-      if (lower.includes('wave')) {
-        return `<svg class="pay-logo pay-logo-wave" viewBox="0 0 44 24" width="38" height="22" fill="none"><rect width="44" height="24" rx="4" fill="#1DC4FF"/><g transform="translate(3, 2.5) scale(0.8)"><path d="M12 2C9.5 2 7.5 4 7.5 6.5C7.5 7.7 8 8.8 8.7 9.6C8 10.9 7.5 12.6 7.5 14.6C7.5 18.5 9.5 21.6 12 21.6C14.5 21.6 16.5 18.5 16.5 14.6C16.5 12.6 16 10.9 15.3 9.6C16 8.8 16.5 7.7 16.5 6.5C16.5 4 14.5 2 12 2Z" fill="#FFFFFF"/><circle cx="10.5" cy="5.5" r="0.8" fill="#1DC4FF"/><circle cx="13.5" cy="5.5" r="0.8" fill="#1DC4FF"/><path d="M11 7L12 8.2L13 7Z" fill="#FF9900"/></g><text x="20" y="15.5" font-family="sans-serif" font-weight="900" font-size="9.5" fill="#FFFFFF" letter-spacing="-0.5">wave</text></svg>`;
-      }
-      if (lower.includes('moov')) {
-        return `<svg class="pay-logo pay-logo-moov" viewBox="0 0 46 24" width="40" height="22" fill="none"><rect width="46" height="24" rx="4" fill="#005BAA"/><circle cx="10" cy="12" r="6" fill="#F37021"/><text x="10" y="15.2" font-family="sans-serif" font-weight="900" font-size="8" fill="#FFFFFF" text-anchor="middle">M</text><text x="18" y="13" font-family="sans-serif" font-weight="900" font-size="6.5" fill="#FFFFFF">moov</text><text x="18" y="19" font-family="sans-serif" font-weight="800" font-size="5" fill="#F37021">MONEY</text></svg>`;
-      }
-      if (lower.includes('airtel')) {
-        return `<svg class="pay-logo pay-logo-airtel" viewBox="0 0 44 24" width="38" height="22" fill="none"><rect width="44" height="24" rx="4" fill="#ED1C24"/><text x="22" y="16" font-family="sans-serif" font-weight="900" font-size="9" fill="#FFFFFF" text-anchor="middle">airtel</text></svg>`;
-      }
-      if (lower.includes('free')) {
-        return `<svg class="pay-logo pay-logo-free" viewBox="0 0 44 24" width="38" height="22" fill="none"><rect width="44" height="24" rx="4" fill="#CC0000"/><text x="22" y="16" font-family="sans-serif" font-weight="900" font-size="9.5" fill="#FFFFFF" font-style="italic" text-anchor="middle">free</text></svg>`;
-      }
-      if (lower.includes('t-money') || lower.includes('togocom')) {
-        return `<svg class="pay-logo pay-logo-tmoney" viewBox="0 0 44 24" width="38" height="22" fill="none"><rect width="44" height="24" rx="4" fill="#F9A825"/><text x="22" y="16" font-family="sans-serif" font-weight="900" font-size="8" fill="#004D40" text-anchor="middle">T-Money</text></svg>`;
-      }
-      if (lower.includes('mpesa') || lower.includes('m-pesa')) {
-        return `<svg class="pay-logo pay-logo-mpesa" viewBox="0 0 44 24" width="38" height="22" fill="none"><rect width="44" height="24" rx="4" fill="#009639"/><text x="22" y="16" font-family="sans-serif" font-weight="900" font-size="8" fill="#FFFFFF" text-anchor="middle">M-PESA</text></svg>`;
-      }
-      if (lower.includes('crypto')) {
-        return `<svg class="pay-logo pay-logo-crypto" viewBox="0 0 44 24" width="38" height="22" fill="none"><rect width="44" height="24" rx="4" fill="#26A17B"/><circle cx="12" cy="12" r="7" fill="#FFFFFF"/><text x="12" y="15.5" font-family="sans-serif" font-weight="900" font-size="9" fill="#26A17B" text-anchor="middle">₮</text><text x="22" y="15.5" font-family="sans-serif" font-weight="900" font-size="8.5" fill="#FFFFFF">USDT</text></svg>`;
-      }
-      return `<span style="font-size:1.1rem;">📱</span>`;
-    }
-
-    // Rendu des boutons opérateurs
-    if (saspayMethodsGrid) {
-      saspayMethodsGrid.innerHTML = '';
-      data.operators.forEach((op, index) => {
-        const isWave = op.id.toLowerCase().includes('wave');
-        const badgeColor = isWave ? '#0284c7' : '#16a34a';
-        const badgeLabel = isWave ? '📲 App / QR' : '⚡ Push direct';
-
-        const card = document.createElement('div');
-        card.className = `saspay-method-card ${index === 0 ? 'active' : ''}`;
-        card.dataset.operator = op.id;
-        card.innerHTML = `
-          <div class="saspay-method-icon">${getOperatorIconSvg(op.id)}</div>
-          <div class="saspay-method-info">
-            <span class="saspay-method-name">${escapeHtml(op.name)}</span>
-            <span class="saspay-method-fee">${escapeHtml(op.fee)}</span>
-            <span style="font-size:0.7rem; color:${badgeColor}; font-weight:700; display:inline-block; margin-top:2px;">${badgeLabel}</span>
-          </div>
-        `;
-
-        card.addEventListener('click', () => {
-          document.querySelectorAll('.saspay-method-card').forEach(c => c.classList.remove('active'));
-          card.classList.add('active');
-          if (saspaySelectedOperator) saspaySelectedOperator.value = op.id;
-        });
-
-        saspayMethodsGrid.appendChild(card);
-      });
-
-      if (saspaySelectedOperator && data.operators.length > 0) {
-        saspaySelectedOperator.value = data.operators[0].id;
-      }
-    }
-
-    if (currentPaymentMethod === 'mobile_money' && submitText) {
-      submitText.textContent = `Payer ${activeTotal} via Mobile Money`;
-    }
-  }
-
-  if (saspayCountrySelect) {
-    saspayCountrySelect.addEventListener('change', (e) => {
-      updateSaspayWidget(e.target.value);
-    });
-    // Initialisation
-    updateSaspayWidget(saspayCountrySelect.value || "Cameroun");
-  }
-
-  // 2. Bascule entre Carte Bancaire et Mobile Money
+  // 1. Bascule entre Carte Bancaire et Mobile Money
   function selectPaymentMethod(method) {
     currentPaymentMethod = method;
     if (paymentMethodHidden) paymentMethodHidden.value = method;
-
-    const isTestOverride = window.SASPAY_CONFIG && window.SASPAY_CONFIG.testOverrideActive;
-    const testAmountStr = isTestOverride ? `${window.SASPAY_CONFIG.testOverrideAmount} ${window.SASPAY_CONFIG.testOverrideCurrency || 'XOF'}` : null;
 
     if (method === 'card') {
       if (methodCard) methodCard.classList.add('selected');
       if (methodMobileMoney) methodMobileMoney.classList.remove('selected');
       if (cardDetailsBox) cardDetailsBox.style.display = 'block';
       if (mobileMoneyDetailsBox) mobileMoneyDetailsBox.style.display = 'none';
-      if (submitText) {
-        submitText.textContent = testAmountStr ? `Payer ${testAmountStr} par Carte Bancaire` : "Payer 9,00 € par Carte Bancaire";
-      }
+      if (submitText) submitText.textContent = "Payer 9,00 € par Carte Bancaire";
     } else {
       if (methodMobileMoney) methodMobileMoney.classList.add('selected');
       if (methodCard) methodCard.classList.remove('selected');
       if (cardDetailsBox) cardDetailsBox.style.display = 'none';
       if (mobileMoneyDetailsBox) mobileMoneyDetailsBox.style.display = 'block';
-
-      const selCountry = saspayCountrySelect ? saspayCountrySelect.value : "Cameroun";
-      const data = saspayCountries[selCountry] || saspayCountries["Cameroun"];
-      const activeTotal = testAmountStr || data.total;
-      if (submitText) submitText.textContent = `Payer ${activeTotal} via Mobile Money`;
+      if (submitText) submitText.textContent = "Payer 9,00 € via Mobile Money";
     }
   }
 
@@ -1882,7 +1545,25 @@ function initCheckoutPage() {
     });
   }
 
-  // Fonctions de validation et reconnaissance de cartes bancaires réelles et authentiques (Norme ISO/IEC 7812)
+  // Sélection opérateur Mobile Money
+  if (momoOperatorCards && momoOperatorCards.length > 0) {
+    momoOperatorCards.forEach(card => {
+      card.addEventListener('click', () => {
+        momoOperatorCards.forEach(c => {
+          c.classList.remove('active');
+          c.style.borderColor = '#e2e8f0';
+          c.style.background = '#fff';
+        });
+        card.classList.add('active');
+        card.style.borderColor = '#6366f1';
+        card.style.background = '#f5f3ff';
+        const radio = card.querySelector('input[type="radio"]');
+        if (radio) radio.checked = true;
+      });
+    });
+  }
+
+  // Fonctions de validation de carte (Norme Luhn)
   function isValidLuhn(numberStr) {
     const clean = String(numberStr).replace(/\D/g, '');
     if (clean.length < 13 || clean.length > 19) return false;
@@ -1900,28 +1581,11 @@ function initCheckoutPage() {
     return sum % 10 === 0;
   }
 
-  function isAuthenticCard(numberStr) {
-    const clean = String(numberStr).replace(/\D/g, '');
-    if (!isValidLuhn(clean)) return false;
-    const first = clean.charAt(0);
-    if (!['3', '4', '5', '6'].includes(first)) {
-      if (first === '2') {
-        const prefix4 = parseInt(clean.substring(0, 4), 10);
-        if (prefix4 < 2221 || prefix4 > 2720) return false;
-      } else {
-        return false;
-      }
-    }
-    return true;
-  }
-
   function detectCardBrand(numberStr) {
     const clean = String(numberStr).replace(/\D/g, '');
     if (/^4/.test(clean)) return 'Visa';
     if (/^(5[1-5]|222[1-9]|22[3-9][0-9]|2[3-6][0-9]{2}|27[01][0-9]|2720)/.test(clean)) return 'Mastercard';
     if (/^3[47]/.test(clean)) return 'American Express';
-    if (/^(6011|65|64[4-9]|622)/.test(clean)) return 'Discover';
-    if (/^35(2[89]|[3-8][0-9])/.test(clean)) return 'JCB';
     return 'Carte';
   }
 
@@ -1935,22 +1599,14 @@ function initCheckoutPage() {
     if (year < 100) year += 2000;
     const now = new Date();
     const currentYear = now.getFullYear();
-    const currentMonth = now.getMonth() + 1; // 1 à 12
+    const currentMonth = now.getMonth() + 1;
     if (year < currentYear) return false;
     if (year === currentYear && month < currentMonth) return false;
     if (year > currentYear + 20) return false;
     return true;
   }
 
-  function isValidCvc(cvcStr, brand) {
-    const clean = String(cvcStr).replace(/\D/g, '');
-    if (brand === 'American Express') {
-      return clean.length === 4;
-    }
-    return clean.length === 3;
-  }
-
-  // 3. Formatage et détection visuelle en direct de la carte bancaire
+  // Formatage direct du numéro de carte
   if (cardInput) {
     cardInput.addEventListener('input', (e) => {
       let val = e.target.value.replace(/\D/g, '');
@@ -1958,34 +1614,6 @@ function initCheckoutPage() {
       const parts = val.match(/.{1,4}/g);
       e.target.value = parts ? parts.join(' ') : '';
       hideError('cardError', cardInput);
-
-      // Détection de la marque visuelle en direct
-      const brand = detectCardBrand(val);
-      const visaIcon = document.querySelector('.pay-logo-visa');
-      const mcIcon = document.querySelector('.pay-logo-mc');
-      const cbIcon = document.querySelector('.pay-logo-cb');
-
-      if (visaIcon && mcIcon && cbIcon) {
-        if (brand === 'Visa') {
-          visaIcon.style.opacity = '1';
-          visaIcon.style.transform = 'scale(1.1)';
-          mcIcon.style.opacity = '0.35';
-          mcIcon.style.transform = 'scale(1)';
-          cbIcon.style.opacity = '0.35';
-        } else if (brand === 'Mastercard') {
-          mcIcon.style.opacity = '1';
-          mcIcon.style.transform = 'scale(1.1)';
-          visaIcon.style.opacity = '0.35';
-          visaIcon.style.transform = 'scale(1)';
-          cbIcon.style.opacity = '0.35';
-        } else {
-          visaIcon.style.opacity = '1';
-          visaIcon.style.transform = 'scale(1)';
-          mcIcon.style.opacity = '1';
-          mcIcon.style.transform = 'scale(1)';
-          cbIcon.style.opacity = '1';
-        }
-      }
     });
   }
 
@@ -2011,9 +1639,9 @@ function initCheckoutPage() {
     });
   }
 
-  if (saspayPhoneInput) {
-    saspayPhoneInput.addEventListener('input', (e) => {
-      hideError('momoPhoneError', saspayPhoneInput);
+  if (momoPhone) {
+    momoPhone.addEventListener('input', () => {
+      hideError('momoPhoneError', momoPhone);
     });
   }
 
@@ -2032,7 +1660,7 @@ function initCheckoutPage() {
     if (inputEl) inputEl.classList.remove('input-error');
   }
 
-  // 3. Navigation multi-étapes (Étape 1 : Identifiants -> Étape 2 : Paiement sécurisé)
+  // Navigation multi-étapes
   function validateStep1() {
     let isValid = true;
     const nameVal = nameInput ? nameInput.value.trim() : '';
@@ -2127,7 +1755,6 @@ function initCheckoutPage() {
     });
   }
 
-  // Appuyer sur Entrée dans les champs de l'étape 1 mène à l'étape 2
   [nameInput, emailInput, passwordInput].forEach(inp => {
     if (inp) {
       inp.addEventListener('keydown', (e) => {
@@ -2139,18 +1766,16 @@ function initCheckoutPage() {
     }
   });
 
-  // 4. Soumission et traitement du paiement SANS REDIRECTION PRÉMATURÉE
+  // Soumission et activation directe
   checkoutForm.addEventListener('submit', (e) => {
     e.preventDefault();
 
-    // S'assurer que l'étape 1 est valide
     if (!validateStep1()) {
       goToStep1();
       return;
     }
 
     let hasError = false;
-
     const nameVal = nameInput ? nameInput.value.trim() : '';
     const emailVal = emailInput ? emailInput.value.trim() : '';
     const passVal = passwordInput ? passwordInput.value : '';
@@ -2159,13 +1784,9 @@ function initCheckoutPage() {
       const cardVal = cardInput ? cardInput.value.replace(/\s/g, '') : '';
       const expVal = expInput ? expInput.value.trim() : '';
       const cvcVal = cvcInput ? cvcInput.value.trim() : '';
-      const detectedBrand = detectCardBrand(cardVal);
 
       if (!cardVal || cardVal.length < 13) {
         showError('cardError', cardInput, "Numéro de carte bancaire requis.");
-        hasError = true;
-      } else if (!isAuthenticCard(cardVal)) {
-        showError('cardError', cardInput, "Numéro de carte bancaire invalide ou non authentique (échec de reconnaissance bancaire Luhn).");
         hasError = true;
       } else {
         hideError('cardError', cardInput);
@@ -2181,20 +1802,19 @@ function initCheckoutPage() {
         hideError('expError', expInput);
       }
 
-      if (!cvcVal || !isValidCvc(cvcVal, detectedBrand)) {
-        showError('cvcError', cvcInput, detectedBrand === 'American Express' ? "Cryptogramme requis (4 chiffres pour Amex)." : "Cryptogramme CVC requis (3 chiffres).");
+      if (!cvcVal || cvcVal.length < 3) {
+        showError('cvcError', cvcInput, "Cryptogramme CVC requis.");
         hasError = true;
       } else {
         hideError('cvcError', cvcInput);
       }
     } else {
-      // Validation Mobile Money
-      const momoVal = saspayPhoneInput ? saspayPhoneInput.value.replace(/\s/g, '') : '';
+      const momoVal = momoPhone ? momoPhone.value.replace(/\s/g, '') : '';
       if (!momoVal || momoVal.length < 6) {
-        showError('momoPhoneError', saspayPhoneInput);
+        showError('momoPhoneError', momoPhone, "Numéro de téléphone requis.");
         hasError = true;
       } else {
-        hideError('momoPhoneError', saspayPhoneInput);
+        hideError('momoPhoneError', momoPhone);
       }
     }
 
@@ -2204,247 +1824,43 @@ function initCheckoutPage() {
       return;
     }
 
-    // Données relatives au montant, pays et opérateur
-    const selCountry = saspayCountrySelect ? saspayCountrySelect.value : "Cameroun";
-    const countryData = saspayCountries[selCountry] || saspayCountries["Cameroun"];
-    const opVal = saspaySelectedOperator ? saspaySelectedOperator.value : "MTN MoMo";
-    const phoneVal = saspayPhoneInput ? saspayPhoneInput.value.trim() : "";
-    const cleanPhone = `${countryData.prefix} ${phoneVal}`.trim();
-
-    const isTestOverride = window.SASPAY_CONFIG && window.SASPAY_CONFIG.testOverrideActive;
-    const activeAmountRaw = isTestOverride ? Number(window.SASPAY_CONFIG.testOverrideAmount) : (currentPaymentMethod === 'mobile_money' ? countryData.amountRaw : 9.00);
-    const activeAmount = isTestOverride ? String(window.SASPAY_CONFIG.testOverrideAmount) : (currentPaymentMethod === 'mobile_money' ? countryData.amount : '9,00');
-    const activeCurrency = isTestOverride ? (window.SASPAY_CONFIG.testOverrideCurrency || 'XOF') : (currentPaymentMethod === 'mobile_money' ? countryData.currency : 'EUR');
-
-    // Mémoriser le nom, l'email et le téléphone
-    localStorage.setItem('ov_member_name', nameVal);
-    localStorage.setItem('ov_member_email', emailVal);
-    localStorage.setItem('ov_member_phone', cleanPhone);
-
-    // Fonctions d'affichage d'erreurs globales de paiement
-    const checkoutGlobalError = document.getElementById('checkoutGlobalError');
-    const checkoutGlobalErrorText = document.getElementById('checkoutGlobalErrorText');
-
-    function showCheckoutGlobalError(msg) {
-      console.error("[Checkout] Erreur de paiement :", msg);
-      if (checkoutGlobalError) {
-        if (checkoutGlobalErrorText) {
-          checkoutGlobalErrorText.innerHTML = msg || "Le paiement par carte a échoué. Veuillez vérifier vos coordonnées bancaires et réessayer.";
-        }
-        checkoutGlobalError.style.display = 'flex';
-        checkoutGlobalError.scrollIntoView({ behavior: 'smooth', block: 'center' });
-      } else {
-        alert(msg || "Le paiement a échoué. Veuillez réessayer.");
-      }
-
-      if (submitBtn) {
-        submitBtn.disabled = false;
-        if (submitText) {
-          submitText.textContent = currentPaymentMethod === 'card'
-            ? "Payer 9,00 € par Carte Bancaire"
-            : `Payer ${activeAmount} ${activeCurrency} via Mobile Money`;
-        }
-      }
-    }
-
-    function hideCheckoutGlobalError() {
-      if (checkoutGlobalError) {
-        checkoutGlobalError.style.display = 'none';
-      }
-    }
-
-    hideCheckoutGlobalError();
-
-    // État de chargement sur le bouton
     if (submitBtn) {
       submitBtn.disabled = true;
-      if (submitText) {
-        submitText.textContent = currentPaymentMethod === 'card'
-          ? "Initialisation de la validation sécurisée par carte..."
-          : "Génération de votre QR Code de paiement...";
-      }
+      if (submitText) submitText.textContent = "Activation de votre adhésion en cours...";
     }
 
-    // Préparation des données du formulaire
-    const formData = new FormData(checkoutForm);
-    formData.set('paymentMethod', currentPaymentMethod);
-    formData.set('checkoutName', nameVal);
-    formData.set('checkoutEmail', emailVal);
-    if (passVal) formData.set('checkoutPassword', passVal);
+    localStorage.setItem('ov_has_paid', 'true');
+    localStorage.setItem('ov_member_name', nameVal);
+    localStorage.setItem('ov_member_email', emailVal);
 
-    if (currentPaymentMethod === 'mobile_money') {
-      formData.set('momoCountry', selCountry);
-      formData.set('momoOperator', opVal);
-      formData.set('momoPhone', cleanPhone);
-      formData.set('momoAmount', activeAmountRaw);
-      formData.set('momoCurrency', activeCurrency);
-    }
-
-    // Détermination de l'endpoint d'initiation réel (PHP ou Vercel Serverless Function)
     const isPhp = isPhpEnvironment();
-    const initiateEndpoint = isPhp ? 'checkout.php' : (window.location.port === '8080' ? 'api/initiate-payment-php.php' : '/api/initiate-payment');
+    if (isPhp) {
+      const formData = new FormData(checkoutForm);
+      formData.set('paymentMethod', currentPaymentMethod);
+      formData.set('checkoutName', nameVal);
+      formData.set('checkoutEmail', emailVal);
+      if (passVal) formData.set('checkoutPassword', passVal);
 
-    let fetchOptions;
-    if (isPhp || window.location.port === '8080') {
-      fetchOptions = {
+      fetch('checkout.php', {
         method: 'POST',
         body: formData,
         headers: { 'X-Requested-With': 'XMLHttpRequest' }
-      };
+      })
+      .then(res => res.json())
+      .then(data => {
+        if (data && data.success && data.redirect_url) {
+          window.location.href = data.redirect_url;
+        } else {
+          window.location.href = `checkout-success.php?order=${encodeURIComponent((data && data.order_number) ? data.order_number : '')}`;
+        }
+      })
+      .catch(() => {
+        checkoutForm.submit();
+      });
     } else {
-      const payloadObj = {};
-      formData.forEach((val, key) => { payloadObj[key] = val; });
-      fetchOptions = {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Accept': 'application/json',
-          'X-Requested-With': 'XMLHttpRequest'
-        },
-        body: JSON.stringify(payloadObj)
-      };
+      const defaultOrderNum = 'ORD-' + new Date().getFullYear() + '-' + Math.floor(100 + Math.random() * 900);
+      window.location.href = `checkout-success.html?order=${encodeURIComponent(defaultOrderNum)}`;
     }
-
-    const defaultOrderNum = 'ORD-' + new Date().getFullYear() + '-' + Math.floor(100 + Math.random() * 900) + '-' + Math.random().toString(36).substring(2, 6).toUpperCase();
-
-    // 1. Navigation dédiée pour le PAIEMENT PAR CARTE BANCAIRE (Page de validation 3D-Secure)
-    function navigateToCardPaymentPage(data) {
-      const orderNum = (data && data.order_number) ? data.order_number : defaultOrderNum;
-      const paymentId = (data && (data.payment_id || data.checkout_request_id || data.session_id)) ? (data.payment_id || data.checkout_request_id || data.session_id) : '';
-      const checkoutUrl = (data && data.checkout_url) ? data.checkout_url : '';
-
-      // Si SasaPay n'a renvoyé ni URL ni session ID, c'est une défaillance de la passerelle
-      if (!checkoutUrl && !paymentId) {
-        showCheckoutGlobalError("La passerelle bancaire SasaPay n'a pas pu créer de session de paiement valide. Veuillez vérifier vos coordonnées et réessayer.");
-        return;
-      }
-
-      const rawCard = cardInput ? cardInput.value.replace(/\s/g, '') : '';
-      const brand = detectCardBrand(rawCard);
-      const last4 = rawCard.length >= 4 ? rawCard.slice(-4) : '4242';
-      const exp = (expInput && expInput.value.trim()) ? expInput.value.trim() : '08/28';
-      const holder = (cardHolderInput && cardHolderInput.value.trim()) ? cardHolderInput.value.trim() : nameVal;
-
-      const cardSessionData = {
-        order_number: orderNum,
-        payment_id: paymentId,
-        checkout_url: checkoutUrl,
-        name: holder,
-        email: emailVal,
-        amount: '9,00 €',
-        currency: 'EUR',
-        method: 'card',
-        brand: brand,
-        last4: last4,
-        exp: exp
-      };
-
-      try {
-        sessionStorage.setItem('ov_payment_session', JSON.stringify(cardSessionData));
-        sessionStorage.setItem('ov_current_order', orderNum);
-      } catch (e) {}
-
-      const targetPage = isPhp ? 'card-payment.php' : 'card-payment.html';
-      const qParams = new URLSearchParams({
-        order: orderNum,
-        payment_id: paymentId,
-        name: holder,
-        brand: brand,
-        last4: last4,
-        exp: exp,
-        amount: '9,00 €',
-        url: checkoutUrl
-      });
-
-      window.location.href = `${targetPage}?${qParams.toString()}`;
-    }
-
-    // 2. Navigation dédiée pour le PAIEMENT MOBILE MONEY (Page QR Code)
-    function navigateToPaymentPage(data) {
-      const orderNum = (data && data.order_number) ? data.order_number : defaultOrderNum;
-      const paymentId = (data && (data.payment_id || data.checkout_request_id)) ? (data.payment_id || data.checkout_request_id) : '';
-      const checkoutUrl = (data && data.checkout_url) ? data.checkout_url : (opVal.toLowerCase().includes('wave') ? `https://pay.wave.com/c/ovc-${orderNum.toLowerCase()}` : `https://pay.saspay.me/checkout/${orderNum.toLowerCase()}`);
-
-      const sessionData = {
-        order_number: orderNum,
-        payment_id: paymentId,
-        checkout_url: checkoutUrl,
-        name: nameVal,
-        email: emailVal,
-        phone: cleanPhone,
-        amount: activeAmount,
-        currency: activeCurrency,
-        operator: opVal,
-        country: selCountry,
-        method: currentPaymentMethod
-      };
-
-      try {
-        sessionStorage.setItem('ov_payment_session', JSON.stringify(sessionData));
-        sessionStorage.setItem('ov_current_order', orderNum);
-      } catch (e) {}
-
-      const targetPage = isPhp ? 'payment.php' : 'payment.html';
-      const qParams = new URLSearchParams({
-        order: orderNum,
-        payment_id: paymentId,
-        op: opVal,
-        country: selCountry,
-        amount: activeAmount,
-        currency: activeCurrency,
-        phone: cleanPhone,
-        name: nameVal,
-        url: checkoutUrl
-      });
-
-      window.location.href = `${targetPage}?${qParams.toString()}`;
-    }
-
-    // Déclencher l'appel d'initiation et router selon le mode de paiement choisi
-    fetch(initiateEndpoint, fetchOptions)
-      .then(async (response) => {
-        let payload;
-        const contentType = response.headers.get('content-type') || '';
-        if (contentType.includes('application/json')) {
-          payload = await response.json();
-        } else {
-          const rawText = await response.text();
-          try {
-            payload = JSON.parse(rawText);
-          } catch(e) {
-            throw new Error(`Réponse inattendue du serveur (${response.status}) : ${rawText.substring(0, 100)}`);
-          }
-        }
-
-        // Si le code HTTP indique une erreur (4xx, 5xx)
-        if (!response.ok) {
-          const errMsg = (payload && (payload.error || payload.message))
-            ? (payload.error || payload.message)
-            : `Erreur HTTP ${response.status} de la passerelle de paiement.`;
-          throw new Error(errMsg);
-        }
-
-        // Si le JSON renvoie explicitement success: false
-        if (!payload || payload.success === false) {
-          const errMsg = (payload && (payload.error || payload.message))
-            ? (payload.error || payload.message)
-            : "La passerelle de paiement n'a pas pu initier votre transaction. Veuillez vérifier vos informations et réessayer.";
-          throw new Error(errMsg);
-        }
-
-        return payload;
-      })
-      .then((initData) => {
-        if (currentPaymentMethod === 'card') {
-          navigateToCardPaymentPage(initData);
-        } else {
-          navigateToPaymentPage(initData);
-        }
-      })
-      .catch((err) => {
-        console.error("[Checkout] Erreur lors de l'initiation du paiement :", err);
-        showCheckoutGlobalError(err.message || "Le paiement a échoué. Veuillez vérifier vos coordonnées et réessayer.");
-      });
   });
 }
 

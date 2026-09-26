@@ -86,14 +86,11 @@ La base de données s'auto-initialise avec des comptes de démonstration prêts 
 3. **Salons de Discussion en Temps Réel** :
    - Les messages sont sauvegardés en BDD SQLite et synchronisés en AJAX via `api/chat.php`.
 
-4. **Paiement Sécurisé SasPay (Carte Bancaire & Mobile Money)** :
-   - Intégration officielle de l'API **SasPay** (`includes/saspay.php`).
-   - Prise en charge transparente des paiements par :
-     - **Carte Bancaire** : Visa, Mastercard, CB, etc.
-     - **Mobile Money** : Wave, MTN MoMo, Orange Money, Moov Money, Djamo, Airtel Money.
-   - Flux de checkout hébergé ultra-sécurisé avec redirection vers `checkout.saspay.me`.
-   - Page de retour et de confirmation automatique : `checkout-success.php`.
-   - Réception et traitement des notifications webhook asynchrones : `webhook-saspay.php`.
+4. **Adhésion & Facturation Immédiate** :
+   - Tunnel d'adhésion sécurisé (`checkout.php`).
+   - Prise en charge des coordonnées d'adhésion (Carte Bancaire & Paiement Mobile).
+   - Activation instantanée de l'accès membre dans la base de données.
+   - Page de confirmation d'adhésion (`checkout-success.php`).
    - Génération immédiate de la facture officielle acquittée (`facture.php?id=...`).
 
 5. **Centre d'Administration (Rôle Admin)** :

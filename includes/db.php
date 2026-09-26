@@ -24,23 +24,6 @@ function get_db(): PDO {
         // Activer les clés étrangères dans SQLite
         $pdo->exec('PRAGMA foreign_keys = ON;');
 
-        // Migrations progressives pour SasPay et Mobile Money
-        try {
-            $pdo->exec("ALTER TABLE orders ADD COLUMN saspay_session_id TEXT DEFAULT ''");
-        } catch (Throwable $e) {}
-        try {
-            $pdo->exec("ALTER TABLE orders ADD COLUMN saspay_transaction_id TEXT DEFAULT ''");
-        } catch (Throwable $e) {}
-        try {
-            $pdo->exec("ALTER TABLE orders ADD COLUMN momo_phone TEXT DEFAULT ''");
-        } catch (Throwable $e) {}
-        try {
-            $pdo->exec("ALTER TABLE orders ADD COLUMN momo_operator TEXT DEFAULT ''");
-        } catch (Throwable $e) {}
-        try {
-            $pdo->exec("ALTER TABLE orders ADD COLUMN momo_country TEXT DEFAULT ''");
-        } catch (Throwable $e) {}
-
         if ($isNewDb || filesize(DB_FILE) === 0) {
             init_database($pdo);
         }
@@ -124,20 +107,10 @@ function init_database(PDO $pdo): void {
             billing_address TEXT DEFAULT '',
             billing_country TEXT DEFAULT 'France',
             invoice_number TEXT UNIQUE NOT NULL,
-            saspay_session_id TEXT DEFAULT '',
-            saspay_transaction_id TEXT DEFAULT '',
             created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
             FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
         );
     ");
-
-    // Migration progressive pour les bases existantes
-    try {
-        $pdo->exec("ALTER TABLE orders ADD COLUMN saspay_session_id TEXT DEFAULT ''");
-    } catch (Exception $e) {}
-    try {
-        $pdo->exec("ALTER TABLE orders ADD COLUMN saspay_transaction_id TEXT DEFAULT ''");
-    } catch (Exception $e) {}
 
     // 5. Table Support & Tickets Contact
     $pdo->exec("

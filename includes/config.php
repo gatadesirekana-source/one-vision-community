@@ -1,7 +1,6 @@
 <?php
 /**
  * ONE VISION COMMUNITY — CONFIGURATION GLOBALE
- * Support complet des environnements Production & Sandbox SasaPay / SasPay
  */
 
 if (session_status() === PHP_SESSION_NONE) {
@@ -51,58 +50,10 @@ if (file_exists(__DIR__ . '/config.local.php')) {
     require_once __DIR__ . '/config.local.php';
 }
 
-// 3. Définition de l'environnement (production ou sandbox)
-$envMode = strtolower(getenv('SASAPAY_ENV') ?: getenv('SASPAY_ENV') ?: 'production');
-define('SASPAY_ENV', $envMode);
-
-// 4. URL de base de l'API selon l'environnement (Production vs Sandbox)
-$customApiUrl = getenv('SASAPAY_API_URL') ?: getenv('SASPAY_API_URL');
-if (!empty($customApiUrl)) {
-    define('SASPAY_API_URL', rtrim($customApiUrl, '/'));
-} else {
-    if ($envMode === 'sandbox' || $envMode === 'test') {
-        define('SASPAY_API_URL', 'https://api-sandbox.saspay.me/api/v1');
-    } else {
-        define('SASPAY_API_URL', 'https://api.saspay.me/api/v1'); // Production officielle
-    }
-}
-
-// 5. Identifiants SasaPay / SasPay (récupérés des variables d'environnement)
-if (!defined('SASPAY_API_KEY')) {
-    define('SASPAY_API_KEY', getenv('SASAPAY_API_KEY') ?: getenv('SASPAY_API_KEY') ?: '');
-}
-if (!defined('SASPAY_CLIENT_ID')) {
-    define('SASPAY_CLIENT_ID', getenv('SASAPAY_CLIENT_ID') ?: getenv('SASPAY_CLIENT_ID') ?: '');
-}
-if (!defined('SASPAY_CLIENT_SECRET')) {
-    define('SASPAY_CLIENT_SECRET', getenv('SASAPAY_CLIENT_SECRET') ?: getenv('SASPAY_CLIENT_SECRET') ?: '');
-}
-if (!defined('SASPAY_MERCHANT_CODE')) {
-    define('SASPAY_MERCHANT_CODE', getenv('SASAPAY_MERCHANT_CODE') ?: getenv('SASPAY_MERCHANT_CODE') ?: '');
-}
-if (!defined('SASPAY_WEBHOOK_SECRET')) {
-    define('SASPAY_WEBHOOK_SECRET', getenv('SASAPAY_WEBHOOK_SECRET') ?: getenv('SASPAY_WEBHOOK_SECRET') ?: '');
-}
-
-define('SASPAY_CURRENCY', getenv('SASPAY_CURRENCY') ?: 'EUR');
-
-// 5b. Montant temporaire d'essai réel (ex: 100 Francs CFA)
-// Configurable dans le fichier .env (SASAPAY_TEST_OVERRIDE_AMOUNT=100)
-// Pour revenir au montant normal (9€ / 5 900 FCFA), il suffit de vider ou commenter la variable dans .env
-$testOverrideRaw = getenv('SASAPAY_TEST_OVERRIDE_AMOUNT') ?: getenv('SASPAY_TEST_OVERRIDE_AMOUNT');
-if ($testOverrideRaw !== false && $testOverrideRaw !== null && trim($testOverrideRaw) !== '' && is_numeric(trim($testOverrideRaw))) {
-    define('SASPAY_TEST_OVERRIDE_AMOUNT', (float)trim($testOverrideRaw));
-} else {
-    define('SASPAY_TEST_OVERRIDE_AMOUNT', null);
-}
-define('SASPAY_TEST_OVERRIDE_CURRENCY', getenv('SASAPAY_TEST_OVERRIDE_CURRENCY') ?: getenv('SASPAY_TEST_OVERRIDE_CURRENCY') ?: 'XOF');
-
-// 6. Détection et configuration des URLs publiques (APP_URL et CALLBACK/WEBHOOK URL)
+// 3. Détection et configuration de l'URL publique de base (APP_URL)
 $currentHost = $_SERVER['HTTP_HOST'] ?? '';
 $protocol = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') || (isset($_SERVER['SERVER_PORT']) && $_SERVER['SERVER_PORT'] == 443) ? 'https' : 'http';
 
-// Si la requête provient d'un environnement local (localhost, 127.0.0.1, ou port spécifique),
-// on utilise TOUJOURS l'adresse locale actuelle pour que les redirections du navigateur fonctionnent.
 if (!empty($currentHost) && (strpos($currentHost, 'localhost') !== false || strpos($currentHost, '127.0.0.1') !== false || strpos($currentHost, ':') !== false)) {
     define('APP_URL', $protocol . '://' . $currentHost);
 } else {
@@ -113,14 +64,6 @@ if (!empty($currentHost) && (strpos($currentHost, 'localhost') !== false || strp
         $host = !empty($currentHost) ? $currentHost : 'localhost:8080';
         define('APP_URL', $protocol . '://' . $host);
     }
-}
-
-// URL Callback / IPN publique
-$envCallbackUrl = getenv('SASAPAY_CALLBACK_URL') ?: getenv('SASPAY_WEBHOOK_URL');
-if (!empty($envCallbackUrl)) {
-    define('SASPAY_WEBHOOK_URL', $envCallbackUrl);
-} else {
-    define('SASPAY_WEBHOOK_URL', APP_URL . '/webhook-saspay.php');
 }
 
 // Fuseau horaire
