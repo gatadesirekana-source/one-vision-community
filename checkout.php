@@ -397,39 +397,44 @@ $pageDescription = "Finalisez votre adhésion à One Vision Community pour 9€ 
                     </div>
                     <div class="momo-badges-row">
                       <!-- Orange Money SVG Logo -->
-                      <svg class="pay-logo pay-logo-orange" viewBox="0 0 38 24" width="38" height="24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-label="Orange Money">
-                        <rect width="38" height="24" rx="4" fill="#000000"/>
-                        <rect x="3" y="3.5" width="17" height="17" rx="2.5" fill="#FF7900"/>
-                        <circle cx="9.5" cy="12" r="3.2" stroke="#000000" stroke-width="1.6" fill="none"/>
-                        <circle cx="13.5" cy="12" r="3.2" stroke="#FFFFFF" stroke-width="1.6" fill="none"/>
-                        <text x="28.5" y="16" font-family="'Arial Black',Impact,sans-serif" font-weight="900" font-size="9.5" fill="#FF7900" text-anchor="middle" letter-spacing="-0.5">OM</text>
+                      <svg class="pay-logo pay-logo-orange" viewBox="0 0 54 28" width="48" height="25" fill="none" xmlns="http://www.w3.org/2000/svg" aria-label="Orange Money">
+                        <rect width="54" height="28" rx="4" fill="#FF7900"/>
+                        <g transform="translate(3, 4.5)">
+                          <path d="M6.8 2H2C0.9 2 0 2.9 0 4s0.9 2 2 2h2.5L0.5 10c-0.8 0.8-0.8 2.2 0 3s2.2 0.8 3 0l4-4V11.5c0 1.1 0.9 2 2 2s2-0.9 2-2V4c0-1.1-0.9-2-2-2h-2.7z" fill="#000000" transform="scale(0.82)"/>
+                          <path d="M10 16h4.8c1.1 0 2-0.9 2-2s-0.9-2-2-2h-2.5l4-4c0.8-0.8 0.8-2.2 0-3s-2.2-0.8-3 0l-4 4V6.5c0-1.1-0.9-2-2-2s-2 0.9-2 2V14c0 1.1 0.9 2 2 2h2.7z" fill="#FFFFFF" transform="scale(0.82)"/>
+                        </g>
+                        <text x="35" y="13" font-family="system-ui, -apple-system, sans-serif" font-weight="900" font-size="8" fill="#FFFFFF" text-anchor="middle" letter-spacing="-0.3">orange</text>
+                        <text x="35" y="21.5" font-family="system-ui, -apple-system, sans-serif" font-weight="800" font-size="6.5" fill="#000000" text-anchor="middle" letter-spacing="-0.2">money</text>
                       </svg>
                       <!-- MTN MoMo SVG Logo -->
-                      <svg class="pay-logo pay-logo-mtn" viewBox="0 0 38 24" width="38" height="24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-label="MTN MoMo">
-                        <rect width="38" height="24" rx="4" fill="#FFCC00"/>
-                        <ellipse cx="19" cy="12" rx="16" ry="9" fill="#002B49"/>
-                        <text x="19" y="15.8" font-family="system-ui,-apple-system,'Arial Black',sans-serif" font-weight="900" font-size="8.8" fill="#FFCC00" text-anchor="middle" letter-spacing="-0.4">MoMo</text>
+                      <svg class="pay-logo pay-logo-mtn" viewBox="0 0 54 28" width="48" height="25" fill="none" xmlns="http://www.w3.org/2000/svg" aria-label="MTN MoMo">
+                        <rect width="54" height="28" rx="4" fill="#FFCC00"/>
+                        <ellipse cx="27" cy="14" rx="22" ry="11" fill="#002855"/>
+                        <text x="27" y="18.5" font-family="system-ui, -apple-system, 'Arial Black', sans-serif" font-weight="900" font-size="12" fill="#FFCC00" text-anchor="middle" letter-spacing="0.5">MTN</text>
                       </svg>
                       <!-- Wave SVG Logo -->
-                      <svg class="pay-logo pay-logo-wave" viewBox="0 0 38 24" width="38" height="24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-label="Wave">
-                        <rect width="38" height="24" rx="4" fill="#1DC4FF"/>
-                        <ellipse cx="19" cy="12" rx="7.5" ry="9" fill="#0F172A"/>
-                        <ellipse cx="19" cy="13.2" rx="5.2" ry="6.6" fill="#FFFFFF"/>
-                        <circle cx="16.8" cy="8.8" r="1.3" fill="#FFFFFF"/>
-                        <circle cx="16.8" cy="8.8" r="0.65" fill="#0F172A"/>
-                        <circle cx="21.2" cy="8.8" r="1.3" fill="#FFFFFF"/>
-                        <circle cx="21.2" cy="8.8" r="0.65" fill="#0F172A"/>
-                        <polygon points="17.6,10.6 20.4,10.6 19,12.8" fill="#FF9900"/>
-                        <ellipse cx="16.2" cy="20.5" rx="2.2" ry="0.9" fill="#FF9900"/>
-                        <ellipse cx="21.8" cy="20.5" rx="2.2" ry="0.9" fill="#FF9900"/>
+                      <svg class="pay-logo pay-logo-wave" viewBox="0 0 54 28" width="48" height="25" fill="none" xmlns="http://www.w3.org/2000/svg" aria-label="Wave">
+                        <rect width="54" height="28" rx="4" fill="#1DC4FF"/>
+                        <g transform="translate(3, 2.5)">
+                          <ellipse cx="9" cy="11.5" rx="7" ry="8.5" fill="#0F172A"/>
+                          <ellipse cx="9" cy="12.5" rx="4.8" ry="6.2" fill="#FFFFFF"/>
+                          <circle cx="7.2" cy="8.2" r="1.1" fill="#FFFFFF"/>
+                          <circle cx="7.2" cy="8.2" r="0.55" fill="#0F172A"/>
+                          <circle cx="10.8" cy="8.2" r="1.1" fill="#FFFFFF"/>
+                          <circle cx="10.8" cy="8.2" r="0.55" fill="#0F172A"/>
+                          <polygon points="8,9.8 10,9.8 9,11.6" fill="#FF9900"/>
+                          <ellipse cx="6.5" cy="19.2" rx="1.8" ry="0.8" fill="#FF9900"/>
+                          <ellipse cx="11.5" cy="19.2" rx="1.8" ry="0.8" fill="#FF9900"/>
+                        </g>
+                        <text x="35.5" y="18" font-family="system-ui, -apple-system, sans-serif" font-weight="900" font-size="11" fill="#FFFFFF" text-anchor="middle" letter-spacing="-0.3">wave</text>
                       </svg>
                       <!-- Moov Money SVG Logo -->
-                      <svg class="pay-logo pay-logo-moov" viewBox="0 0 38 24" width="38" height="24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-label="Moov Money">
-                        <rect width="38" height="24" rx="4" fill="#005BAA"/>
-                        <circle cx="10" cy="12" r="5.5" fill="#8DC63F"/>
-                        <path d="M10 6.5C13 6.5 15.5 9 15.5 12C15.5 15 13 17.5 10 17.5C11.5 16 12.5 14 12.5 12C12.5 10 11.5 8 10 6.5Z" fill="#FFFFFF"/>
-                        <text x="25.5" y="13.5" font-family="system-ui,-apple-system,'Arial Black',sans-serif" font-weight="900" font-size="6.8" fill="#FFFFFF" text-anchor="middle">MOOV</text>
-                        <text x="25.5" y="19" font-family="system-ui,-apple-system,sans-serif" font-weight="800" font-size="4.2" fill="#8DC63F" text-anchor="middle" letter-spacing="0.4">MONEY</text>
+                      <svg class="pay-logo pay-logo-moov" viewBox="0 0 54 28" width="48" height="25" fill="none" xmlns="http://www.w3.org/2000/svg" aria-label="Moov Money">
+                        <rect width="54" height="28" rx="4" fill="#005BAA"/>
+                        <circle cx="9.5" cy="14" r="5" fill="#8DC63F"/>
+                        <path d="M9.5 9C12.2 9 14.5 11.2 14.5 14C14.5 16.8 12.2 19 9.5 19C10.8 17.6 11.7 15.8 11.7 14C11.7 12.2 10.8 10.4 9.5 9Z" fill="#FFFFFF"/>
+                        <text x="33.5" y="13.5" font-family="system-ui, -apple-system, 'Arial Black', sans-serif" font-weight="900" font-size="8" fill="#FFFFFF" text-anchor="middle" letter-spacing="0.2">MOOV</text>
+                        <text x="33.5" y="21" font-family="system-ui, -apple-system, sans-serif" font-weight="800" font-size="5.5" fill="#8DC63F" text-anchor="middle" letter-spacing="0.6">MONEY</text>
                       </svg>
                     </div>
                   </div>
@@ -506,53 +511,58 @@ $pageDescription = "Finalisez votre adhésion à One Vision Community pour 9€ 
 
                   <div class="form-group">
                     <label class="form-label">Opérateur Mobile Money</label>
-                    <div class="momo-operators-grid" style="display:grid; grid-template-columns:repeat(auto-fit, minmax(125px, 1fr)); gap:0.5rem; margin-bottom:1rem;">
+                    <div class="momo-operators-grid" style="display:grid; grid-template-columns:repeat(auto-fit, minmax(130px, 1fr)); gap:0.5rem; margin-bottom:1rem;">
                       <label class="momo-operator-card active" style="display:flex; align-items:center; gap:0.5rem; padding:0.6rem 0.75rem; border:1.5px solid #6366f1; border-radius:10px; cursor:pointer; background:#f5f3ff;">
                         <input type="radio" name="momoOperator" value="Orange Money" checked class="sr-only">
-                        <svg class="pay-logo pay-logo-orange" viewBox="0 0 38 24" width="28" height="18" fill="none" xmlns="http://www.w3.org/2000/svg" aria-label="Orange Money">
-                          <rect width="38" height="24" rx="4" fill="#000000"/>
-                          <rect x="3" y="3.5" width="17" height="17" rx="2.5" fill="#FF7900"/>
-                          <circle cx="9.5" cy="12" r="3.2" stroke="#000000" stroke-width="1.6" fill="none"/>
-                          <circle cx="13.5" cy="12" r="3.2" stroke="#FFFFFF" stroke-width="1.6" fill="none"/>
-                          <text x="28.5" y="16" font-family="'Arial Black',Impact,sans-serif" font-weight="900" font-size="9.5" fill="#FF7900" text-anchor="middle" letter-spacing="-0.5">OM</text>
+                        <svg class="pay-logo pay-logo-orange" viewBox="0 0 54 28" width="36" height="20" fill="none" xmlns="http://www.w3.org/2000/svg" aria-label="Orange Money">
+                          <rect width="54" height="28" rx="4" fill="#FF7900"/>
+                          <g transform="translate(3, 4.5)">
+                            <path d="M6.8 2H2C0.9 2 0 2.9 0 4s0.9 2 2 2h2.5L0.5 10c-0.8 0.8-0.8 2.2 0 3s2.2 0.8 3 0l4-4V11.5c0 1.1 0.9 2 2 2s2-0.9 2-2V4c0-1.1-0.9-2-2-2h-2.7z" fill="#000000" transform="scale(0.82)"/>
+                            <path d="M10 16h4.8c1.1 0 2-0.9 2-2s-0.9-2-2-2h-2.5l4-4c0.8-0.8 0.8-2.2 0-3s-2.2-0.8-3 0l-4 4V6.5c0-1.1-0.9-2-2-2s-2 0.9-2 2V14c0 1.1 0.9 2 2 2h2.7z" fill="#FFFFFF" transform="scale(0.82)"/>
+                          </g>
+                          <text x="35" y="13" font-family="system-ui, -apple-system, sans-serif" font-weight="900" font-size="8" fill="#FFFFFF" text-anchor="middle" letter-spacing="-0.3">orange</text>
+                          <text x="35" y="21.5" font-family="system-ui, -apple-system, sans-serif" font-weight="800" font-size="6.5" fill="#000000" text-anchor="middle" letter-spacing="-0.2">money</text>
                         </svg>
-                        <span style="font-size:0.8rem; font-weight:700;">Orange</span>
+                        <span style="font-size:0.8rem; font-weight:700;">Orange Money</span>
                       </label>
                       <label class="momo-operator-card" style="display:flex; align-items:center; gap:0.5rem; padding:0.6rem 0.75rem; border:1.5px solid #e2e8f0; border-radius:10px; cursor:pointer; background:#fff;">
                         <input type="radio" name="momoOperator" value="MTN MoMo" class="sr-only">
-                        <svg class="pay-logo pay-logo-mtn" viewBox="0 0 38 24" width="28" height="18" fill="none" xmlns="http://www.w3.org/2000/svg" aria-label="MTN MoMo">
-                          <rect width="38" height="24" rx="4" fill="#FFCC00"/>
-                          <ellipse cx="19" cy="12" rx="16" ry="9" fill="#002B49"/>
-                          <text x="19" y="15.8" font-family="system-ui,-apple-system,'Arial Black',sans-serif" font-weight="900" font-size="8.8" fill="#FFCC00" text-anchor="middle" letter-spacing="-0.4">MoMo</text>
+                        <svg class="pay-logo pay-logo-mtn" viewBox="0 0 54 28" width="36" height="20" fill="none" xmlns="http://www.w3.org/2000/svg" aria-label="MTN MoMo">
+                          <rect width="54" height="28" rx="4" fill="#FFCC00"/>
+                          <ellipse cx="27" cy="14" rx="22" ry="11" fill="#002855"/>
+                          <text x="27" y="18.5" font-family="system-ui, -apple-system, 'Arial Black', sans-serif" font-weight="900" font-size="12" fill="#FFCC00" text-anchor="middle" letter-spacing="0.5">MTN</text>
                         </svg>
-                        <span style="font-size:0.8rem; font-weight:700;">MTN</span>
+                        <span style="font-size:0.8rem; font-weight:700;">MTN MoMo</span>
                       </label>
                       <label class="momo-operator-card" style="display:flex; align-items:center; gap:0.5rem; padding:0.6rem 0.75rem; border:1.5px solid #e2e8f0; border-radius:10px; cursor:pointer; background:#fff;">
                         <input type="radio" name="momoOperator" value="Wave" class="sr-only">
-                        <svg class="pay-logo pay-logo-wave" viewBox="0 0 38 24" width="28" height="18" fill="none" xmlns="http://www.w3.org/2000/svg" aria-label="Wave">
-                          <rect width="38" height="24" rx="4" fill="#1DC4FF"/>
-                          <ellipse cx="19" cy="12" rx="7.5" ry="9" fill="#0F172A"/>
-                          <ellipse cx="19" cy="13.2" rx="5.2" ry="6.6" fill="#FFFFFF"/>
-                          <circle cx="16.8" cy="8.8" r="1.3" fill="#FFFFFF"/>
-                          <circle cx="16.8" cy="8.8" r="0.65" fill="#0F172A"/>
-                          <circle cx="21.2" cy="8.8" r="1.3" fill="#FFFFFF"/>
-                          <circle cx="21.2" cy="8.8" r="0.65" fill="#0F172A"/>
-                          <polygon points="17.6,10.6 20.4,10.6 19,12.8" fill="#FF9900"/>
-                          <ellipse cx="16.2" cy="20.5" rx="2.2" ry="0.9" fill="#FF9900"/>
-                          <ellipse cx="21.8" cy="20.5" rx="2.2" ry="0.9" fill="#FF9900"/>
+                        <svg class="pay-logo pay-logo-wave" viewBox="0 0 54 28" width="36" height="20" fill="none" xmlns="http://www.w3.org/2000/svg" aria-label="Wave">
+                          <rect width="54" height="28" rx="4" fill="#1DC4FF"/>
+                          <g transform="translate(3, 2.5)">
+                            <ellipse cx="9" cy="11.5" rx="7" ry="8.5" fill="#0F172A"/>
+                            <ellipse cx="9" cy="12.5" rx="4.8" ry="6.2" fill="#FFFFFF"/>
+                            <circle cx="7.2" cy="8.2" r="1.1" fill="#FFFFFF"/>
+                            <circle cx="7.2" cy="8.2" r="0.55" fill="#0F172A"/>
+                            <circle cx="10.8" cy="8.2" r="1.1" fill="#FFFFFF"/>
+                            <circle cx="10.8" cy="8.2" r="0.55" fill="#0F172A"/>
+                            <polygon points="8,9.8 10,9.8 9,11.6" fill="#FF9900"/>
+                            <ellipse cx="6.5" cy="19.2" rx="1.8" ry="0.8" fill="#FF9900"/>
+                            <ellipse cx="11.5" cy="19.2" rx="1.8" ry="0.8" fill="#FF9900"/>
+                          </g>
+                          <text x="35.5" y="18" font-family="system-ui, -apple-system, sans-serif" font-weight="900" font-size="11" fill="#FFFFFF" text-anchor="middle" letter-spacing="-0.3">wave</text>
                         </svg>
                         <span style="font-size:0.8rem; font-weight:700;">Wave</span>
                       </label>
                       <label class="momo-operator-card" style="display:flex; align-items:center; gap:0.5rem; padding:0.6rem 0.75rem; border:1.5px solid #e2e8f0; border-radius:10px; cursor:pointer; background:#fff;">
                         <input type="radio" name="momoOperator" value="Moov Money" class="sr-only">
-                        <svg class="pay-logo pay-logo-moov" viewBox="0 0 38 24" width="28" height="18" fill="none" xmlns="http://www.w3.org/2000/svg" aria-label="Moov Money">
-                          <rect width="38" height="24" rx="4" fill="#005BAA"/>
-                          <circle cx="10" cy="12" r="5.5" fill="#8DC63F"/>
-                          <path d="M10 6.5C13 6.5 15.5 9 15.5 12C15.5 15 13 17.5 10 17.5C11.5 16 12.5 14 12.5 12C12.5 10 11.5 8 10 6.5Z" fill="#FFFFFF"/>
-                          <text x="25.5" y="13.5" font-family="system-ui,-apple-system,'Arial Black',sans-serif" font-weight="900" font-size="6.8" fill="#FFFFFF" text-anchor="middle">MOOV</text>
-                          <text x="25.5" y="19" font-family="system-ui,-apple-system,sans-serif" font-weight="800" font-size="4.2" fill="#8DC63F" text-anchor="middle" letter-spacing="0.4">MONEY</text>
+                        <svg class="pay-logo pay-logo-moov" viewBox="0 0 54 28" width="36" height="20" fill="none" xmlns="http://www.w3.org/2000/svg" aria-label="Moov Money">
+                          <rect width="54" height="28" rx="4" fill="#005BAA"/>
+                          <circle cx="9.5" cy="14" r="5" fill="#8DC63F"/>
+                          <path d="M9.5 9C12.2 9 14.5 11.2 14.5 14C14.5 16.8 12.2 19 9.5 19C10.8 17.6 11.7 15.8 11.7 14C11.7 12.2 10.8 10.4 9.5 9Z" fill="#FFFFFF"/>
+                          <text x="33.5" y="13.5" font-family="system-ui, -apple-system, 'Arial Black', sans-serif" font-weight="900" font-size="8" fill="#FFFFFF" text-anchor="middle" letter-spacing="0.2">MOOV</text>
+                          <text x="33.5" y="21" font-family="system-ui, -apple-system, sans-serif" font-weight="800" font-size="5.5" fill="#8DC63F" text-anchor="middle" letter-spacing="0.6">MONEY</text>
                         </svg>
-                        <span style="font-size:0.8rem; font-weight:700;">Moov</span>
+                        <span style="font-size:0.8rem; font-weight:700;">Moov Money</span>
                       </label>
                     </div>
                   </div>
