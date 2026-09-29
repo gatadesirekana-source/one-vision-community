@@ -1515,13 +1515,13 @@ function initCheckoutPage() {
       if (methodMobileMoney) methodMobileMoney.classList.remove('selected');
       if (cardDetailsBox) cardDetailsBox.style.display = 'block';
       if (mobileMoneyDetailsBox) mobileMoneyDetailsBox.style.display = 'none';
-      if (submitText) submitText.textContent = "Payer 9,00 € par Carte Bancaire";
+      if (submitText) submitText.textContent = "Payer en toute sécurité avec Moneroo (Carte)";
     } else {
       if (methodMobileMoney) methodMobileMoney.classList.add('selected');
       if (methodCard) methodCard.classList.remove('selected');
       if (cardDetailsBox) cardDetailsBox.style.display = 'none';
       if (mobileMoneyDetailsBox) mobileMoneyDetailsBox.style.display = 'block';
-      if (submitText) submitText.textContent = "Payer 9,00 € via Mobile Money";
+      if (submitText) submitText.textContent = "Payer en toute sécurité avec Moneroo (Mobile Money)";
     }
   }
 
@@ -1783,38 +1783,17 @@ function initCheckoutPage() {
     if (currentPaymentMethod === 'card') {
       const cardVal = cardInput ? cardInput.value.replace(/\s/g, '') : '';
       const expVal = expInput ? expInput.value.trim() : '';
-      const cvcVal = cvcInput ? cvcInput.value.trim() : '';
-
-      if (!cardVal || cardVal.length < 13) {
-        showError('cardError', cardInput, "Numéro de carte bancaire requis.");
+      if (cardVal && cardVal.length < 13) {
+        showError('cardError', cardInput, "Numéro de carte bancaire incomplet.");
         hasError = true;
       } else {
         hideError('cardError', cardInput);
       }
-
-      if (!expVal || !expVal.includes('/') || expVal.length < 5) {
-        showError('expError', expInput, "Format MM/AA requis (ex: 08/28).");
-        hasError = true;
-      } else if (!isCardNotExpired(expVal)) {
-        showError('expError', expInput, "Cette carte bancaire est expirée ou la date est invalide.");
+      if (expVal && (!expVal.includes('/') || !isCardNotExpired(expVal))) {
+        showError('expError', expInput, "Date d'expiration invalide ou expirée.");
         hasError = true;
       } else {
         hideError('expError', expInput);
-      }
-
-      if (!cvcVal || cvcVal.length < 3) {
-        showError('cvcError', cvcInput, "Cryptogramme CVC requis.");
-        hasError = true;
-      } else {
-        hideError('cvcError', cvcInput);
-      }
-    } else {
-      const momoVal = momoPhone ? momoPhone.value.replace(/\s/g, '') : '';
-      if (!momoVal || momoVal.length < 6) {
-        showError('momoPhoneError', momoPhone, "Numéro de téléphone requis.");
-        hasError = true;
-      } else {
-        hideError('momoPhoneError', momoPhone);
       }
     }
 
@@ -1826,7 +1805,7 @@ function initCheckoutPage() {
 
     if (submitBtn) {
       submitBtn.disabled = true;
-      if (submitText) submitText.textContent = "Activation de votre adhésion en cours...";
+      if (submitText) submitText.textContent = "Redirection vers le paiement sécurisé...";
     }
 
     localStorage.setItem('ov_has_paid', 'true');
@@ -1850,6 +1829,17 @@ function initCheckoutPage() {
       .then(data => {
         if (data && data.success && data.redirect_url) {
           window.location.href = data.redirect_url;
+        } else if (data && !data.success && data.error) {
+          if (submitBtn) submitBtn.disabled = false;
+          if (submitText) submitText.textContent = (currentPaymentMethod === 'card') ? "Payer en toute sécurité avec Moneroo (Carte)" : "Payer en toute sécurité avec Moneroo (Mobile Money)";
+          const globalErr = document.getElementById('checkoutGlobalError');
+          const globalErrText = document.getElementById('checkoutGlobalErrorText');
+          if (globalErr && globalErrText) {
+            globalErrText.textContent = data.error;
+            globalErr.style.display = 'flex';
+          } else {
+            alert(data.error);
+          }
         } else {
           window.location.href = `checkout-success.php?order=${encodeURIComponent((data && data.order_number) ? data.order_number : '')}`;
         }
