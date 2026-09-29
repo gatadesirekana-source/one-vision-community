@@ -3009,7 +3009,7 @@ Document généré pour ${memberName} • One Vision Community © Tous droits r�
     salonFeedContainer.innerHTML = posts.map(p => `
       <div class="salon-post" data-post-id="${p.id}" data-channel="${channelKey}">
         <div class="post-header">
-          <img src="${p.avatar}" alt="${p.name}" class="post-avatar">
+          <img src="${escapeHtml(p.avatar)}" alt="${escapeHtml(p.name)}" class="post-avatar">
           <div class="post-meta">
             <strong>${escapeHtml(p.name)}</strong> 
             <span>${p.time} • ${escapeHtml(p.role)} • ${escapeHtml(p.tag)}</span>
@@ -3038,7 +3038,7 @@ Document généré pour ${memberName} • One Vision Community © Tous droits r�
             ✍️ Répondre
           </button>
 
-          <button type="button" class="post-action-pill btn-dm-author" data-author-name="${escapeHtml(p.name)}" data-author-role="${escapeHtml(p.role)}" data-author-avatar="${p.avatar}" title="Envoyer un message privé à ${escapeHtml(p.name)}">
+          <button type="button" class="post-action-pill btn-dm-author" data-author-name="${escapeHtml(p.name)}" data-author-role="${escapeHtml(p.role)}" data-author-avatar="${escapeHtml(p.avatar)}" title="Envoyer un message privé à ${escapeHtml(p.name)}">
             ✉️ Envoyer un message
           </button>
         </div>
@@ -3048,7 +3048,7 @@ Document généré pour ${memberName} • One Vision Community © Tous droits r�
           ${p.replies.map(r => `
             <div class="comment-reply-card">
               <div class="comment-reply-header">
-                <img src="${r.avatar}" alt="${r.name}" class="comment-reply-avatar">
+                <img src="${escapeHtml(r.avatar)}" alt="${escapeHtml(r.name)}" class="comment-reply-avatar">
                 <span class="comment-reply-author">${escapeHtml(r.name)}</span>
                 <span class="comment-reply-role">• ${escapeHtml(r.role)}</span>
                 <span class="comment-reply-time">${r.time}</span>
@@ -3287,7 +3287,7 @@ Document généré pour ${memberName} • One Vision Community © Tous droits r�
       if (isPhpEnvironment()) {
         fetch('api/chat.php', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '' },
           body: JSON.stringify({
             channel: activeChannelKey,
             content: text || "A partagé une image"

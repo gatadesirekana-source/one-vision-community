@@ -13,31 +13,60 @@ require_auth('login.php');
 $db = get_db();
 $currentUser = current_user();
 
+// En-têtes de sécurité HTTP
+if (!headers_sent()) {
+    header('X-Content-Type-Options: nosniff');
+    header('X-Frame-Options: SAMEORIGIN');
+    header('Referrer-Policy: strict-origin-when-cross-origin');
+}
+
 // Traitement POST : Mise à jour du profil membre
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'update_profile') {
-    $fullName = trim($_POST['settingsFullName'] ?? '');
-    $role = trim($_POST['settingsRole'] ?? '');
-    $avatar = trim($_POST['settingsAvatar'] ?? ($currentUser['avatar'] ?? './img/avatar-maxime.jpg'));
-    $newPwd = $_POST['settingsNewPassword'] ?? '';
-    $oldPwd = $_POST['settingsOldPassword'] ?? '';
+    if (!verify_csrf_token($_POST['csrf_token'] ?? null)) {
+        set_flash('error', 'Session de formulaire expirée. Veuillez actualiser et réessayer.');
+    } else {
+        $fullName = trim($_POST['settingsFullName'] ?? '');
+        $role = trim($_POST['settingsRole'] ?? '');
+        $avatar = trim($_POST['settingsAvatar'] ?? ($currentUser['avatar'] ?? './img/avatar-maxime.jpg'));
+        $newPwd = $_POST['settingsNewPassword'] ?? '';
+        $oldPwd = $_POST['settingsOldPassword'] ?? '';
 
-    if (!empty($fullName)) {
-        if (!empty($newPwd)) {
-            if (password_verify($oldPwd, $currentUser['password'])) {
-                $hash = password_hash($newPwd, PASSWORD_DEFAULT);
-                $stmt = $db->prepare("UPDATE users SET full_name = ?, job_title = ?, avatar = ?, password = ? WHERE id = ?");
-                $stmt->execute([$fullName, $role, $avatar, $hash, $currentUser['id']]);
-                set_flash('success', 'Votre profil et votre mot de passe ont été mis à jour avec succès.');
+        // Validation stricte de l'avatar (presets autorisés ou data:image format sécurisé)
+        $allowedAvatars = [
+            './img/avatar-maxime.jpg', './img/avatar-florian.jpg',
+            './img/avatar-cyril.jpg',  './img/avatar-aurore.jpg',
+            './img/avatar-sarah.jpg'
+        ];
+        if (!in_array($avatar, $allowedAvatars, true)) {
+            if (preg_match('#^data:image/(jpeg|png|webp);base64,[A-Za-z0-9+/=]+$#', $avatar)) {
+                if (strlen($avatar) > 2800000) {
+                    $avatar = $currentUser['avatar'] ?? './img/avatar-maxime.jpg';
+                }
             } else {
-                set_flash('error', 'Le mot de passe actuel saisi est incorrect.');
+                $avatar = $currentUser['avatar'] ?? './img/avatar-maxime.jpg';
             }
-        } else {
-            $stmt = $db->prepare("UPDATE users SET full_name = ?, job_title = ?, avatar = ? WHERE id = ?");
-            $stmt->execute([$fullName, $role, $avatar, $currentUser['id']]);
-            set_flash('success', 'Votre profil a été mis à jour avec succès.');
         }
-        $currentUser = current_user();
-        $_SESSION['user_name'] = $currentUser['full_name'];
+
+        if (!empty($fullName)) {
+            if (!empty($newPwd)) {
+                if (strlen($newPwd) < 8 || !preg_match('#[0-9]#', $newPwd) || !preg_match('#[a-zA-Z]#', $newPwd)) {
+                    set_flash('error', 'Le nouveau mot de passe doit comporter au moins 8 caractères et combiner lettres et chiffres.');
+                } elseif (password_verify($oldPwd, $currentUser['password'])) {
+                    $hash = password_hash($newPwd, PASSWORD_DEFAULT);
+                    $stmt = $db->prepare("UPDATE users SET full_name = ?, job_title = ?, avatar = ?, password = ? WHERE id = ?");
+                    $stmt->execute([$fullName, $role, $avatar, $hash, $currentUser['id']]);
+                    set_flash('success', 'Votre profil et votre mot de passe ont été mis à jour avec succès.');
+                } else {
+                    set_flash('error', 'Le mot de passe actuel saisi est incorrect.');
+                }
+            } else {
+                $stmt = $db->prepare("UPDATE users SET full_name = ?, job_title = ?, avatar = ? WHERE id = ?");
+                $stmt->execute([$fullName, $role, $avatar, $currentUser['id']]);
+                set_flash('success', 'Votre profil a été mis à jour avec succès.');
+            }
+            $currentUser = current_user();
+            $_SESSION['user_name'] = $currentUser['full_name'];
+        }
     }
 }
 
@@ -77,6 +106,7 @@ if (($currentUser['role'] ?? '') === 'admin') {
   <link href="https://fonts.googleapis.com/css2?family=Great+Vibes&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 
   <link rel="stylesheet" href="./css/style.css?v=3">
+  <meta name="csrf-token" content="<?= htmlspecialchars(csrf_token()) ?>">
 </head>
 <body class="dashboard-body">
 
@@ -218,7 +248,7 @@ if (($currentUser['role'] ?? '') === 'admin') {
 
           <div class="user-dropdown-divider"></div>
 
-          <a href="logout.php" class="user-dropdown-item item-danger" id="dashLogoutBtn" style="text-decoration:none; display:flex; align-items:center; gap:0.5rem;">
+          <a href="logout.php?token=<?= urlencode(csrf_token()) ?>" class="user-dropdown-item item-danger" id="dashLogoutBtn" style="text-decoration:none; display:flex; align-items:center; gap:0.5rem;">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
               <polyline points="16 17 21 12 16 7"></polyline>

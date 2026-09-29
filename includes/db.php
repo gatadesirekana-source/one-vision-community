@@ -23,6 +23,7 @@ function get_db(): PDO {
 
         // Activer les clés étrangères dans SQLite
         $pdo->exec('PRAGMA foreign_keys = ON;');
+        $pdo->exec('CREATE TABLE IF NOT EXISTS login_attempts (id INTEGER PRIMARY KEY AUTOINCREMENT, ip TEXT NOT NULL, attempt_time INTEGER NOT NULL);');
 
         if ($isNewDb || filesize(DB_FILE) === 0) {
             init_database($pdo);
@@ -107,6 +108,9 @@ function init_database(PDO $pdo): void {
             billing_address TEXT DEFAULT '',
             billing_country TEXT DEFAULT 'France',
             invoice_number TEXT UNIQUE NOT NULL,
+            momo_phone TEXT DEFAULT '',
+            momo_operator TEXT DEFAULT '',
+            momo_country TEXT DEFAULT '',
             created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
             FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
         );
@@ -124,6 +128,15 @@ function init_database(PDO $pdo): void {
             status TEXT NOT NULL DEFAULT 'open', -- open, in_progress, resolved
             created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
             FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE SET NULL
+        );
+    ");
+
+    // 6. Table Limitation de débit des connexions (Rate Limiting)
+    $pdo->exec("
+        CREATE TABLE IF NOT EXISTS login_attempts (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            ip TEXT NOT NULL,
+            attempt_time INTEGER NOT NULL
         );
     ");
 

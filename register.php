@@ -20,23 +20,27 @@ $companyVal = '';
 $jobTitleVal = '';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $fullNameVal = trim($_POST['full_name'] ?? '');
-    $emailVal = trim($_POST['email'] ?? '');
-    $password = $_POST['password'] ?? '';
-    $companyVal = trim($_POST['company'] ?? '');
-    $jobTitleVal = trim($_POST['job_title'] ?? '');
-
-    $result = register_user($fullNameVal, $emailVal, $password, [
-        'company' => $companyVal,
-        'job_title' => $jobTitleVal ?: 'Entrepreneur & Membre One Vision'
-    ]);
-
-    if ($result['success']) {
-        set_flash('success', 'Bienvenue dans One Vision Community ! Votre compte a été créé avec succès.');
-        header('Location: dashboard.php');
-        exit;
+    if (!verify_csrf_token($_POST['csrf_token'] ?? null)) {
+        $error = "Session de formulaire expirée. Veuillez actualiser la page et réessayer.";
     } else {
-        $error = $result['error'];
+        $fullNameVal = trim($_POST['full_name'] ?? '');
+        $emailVal = trim($_POST['email'] ?? '');
+        $password = $_POST['password'] ?? '';
+        $companyVal = trim($_POST['company'] ?? '');
+        $jobTitleVal = trim($_POST['job_title'] ?? '');
+
+        $result = register_user($fullNameVal, $emailVal, $password, [
+            'company' => $companyVal,
+            'job_title' => $jobTitleVal ?: 'Entrepreneur & Membre One Vision'
+        ]);
+
+        if ($result['success']) {
+            set_flash('success', 'Bienvenue dans One Vision Community ! Votre compte a été créé avec succès.');
+            header('Location: dashboard.php');
+            exit;
+        } else {
+            $error = $result['error'];
+        }
     }
 }
 
@@ -132,7 +136,7 @@ require_once __DIR__ . '/includes/header.php';
 
       <div class="form-group">
         <label for="password" style="display:block; font-size:0.9rem; font-weight:600; margin-bottom:0.4rem; color:var(--color-text-main, #1e293b);">
-          Mot de passe (6 caractères min.) <span style="color:#ef4444;">*</span>
+          Mot de passe (8 caractères min., avec lettres et chiffres) <span style="color:#ef4444;">*</span>
         </label>
         <input 
           type="password" 

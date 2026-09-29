@@ -1,0 +1,7 @@
+# Interdiction absolue d'accès HTTP au répertoire de la base de données
+<IfModule mod_authz_core.c>
+    Require all denied
+</IfModule>
+<IfModule !mod_authz_core.c>
+    Deny from all
+</IfModule>

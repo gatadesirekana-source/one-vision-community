@@ -8,38 +8,25 @@ require_once __DIR__ . '/includes/db.php';
 require_once __DIR__ . '/includes/auth.php';
 require_once __DIR__ . '/includes/flash.php';
 
+require_auth('login.php');
+
 $db = get_db();
+$currentUser = current_user();
 $orderNumber = trim($_GET['order'] ?? '');
 
 $order = null;
 
 if (!empty($orderNumber)) {
-    $stmt = $db->prepare("SELECT * FROM orders WHERE order_number = ?");
-    $stmt->execute([$orderNumber]);
+    $stmt = $db->prepare("SELECT * FROM orders WHERE order_number = ? AND user_id = ?");
+    $stmt->execute([$orderNumber, $currentUser['id']]);
     $order = $stmt->fetch();
 }
 
-// Si la commande n'a pas été trouvée, chercher la plus récente pour l'utilisateur connecté
-if (!$order && is_logged_in()) {
-    $currentUser = current_user();
+// Si la commande n'a pas été trouvée par numéro, chercher la plus récente pour l'utilisateur connecté
+if (!$order) {
     $stmt = $db->prepare("SELECT * FROM orders WHERE user_id = ? ORDER BY id DESC LIMIT 1");
     $stmt->execute([$currentUser['id']]);
     $order = $stmt->fetch();
-}
-
-if ($order) {
-    if ($order['status'] !== 'paid') {
-        $db->prepare("UPDATE orders SET status = 'paid' WHERE id = ?")->execute([$order['id']]);
-        $db->prepare("UPDATE users SET subscription_status = 'active', subscription_started_at = CURRENT_TIMESTAMP WHERE id = ?")
-           ->execute([$order['user_id']]);
-        $order['status'] = 'paid';
-    }
-
-    // Connexion automatique dans la session
-    $_SESSION['user_id'] = $order['user_id'];
-    $_SESSION['user_name'] = $order['billing_name'];
-    $_SESSION['user_email'] = $order['billing_email'];
-    $_SESSION['user_role'] = 'member';
 }
 
 $pageTitle = "Adhésion Confirmée — One Vision Community";

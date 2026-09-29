@@ -16,56 +16,71 @@ $createdOrder = null;
 $error = '';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $name = trim($_POST['checkoutName'] ?? '');
-    $email = trim(strtolower($_POST['checkoutEmail'] ?? ''));
-    $password = $_POST['checkoutPassword'] ?? '';
-    $method = trim($_POST['paymentMethod'] ?? 'card');
-    $momoOperator = trim($_POST['momoOperator'] ?? 'Orange Money');
-    $momoPhone = trim($_POST['momoPhone'] ?? '');
-    $momoCountryPrefix = trim($_POST['momoCountryPrefix'] ?? '+225');
-
-    if (empty($name) || empty($email) || !filter_var($email, FILTER_VALIDATE_EMAIL)) {
-        $error = "Veuillez renseigner un nom valide et une adresse email valide.";
+    if (!verify_csrf_token($_POST['csrf_token'] ?? $_SERVER['HTTP_X_CSRF_TOKEN'] ?? null)) {
+        $error = "Session de formulaire expirée. Veuillez actualiser la page et réessayer.";
         if (!empty($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest') {
             header('Content-Type: application/json; charset=utf-8');
-            http_response_code(400);
-            echo json_encode([
-                'success' => false,
-                'error'   => $error
-            ]);
+            http_response_code(403);
+            echo json_encode(['success' => false, 'error' => $error]);
             exit;
         }
     } else {
-        try {
-            $userId = null;
+        $name = trim($_POST['checkoutName'] ?? '');
+        $email = trim(strtolower($_POST['checkoutEmail'] ?? ''));
+        $password = $_POST['checkoutPassword'] ?? '';
+        $method = trim($_POST['paymentMethod'] ?? 'card');
+        $momoOperator = trim($_POST['momoOperator'] ?? 'Orange Money');
+        $momoPhone = trim($_POST['momoPhone'] ?? '');
+        $momoCountryPrefix = trim($_POST['momoCountryPrefix'] ?? '+225');
 
-            if ($currentUser) {
-                $userId = $currentUser['id'];
-                $db->prepare("UPDATE users SET subscription_status = 'active', subscription_started_at = CURRENT_TIMESTAMP WHERE id = ?")
-                   ->execute([$userId]);
-            } else {
-                // Vérifier si l'utilisateur existe déjà
-                $stmt = $db->prepare("SELECT id FROM users WHERE LOWER(email) = ?");
-                $stmt->execute([$email]);
-                $existing = $stmt->fetch();
+        if (empty($name) || empty($email) || !filter_var($email, FILTER_VALIDATE_EMAIL)) {
+            $error = "Veuillez renseigner un nom valide et une adresse email valide.";
+            if (!empty($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest') {
+                header('Content-Type: application/json; charset=utf-8');
+                http_response_code(400);
+                echo json_encode([
+                    'success' => false,
+                    'error'   => $error
+                ]);
+                exit;
+            }
+        } else {
+            try {
+                $userId = null;
 
-                if ($existing) {
-                    $userId = $existing['id'];
+                if ($currentUser) {
+                    $userId = $currentUser['id'];
                     $db->prepare("UPDATE users SET subscription_status = 'active', subscription_started_at = CURRENT_TIMESTAMP WHERE id = ?")
                        ->execute([$userId]);
                 } else {
-                    $pwd = !empty($password) ? $password : 'Member2026!';
-                    $reg = register_user($name, $email, $pwd, [
-                        'job_title'           => 'Membre One Vision Community',
-                        'subscription_status' => 'active'
-                    ]);
-                    if ($reg['success']) {
-                        $userId = $reg['user_id'];
+                    // Vérifier si l'utilisateur existe déjà
+                    $stmt = $db->prepare("SELECT id, full_name, email, role, password FROM users WHERE LOWER(email) = ?");
+                    $stmt->execute([$email]);
+                    $existing = $stmt->fetch();
+
+                    if ($existing) {
+                        // Empêcher l'usurpation de compte : mot de passe obligatoire pour réactiver/commander sur un compte existant
+                        if (empty($password) || !password_verify($password, $existing['password'])) {
+                            throw new Exception("Un compte associé à cette adresse email existe déjà. Veuillez renseigner votre mot de passe pour renouveler votre adhésion ou vous connecter au préalable.");
+                        }
+                        $userId = $existing['id'];
+                        $db->prepare("UPDATE users SET subscription_status = 'active', subscription_started_at = CURRENT_TIMESTAMP WHERE id = ?")
+                           ->execute([$userId]);
                     } else {
-                        throw new Exception($reg['error']);
+                        if (empty($password) || strlen($password) < 8 || !preg_match('#[0-9]#', $password) || !preg_match('#[a-zA-Z]#', $password)) {
+                            throw new Exception("Veuillez choisir un mot de passe d'au moins 8 caractères contenant des lettres et des chiffres pour créer votre compte membre.");
+                        }
+                        $reg = register_user($name, $email, $password, [
+                            'job_title'           => 'Membre One Vision Community',
+                            'subscription_status' => 'active'
+                        ]);
+                        if ($reg['success']) {
+                            $userId = $reg['user_id'];
+                        } else {
+                            throw new Exception($reg['error']);
+                        }
                     }
                 }
-            }
 
             // Générer les numéros de commande et de facture
             $randomNum = rand(100, 999);
@@ -127,7 +142,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             exit;
 
         } catch (Exception $e) {
-            $error = "Erreur lors de la validation : " . $e->getMessage();
+            $error = $e->getMessage();
             if (!empty($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest') {
                 header('Content-Type: application/json; charset=utf-8');
                 http_response_code(400);
@@ -136,6 +151,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             }
         }
     }
+}
 }
 
 $pageTitle = "Paiement Sécurisé — One Vision Community (9€/mois)";
@@ -210,6 +226,7 @@ $pageDescription = "Finalisez votre adhésion à One Vision Community pour 9€ 
             <p class="checkout-subtitle" id="checkoutMainSubtitle">Remplissez vos informations pour activer votre accès instantané à la communauté.</p>
 
             <form id="checkoutPaymentForm" action="checkout.php" method="POST" novalidate>
+              <?= csrf_field() ?>
               
               <!-- ÉTAPE 1 : IDENTIFIANTS DU COMPTE (PAGE COMPACTE / CAPTURE) -->
               <div id="checkoutStep1" class="checkout-step-pane">

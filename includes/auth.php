@@ -43,7 +43,51 @@ function require_auth(string $redirect = 'login.php'): void {
     }
 }
 
+function get_client_ip(): string {
+    $ip = $_SERVER['HTTP_X_FORWARDED_FOR'] ?? $_SERVER['REMOTE_ADDR'] ?? '127.0.0.1';
+    if (strpos($ip, ',') !== false) {
+        $ip = trim(explode(',', $ip)[0]);
+    }
+    return filter_var($ip, FILTER_VALIDATE_IP) ? $ip : '127.0.0.1';
+}
+
+function check_rate_limit(string $ip, int $maxAttempts = 5, int $decaySeconds = 900): bool {
+    try {
+        $db = get_db();
+        $cutoff = time() - $decaySeconds;
+        $db->prepare("DELETE FROM login_attempts WHERE attempt_time < ?")->execute([$cutoff]);
+
+        $stmt = $db->prepare("SELECT COUNT(*) FROM login_attempts WHERE ip = ? AND attempt_time >= ?");
+        $stmt->execute([$ip, $cutoff]);
+        $count = (int)$stmt->fetchColumn();
+
+        return $count < $maxAttempts;
+    } catch (Exception $e) {
+        return true; // Fallback permissif si table temporairement indisponible
+    }
+}
+
+function record_failed_attempt(string $ip): void {
+    try {
+        $db = get_db();
+        $db->prepare("INSERT INTO login_attempts (ip, attempt_time) VALUES (?, ?)")->execute([$ip, time()]);
+    } catch (Exception $e) {}
+}
+
+function reset_attempts(string $ip): void {
+    try {
+        $db = get_db();
+        $db->prepare("DELETE FROM login_attempts WHERE ip = ?")->execute([$ip]);
+    } catch (Exception $e) {}
+}
+
 function login_user(string $email, string $password): array {
+    $ip = get_client_ip();
+
+    if (!check_rate_limit($ip, 5, 900)) {
+        return ['success' => false, 'error' => 'Trop de tentatives de connexion échouées. Par mesure de sécurité, veuillez patienter 15 minutes avant de réessayer.'];
+    }
+
     $db = get_db();
     $email = trim(strtolower($email));
 
@@ -56,11 +100,17 @@ function login_user(string $email, string $password): array {
     $user = $stmt->fetch();
 
     if (!$user || !password_verify($password, $user['password'])) {
+        record_failed_attempt($ip);
         return ['success' => false, 'error' => 'Identifiants invalides. Vérifiez votre email et mot de passe.'];
     }
 
+    // Réinitialisation du compteur de tentatives en cas de succès
+    reset_attempts($ip);
+
     // Régénération de l'ID de session pour prévenir la fixation de session
-    session_regenerate_id(true);
+    if (!headers_sent()) {
+        session_regenerate_id(true);
+    }
     $_SESSION['user_id'] = $user['id'];
     $_SESSION['user_name'] = $user['full_name'];
     $_SESSION['user_email'] = $user['email'];
@@ -74,16 +124,16 @@ function register_user(string $fullName, string $email, string $password, array 
     $fullName = trim($fullName);
     $email = trim(strtolower($email));
 
-    if (empty($fullName)) {
-        return ['success' => false, 'error' => 'Veuillez renseigner votre nom complet.'];
+    if (empty($fullName) || mb_strlen($fullName) > 100) {
+        return ['success' => false, 'error' => 'Veuillez renseigner un nom valide (100 caractères maximum).'];
     }
 
     if (empty($email) || !filter_var($email, FILTER_VALIDATE_EMAIL)) {
         return ['success' => false, 'error' => 'Adresse email invalide.'];
     }
 
-    if (strlen($password) < 6) {
-        return ['success' => false, 'error' => 'Le mot de passe doit comporter au moins 6 caractères.'];
+    if (strlen($password) < 8 || !preg_match('#[0-9]#', $password) || !preg_match('#[a-zA-Z]#', $password)) {
+        return ['success' => false, 'error' => 'Le mot de passe doit comporter au moins 8 caractères, incluant au moins une lettre et un chiffre.'];
     }
 
     // Vérifier si l'email existe déjà
@@ -110,7 +160,9 @@ function register_user(string $fullName, string $email, string $password, array 
     $newId = $db->lastInsertId();
 
     // Auto login
-    session_regenerate_id(true);
+    if (!headers_sent()) {
+        session_regenerate_id(true);
+    }
     $_SESSION['user_id'] = $newId;
     $_SESSION['user_name'] = $fullName;
     $_SESSION['user_email'] = $email;

@@ -15,40 +15,45 @@ $ticketSent = false;
 $error = '';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $name = trim($_POST['contactName'] ?? '');
-    $email = trim($_POST['contactEmail'] ?? '');
-    $subject = trim($_POST['contactSubject'] ?? '');
-    $message = trim($_POST['contactMessage'] ?? '');
-
-    if (empty($name) || empty($email) || empty($subject) || empty($message)) {
-        $error = "Veuillez renseigner tous les champs obligatoires du formulaire.";
-    } elseif (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
-        $error = "Adresse email invalide.";
+    if (!verify_csrf_token($_POST['csrf_token'] ?? null)) {
+        $error = "Session de formulaire expirée. Veuillez actualiser la page et réessayer.";
     } else {
-        try {
-            $stmt = $db->prepare("
-                INSERT INTO support_tickets (user_id, name, email, subject, message, status)
-                VALUES (?, ?, ?, ?, ?, 'open')
-            ");
-            $stmt->execute([
-                $currentUser['id'] ?? null,
-                $name,
-                $email,
-                $subject,
-                $message
-            ]);
+        $name = trim($_POST['contactName'] ?? '');
+        $email = trim($_POST['contactEmail'] ?? '');
+        $subject = trim($_POST['contactSubject'] ?? '');
+        $message = trim($_POST['contactMessage'] ?? '');
 
-            $ticketSent = true;
-            set_flash('success', "Votre demande a été prise en compte avec succès ! Un conseiller vous répondra sous 24h ouvrées.");
+        if (empty($name) || empty($email) || empty($subject) || empty($message)) {
+            $error = "Veuillez renseigner tous les champs obligatoires du formulaire.";
+        } elseif (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+            $error = "Adresse email invalide.";
+        } else {
+            try {
+                $stmt = $db->prepare("
+                    INSERT INTO support_tickets (user_id, name, email, subject, message, status)
+                    VALUES (?, ?, ?, ?, ?, 'open')
+                ");
+                $stmt->execute([
+                    $currentUser['id'] ?? null,
+                    $name,
+                    $email,
+                    $subject,
+                    $message
+                ]);
 
-            if (!empty($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest') {
-                header('Content-Type: application/json');
-                echo json_encode(['success' => true]);
-                exit;
+                $ticketSent = true;
+                set_flash('success', "Votre demande a été prise en compte avec succès ! Un conseiller vous répondra sous 24h ouvrées.");
+
+                if (!empty($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest') {
+                    header('Content-Type: application/json');
+                    echo json_encode(['success' => true]);
+                    exit;
+                }
+
+            } catch (Exception $e) {
+                error_log("Support ticket creation error: " . $e->getMessage());
+                $error = "Une erreur est survenue lors de l'enregistrement de votre message. Veuillez réessayer ultérieurement.";
             }
-
-        } catch (Exception $e) {
-            $error = "Une erreur est survenue lors de l'enregistrement de votre message : " . $e->getMessage();
         }
     }
 }

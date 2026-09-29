@@ -19,9 +19,9 @@ $createdLive = null;
 $error = '';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    // Si token CSRF fourni, le vérifier
-    if (isset($_POST['csrf_token']) && !verify_csrf_token($_POST['csrf_token'])) {
-        $error = "Session expirée. Veuillez actualiser la page et réessayer.";
+    // Vérification obligatoire et stricte du token CSRF
+    if (!verify_csrf_token($_POST['csrf_token'] ?? null)) {
+        $error = "Session de formulaire expirée. Veuillez actualiser la page et réessayer.";
     } else {
         $format = trim($_POST['liveFormat'] ?? 'Live Thématique');
         $title = trim($_POST['liveTitle'] ?? '');
@@ -90,7 +90,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 set_flash('success', "Votre session « " . htmlspecialchars($title) . " » a été enregistrée avec succès dans le calendrier !");
 
             } catch (Exception $e) {
-                $error = "Erreur lors de l'enregistrement : " . $e->getMessage();
+                error_log("Database error in creer-live: " . $e->getMessage());
+                $error = "Une erreur est survenue lors de l'enregistrement de votre session. Veuillez vérifier vos données et réessayer.";
             }
         }
     }

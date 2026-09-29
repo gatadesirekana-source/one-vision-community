@@ -65,6 +65,14 @@ if ($method === 'POST') {
         $inputData = $_POST;
     }
 
+    // Vérification stricte du jeton CSRF
+    $token = $_SERVER['HTTP_X_CSRF_TOKEN'] ?? $inputData['csrf_token'] ?? null;
+    if (!verify_csrf_token($token)) {
+        http_response_code(403);
+        echo json_encode(['success' => false, 'error' => 'Jeton CSRF invalide ou session expirée.']);
+        exit;
+    }
+
     $channel = trim($inputData['channel'] ?? 'general');
     $content = trim($inputData['content'] ?? '');
 

@@ -5,7 +5,9 @@
 
 require_once __DIR__ . '/includes/config.php';
 require_once __DIR__ . '/includes/db.php';
-require_once __DIR__ . '/includes/auth.php';
+require_once __DIR__ . '/includes/flash.php';
+
+require_auth('login.php');
 
 $db = get_db();
 $currentUser = current_user();
@@ -16,30 +18,30 @@ $order = null;
 if ($orderId) {
     $stmt = $db->prepare("SELECT * FROM orders WHERE id = ? OR order_number = ? OR invoice_number = ?");
     $stmt->execute([$orderId, $orderId, $orderId]);
-    $order = $stmt->fetch();
+    $foundOrder = $stmt->fetch();
+
+    if ($foundOrder) {
+        // Contrôle d'accès strict (Anti-IDOR) : seul le titulaire ou l'administrateur peut voir la facture
+        if ((int)$foundOrder['user_id'] === (int)$currentUser['id'] || ($currentUser['role'] ?? '') === 'admin') {
+            $order = $foundOrder;
+        } else {
+            http_response_code(403);
+            die("Accès refusé : vous n'avez pas l'autorisation d'accéder à cette facture.");
+        }
+    }
 }
 
-// Si aucune commande spécifiée, chercher la dernière commande du membre connecté
-if (!$order && $currentUser) {
+// Si aucune commande spécifiée ou trouvée, charger la dernière commande du membre connecté
+if (!$order) {
     $stmt = $db->prepare("SELECT * FROM orders WHERE user_id = ? ORDER BY id DESC LIMIT 1");
     $stmt->execute([$currentUser['id']]);
     $order = $stmt->fetch();
 }
 
-// Si toujours aucune commande trouvée, créer des données réalistes par défaut
 if (!$order) {
-    $order = [
-        'order_number' => 'ORD-2026-00101',
-        'invoice_number' => 'INV-2026-00101',
-        'amount' => 9.00,
-        'currency' => 'EUR',
-        'status' => 'paid',
-        'payment_method' => 'card',
-        'billing_name' => $currentUser['full_name'] ?? 'Membre One Vision',
-        'billing_email' => $currentUser['email'] ?? 'contact@onevisioncommunity.fr',
-        'billing_country' => 'France',
-        'created_at' => date('Y-m-d H:i:s')
-    ];
+    set_flash('error', "Aucune facture trouvée pour votre compte.");
+    header('Location: dashboard.php');
+    exit;
 }
 
 $dateEmission = date('d/m/Y', strtotime($order['created_at']));

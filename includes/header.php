@@ -16,8 +16,11 @@ if (!isset($pageTitle)) {
 if (!isset($pageDescription)) {
     $pageDescription = "One Vision Community : Vous savez où vous allez, ici vous n'y allez plus seul. Un espace vivant pour 9€/mois sans engagement.";
 }
-if (!isset($bodyClass)) {
-    $bodyClass = "";
+// En-têtes de sécurité HTTP
+if (!headers_sent()) {
+    header('X-Content-Type-Options: nosniff');
+    header('X-Frame-Options: SAMEORIGIN');
+    header('Referrer-Policy: strict-origin-when-cross-origin');
 }
 ?>
 <!DOCTYPE html>
@@ -68,7 +71,7 @@ if (!isset($bodyClass)) {
             <img src="<?= htmlspecialchars($currentUser['avatar'] ?? './img/avatar-maxime.jpg') ?>" alt="Avatar" style="width:24px; height:24px; border-radius:50%; object-fit:cover;">
             <span>Mon Espace (<?= htmlspecialchars(explode(' ', $currentUser['full_name'])[0]) ?>)</span>
           </a>
-          <a href="logout.php" class="btn btn-outline" style="font-size:0.85rem; padding:0.48rem 0.85rem; border:1px solid var(--color-border); border-radius:8px; color:var(--color-text-muted);" title="Se déconnecter">
+          <a href="logout.php?token=<?= urlencode(csrf_token()) ?>" class="btn btn-outline" style="font-size:0.85rem; padding:0.48rem 0.85rem; border:1px solid var(--color-border); border-radius:8px; color:var(--color-text-muted);" title="Se déconnecter">
             Déconnexion
           </a>
         <?php else: ?>

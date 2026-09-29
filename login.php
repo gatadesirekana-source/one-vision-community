@@ -18,20 +18,24 @@ $error = '';
 $emailValue = '';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $email = $_POST['email'] ?? '';
-    $password = $_POST['password'] ?? '';
-    $emailValue = htmlspecialchars($email);
-
-    $loginResult = login_user($email, $password);
-
-    if ($loginResult['success']) {
-        set_flash('success', 'Ravi de vous revoir parmi nous ! Vous êtes connecté.');
-        $redirectTo = $_SESSION['redirect_after_login'] ?? 'dashboard.php';
-        unset($_SESSION['redirect_after_login']);
-        header("Location: {$redirectTo}");
-        exit;
+    if (!verify_csrf_token($_POST['csrf_token'] ?? null)) {
+        $error = "Session de formulaire expirée. Veuillez actualiser la page et réessayer.";
     } else {
-        $error = $loginResult['error'];
+        $email = $_POST['email'] ?? '';
+        $password = $_POST['password'] ?? '';
+        $emailValue = htmlspecialchars($email);
+
+        $loginResult = login_user($email, $password);
+
+        if ($loginResult['success']) {
+            set_flash('success', 'Ravi de vous revoir parmi nous ! Vous êtes connecté.');
+            $redirectTo = $_SESSION['redirect_after_login'] ?? 'dashboard.php';
+            unset($_SESSION['redirect_after_login']);
+            header("Location: {$redirectTo}");
+            exit;
+        } else {
+            $error = $loginResult['error'];
+        }
     }
 }
 
@@ -112,24 +116,6 @@ require_once __DIR__ . '/includes/header.php';
       </button>
     </form>
 
-    <!-- Comptes de démonstration pour test rapide -->
-    <div style="margin-top:2rem; padding-top:1.5rem; border-top:1px dashed var(--color-border, #e2e8f0); text-align:center;">
-      <p style="font-size:0.82rem; color:var(--color-text-muted, #64748b); margin-bottom:0.75rem;">
-        🚀 <strong>Comptes de test pré-configurés :</strong>
-      </p>
-      <div style="display:flex; flex-wrap:wrap; gap:0.5rem; justify-content:center;">
-        <button type="button" onclick="fillTestAccount('cyril@onevisioncommunity.fr', 'password123')" style="font-size:0.78rem; padding:0.35rem 0.65rem; border-radius:6px; border:1px solid #cbd5e1; background:#f8fafc; cursor:pointer;">
-          👑 Cyril D. (Fondateur)
-        </button>
-        <button type="button" onclick="fillTestAccount('katahana@onevisioncommunity.fr', 'password123')" style="font-size:0.78rem; padding:0.35rem 0.65rem; border-radius:6px; border:1px solid #cbd5e1; background:#f8fafc; cursor:pointer;">
-          💼 Katahana (Membre)
-        </button>
-        <button type="button" onclick="fillTestAccount('sophie@onevisioncommunity.fr', 'password123')" style="font-size:0.78rem; padding:0.35rem 0.65rem; border-radius:6px; border:1px solid #cbd5e1; background:#f8fafc; cursor:pointer;">
-          🎙️ Sophie L. (Speaker)
-        </button>
-      </div>
-    </div>
-
     <div style="margin-top:1.75rem; text-align:center; font-size:0.9rem; color:var(--color-text-muted, #64748b);">
       Pas encore membre ? 
       <a href="checkout.php" style="color:var(--color-primary, #2563eb); font-weight:700; text-decoration:none;">
@@ -139,12 +125,5 @@ require_once __DIR__ . '/includes/header.php';
 
   </div>
 </main>
-
-<script>
-function fillTestAccount(email, password) {
-  document.getElementById('email').value = email;
-  document.getElementById('password').value = password;
-}
-</script>
 
 <?php require_once __DIR__ . '/includes/footer.php'; ?>

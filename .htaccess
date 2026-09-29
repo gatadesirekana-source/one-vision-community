@@ -1,0 +1,23 @@
+# ==============================================================================
+# ONE VISION COMMUNITY — SÉCURISATION SERVEUR APACHE (.HTACCESS)
+# ==============================================================================
+
+# 1. Empêcher le listing des répertoires
+Options -Indexes
+
+# 2. Bloquer l'accès direct aux fichiers sensibles, bases de données, configs et logs
+<FilesMatch "(^\.env|\.(sqlite|sqlite3|db|log|ini|lock|yml|yaml|md|git.*))$">
+    Require all denied
+</FilesMatch>
+
+# 3. Bloquer l'accès direct aux dossiers sensibles
+RedirectMatch 403 ^/database/.*$
+RedirectMatch 403 ^/scratch/.*$
+
+# 4. En-têtes de sécurité HTTP
+<IfModule mod_headers.c>
+    Header set X-Content-Type-Options "nosniff"
+    Header set X-Frame-Options "SAMEORIGIN"
+    Header set X-XSS-Protection "1; mode=block"
+    Header set Referrer-Policy "strict-origin-when-cross-origin"
+</IfModule>
