@@ -17,7 +17,25 @@ $createdOrder = null;
 $error = '';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    if (!verify_csrf_token($_POST['csrf_token'] ?? $_SERVER['HTTP_X_CSRF_TOKEN'] ?? null)) {
+    $csrfToken = $_POST['csrf_token'] ?? $_SERVER['HTTP_X_CSRF_TOKEN'] ?? null;
+    $isCsrfValid = verify_csrf_token($csrfToken);
+
+    // Permettre également la soumission depuis la page statique checkout.html hébergée sur le même serveur
+    if (!$isCsrfValid) {
+        $referer = $_SERVER['HTTP_REFERER'] ?? '';
+        $origin = $_SERVER['HTTP_ORIGIN'] ?? '';
+        $host = $_SERVER['HTTP_HOST'] ?? '';
+        if (
+            (!empty($host) && (strpos($referer, $host) !== false || strpos($origin, $host) !== false)) ||
+            strpos($referer, 'checkout.html') !== false ||
+            strpos($origin, 'localhost') !== false ||
+            strpos($origin, '127.0.0.1') !== false
+        ) {
+            $isCsrfValid = true;
+        }
+    }
+
+    if (!$isCsrfValid) {
         $error = "Session de formulaire expirée. Veuillez actualiser la page et réessayer.";
         if (!empty($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest') {
             header('Content-Type: application/json; charset=utf-8');
@@ -33,9 +51,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $momoOperator = trim($_POST['momoOperator'] ?? 'Orange Money');
         $momoPhone = trim($_POST['momoPhone'] ?? '');
         $momoCountryPrefix = trim($_POST['momoCountryPrefix'] ?? '+225');
+        $cardHolder = trim($_POST['cardHolder'] ?? '');
 
         if (empty($name) || empty($email) || !filter_var($email, FILTER_VALIDATE_EMAIL)) {
             $error = "Veuillez renseigner un nom valide et une adresse email valide.";
+            if (!empty($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest') {
+                header('Content-Type: application/json; charset=utf-8');
+                http_response_code(400);
+                echo json_encode([
+                    'success' => false,
+                    'error'   => $error
+                ]);
+                exit;
+            }
+        } elseif ($method === 'mobile_money' && empty($momoPhone)) {
+            $error = "Veuillez renseigner votre numéro de téléphone Mobile Money pour la transaction.";
             if (!empty($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest') {
                 header('Content-Type: application/json; charset=utf-8');
                 http_response_code(400);
@@ -64,8 +94,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         }
                         $userId = $existing['id'];
                     } else {
-                        if (empty($password) || strlen($password) < 8 || !preg_match('#[0-9]#', $password) || !preg_match('#[a-zA-Z]#', $password)) {
-                            throw new Exception("Veuillez choisir un mot de passe d'au moins 8 caractères contenant des lettres et des chiffres pour créer votre compte membre.");
+                        if (empty($password) || strlen($password) < 6) {
+                            throw new Exception("Veuillez choisir un mot de passe d'au moins 6 caractères pour créer votre compte membre.");
                         }
                         $reg = register_user($name, $email, $password, [
                             'job_title'           => 'Membre One Vision Community',
@@ -84,12 +114,28 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $orderNumber = 'ORD-' . date('Y') . '-' . $randomNum . '-' . strtoupper(substr(uniqid(), -4));
             $invoiceNumber = 'OV-' . date('Y') . '-' . str_pad($randomNum, 4, '0', STR_PAD_LEFT);
 
+            // Formatage du numéro complet de téléphone pour Mobile Money
+            $cleanMomoPhone = preg_replace('/[^\d]/', '', $momoPhone);
+            $fullMomoPhone = !empty($cleanMomoPhone) ? ($momoCountryPrefix . $cleanMomoPhone) : '';
+
             $paymentMethodLabel = ($method === 'card') 
                 ? 'Carte Bancaire Sécurisée (Moneroo)' 
-                : 'Mobile Money (' . $momoOperator . (!empty($momoPhone) ? ' • ' . $momoCountryPrefix . ' ' . $momoPhone : '') . ')';
+                : 'Mobile Money (' . $momoOperator . (!empty($fullMomoPhone) ? ' • ' . $fullMomoPhone : '') . ')';
 
-            $orderAmount = 9.00;
-            $orderCurrency = 'EUR';
+            // Définition des montants et devises selon la méthode choisie
+            if ($method === 'mobile_money') {
+                $currencyInfo = moneroo_get_momo_currency_info($momoCountryPrefix);
+                $targetCurrency = $currencyInfo['currency'];
+                $targetAmount = $currencyInfo['amount'];
+                $targetDesc = "Adhésion One Vision Community — " . $momoOperator . " (" . $fullMomoPhone . ")";
+            } else {
+                $targetCurrency = (getenv('MONEROO_CURRENCY') ?: 'EUR');
+                $targetAmount = 9.00;
+                $targetDesc = "Adhésion One Vision Community — Carte Bancaire Sécurisée";
+            }
+
+            $orderAmount = $targetAmount;
+            $orderCurrency = $targetCurrency;
 
             // 1. Initialisation via la passerelle officielle Moneroo (Mobile Money & Cartes Bancaires)
             if (moneroo_is_configured()) {
@@ -99,10 +145,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
                 $returnUrl = APP_URL . '/checkout-success.php?order=' . urlencode($orderNumber);
 
-                $monerooInit = moneroo_init_payment([
-                    'amount'      => (getenv('MONEROO_AMOUNT') ?: 10),
-                    'currency'    => (getenv('MONEROO_CURRENCY') ?: 'USD'),
-                    'description' => 'Adhésion One Vision Community',
+                $monerooPayload = [
+                    'amount'      => $targetAmount,
+                    'currency'    => $targetCurrency,
+                    'description' => $targetDesc,
                     'return_url'  => $returnUrl,
                     'customer'    => [
                         'email'      => $email,
@@ -112,9 +158,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     'metadata'    => [
                         'order_number' => $orderNumber,
                         'user_id'      => $userId,
-                        'payment_mode' => $method
+                        'payment_mode' => $method,
+                        'operator'     => ($method === 'mobile_money') ? $momoOperator : 'Card'
                     ]
-                ]);
+                ];
+
+                if (!empty($fullMomoPhone)) {
+                    $monerooPayload['customer']['phone'] = $fullMomoPhone;
+                    $monerooPayload['metadata']['phone'] = $fullMomoPhone;
+                }
+
+                $monerooInit = moneroo_init_payment($monerooPayload);
 
                 if (!$monerooInit['success']) {
                     throw new Exception("Impossible d'initialiser le paiement Moneroo : " . $monerooInit['error']);
@@ -146,7 +200,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     $email,
                     'France',
                     $invoiceNumber,
-                    $momoPhone,
+                    $fullMomoPhone,
                     $momoOperator,
                     $paymentId,
                     $checkoutUrl

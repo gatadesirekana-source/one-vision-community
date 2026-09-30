@@ -11,7 +11,7 @@ function isPhpEnvironment() {
     return false;
   }
   // En environnement PHP réel (Apache, XAMPP, serveur PHP intégré), la page se termine explicitement par .php
-  return window.location.pathname.endsWith('.php');
+  return window.location.pathname.endsWith('.php') || window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
 }
 
 function getAppUrl(path) {
@@ -1505,7 +1505,30 @@ function initCheckoutPage() {
   if (savedName && nameInput && !nameInput.value) nameInput.value = savedName;
   if (savedEmail && emailInput && !emailInput.value) emailInput.value = savedEmail;
 
-  // 1. Bascule entre Carte Bancaire et Mobile Money
+  // 1. Mise à jour dynamique du libellé du bouton de paiement
+  function updateSubmitButtonLabel() {
+    if (!submitText) return;
+    if (currentPaymentMethod === 'card') {
+      submitText.textContent = "Payer 9,00 € par Carte Bancaire";
+    } else {
+      const activeOperatorRadio = document.querySelector('.momo-operator-card.active input[type="radio"]') || document.querySelector('input[name="momoOperator"]:checked');
+      const operatorName = activeOperatorRadio ? activeOperatorRadio.value : 'Orange Money';
+      const prefix = momoCountryPrefix ? momoCountryPrefix.value : '+225';
+      
+      let amountStr = "5 900 FCFA";
+      if (prefix === '+243') {
+        amountStr = "25 000 CDF";
+      } else if (prefix === '+224') {
+        amountStr = "85 000 GNF";
+      } else if (prefix === '+33' || prefix === '+32' || prefix === '+41') {
+        amountStr = "9,00 €";
+      }
+
+      submitText.textContent = `Payer ${amountStr} via ${operatorName}`;
+    }
+  }
+
+  // 2. Bascule entre Carte Bancaire et Mobile Money
   function selectPaymentMethod(method) {
     currentPaymentMethod = method;
     if (paymentMethodHidden) paymentMethodHidden.value = method;
@@ -1515,14 +1538,13 @@ function initCheckoutPage() {
       if (methodMobileMoney) methodMobileMoney.classList.remove('selected');
       if (cardDetailsBox) cardDetailsBox.style.display = 'block';
       if (mobileMoneyDetailsBox) mobileMoneyDetailsBox.style.display = 'none';
-      if (submitText) submitText.textContent = "Payer en toute sécurité avec Moneroo (Carte)";
     } else {
       if (methodMobileMoney) methodMobileMoney.classList.add('selected');
       if (methodCard) methodCard.classList.remove('selected');
       if (cardDetailsBox) cardDetailsBox.style.display = 'none';
       if (mobileMoneyDetailsBox) mobileMoneyDetailsBox.style.display = 'block';
-      if (submitText) submitText.textContent = "Payer en toute sécurité avec Moneroo (Mobile Money)";
     }
+    updateSubmitButtonLabel();
   }
 
   if (methodCard) {
@@ -1559,9 +1581,17 @@ function initCheckoutPage() {
         card.style.background = '#f5f3ff';
         const radio = card.querySelector('input[type="radio"]');
         if (radio) radio.checked = true;
+        updateSubmitButtonLabel();
       });
     });
   }
+
+  if (momoCountryPrefix) {
+    momoCountryPrefix.addEventListener('change', updateSubmitButtonLabel);
+  }
+
+  // Initialiser le libellé au chargement
+  updateSubmitButtonLabel();
 
   // Fonctions de validation de carte (Norme Luhn)
   function isValidLuhn(numberStr) {
@@ -1831,7 +1861,7 @@ function initCheckoutPage() {
           window.location.href = data.redirect_url;
         } else if (data && !data.success && data.error) {
           if (submitBtn) submitBtn.disabled = false;
-          if (submitText) submitText.textContent = (currentPaymentMethod === 'card') ? "Payer en toute sécurité avec Moneroo (Carte)" : "Payer en toute sécurité avec Moneroo (Mobile Money)";
+          updateSubmitButtonLabel();
           const globalErr = document.getElementById('checkoutGlobalError');
           const globalErrText = document.getElementById('checkoutGlobalErrorText');
           if (globalErr && globalErrText) {

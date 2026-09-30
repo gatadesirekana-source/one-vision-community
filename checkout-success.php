@@ -10,23 +10,36 @@ require_once __DIR__ . '/includes/flash.php';
 require_once __DIR__ . '/includes/moneroo.php';
 
 $db = get_db();
-$orderNumber = trim($_GET['order'] ?? '');
-$paymentId = trim($_GET['paymentId'] ?? '');
+$orderNumber = trim($_GET['order'] ?? $_SESSION['pending_order_number'] ?? '');
+$paymentId = trim($_GET['paymentId'] ?? $_GET['payment_id'] ?? $_GET['id'] ?? '');
 $paymentStatusParam = strtolower(trim($_GET['paymentStatus'] ?? $_GET['status'] ?? ''));
 
 $order = null;
 $paymentError = '';
 $isPending = false;
 
-// 1. Si un identifiant de paiement Moneroo est retourné, le vérifier rigoureusement côté backend
+// 1. Si aucun paymentId n'est présent dans l'URL mais que nous avons le numéro de commande, retrouver le payment_id en base
+if (empty($paymentId) && !empty($orderNumber)) {
+    $stmtPre = $db->prepare("SELECT * FROM orders WHERE order_number = ? LIMIT 1");
+    $stmtPre->execute([$orderNumber]);
+    $preOrder = $stmtPre->fetch();
+    if ($preOrder && !empty($preOrder['payment_id'])) {
+        $paymentId = $preOrder['payment_id'];
+        $order = $preOrder;
+    }
+}
+
+// 2. Si un identifiant de paiement Moneroo est disponible, vérifier le statut officiel via l'API Moneroo
 if (!empty($paymentId) && moneroo_is_configured()) {
     $verification = moneroo_verify_payment($paymentId);
 
     if ($verification['success'] && in_array($verification['status'], ['success', 'completed', 'paid'], true)) {
         // Retrouver la commande correspondante
-        $stmt = $db->prepare("SELECT * FROM orders WHERE payment_id = ? OR order_number = ? LIMIT 1");
-        $stmt->execute([$paymentId, $orderNumber]);
-        $order = $stmt->fetch();
+        if (!$order) {
+            $stmt = $db->prepare("SELECT * FROM orders WHERE payment_id = ? OR order_number = ? LIMIT 1");
+            $stmt->execute([$paymentId, $orderNumber]);
+            $order = $stmt->fetch();
+        }
 
         if ($order) {
             // Valider la commande
@@ -50,12 +63,14 @@ if (!empty($paymentId) && moneroo_is_configured()) {
         }
     } elseif ($verification['success'] && in_array($verification['status'], ['initiated', 'pending'], true)) {
         $isPending = true;
-        $stmt = $db->prepare("SELECT * FROM orders WHERE payment_id = ? OR order_number = ? LIMIT 1");
-        $stmt->execute([$paymentId, $orderNumber]);
-        $order = $stmt->fetch();
+        if (!$order) {
+            $stmt = $db->prepare("SELECT * FROM orders WHERE payment_id = ? OR order_number = ? LIMIT 1");
+            $stmt->execute([$paymentId, $orderNumber]);
+            $order = $stmt->fetch();
+        }
     } else {
         $paymentError = "Le paiement n'a pas pu être confirmé par l'opérateur (Statut: " . htmlspecialchars($verification['status'] ?? 'inconnu') . ").";
-        if (!empty($orderNumber)) {
+        if (!$order && !empty($orderNumber)) {
             $stmt = $db->prepare("SELECT * FROM orders WHERE order_number = ? LIMIT 1");
             $stmt->execute([$orderNumber]);
             $order = $stmt->fetch();

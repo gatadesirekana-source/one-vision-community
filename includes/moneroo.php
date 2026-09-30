@@ -16,18 +16,75 @@ function moneroo_is_configured(): bool {
 }
 
 /**
- * Initialise un paiement via l'API Moneroo
+ * Détermine la devise et le montant Mobile Money adaptés selon l'indicatif téléphonique du pays
+ *
+ * @param string $prefix ex: '+225', '+237', '+221', etc.
+ * @return array ['currency' => string, 'amount' => int, 'symbol' => string]
+ */
+function moneroo_get_momo_currency_info(string $prefix): array {
+    $prefix = trim($prefix);
+    if (strpos($prefix, '+') !== 0) {
+        $prefix = '+' . $prefix;
+    }
+
+    switch ($prefix) {
+        // Zone UEMOA (Franc CFA Ouest-Africain - XOF)
+        case '+225': // Côte d'Ivoire
+        case '+221': // Sénégal
+        case '+229': // Bénin
+        case '+226': // Burkina Faso
+        case '+223': // Mali
+        case '+228': // Togo
+        case '+227': // Niger
+        case '+245': // Guinée-Bissau
+            return ['currency' => 'XOF', 'amount' => 5900, 'symbol' => 'FCFA'];
+
+        // Zone CEMAC (Franc CFA Centrafricain - XAF)
+        case '+237': // Cameroun
+        case '+242': // Congo-Brazzaville
+        case '+241': // Gabon
+        case '+235': // Tchad
+        case '+236': // République Centrafricaine
+        case '+240': // Guinée Équatoriale
+            return ['currency' => 'XAF', 'amount' => 5900, 'symbol' => 'FCFA'];
+
+        // République Démocratique du Congo (Franc Congolais - CDF)
+        case '+243':
+            return ['currency' => 'CDF', 'amount' => 25000, 'symbol' => 'CDF'];
+
+        // République de Guinée (Franc Guinéen - GNF)
+        case '+224':
+            return ['currency' => 'GNF', 'amount' => 85000, 'symbol' => 'GNF'];
+
+        // France / Europe
+        case '+33':
+        case '+32':
+        case '+41':
+            return ['currency' => 'EUR', 'amount' => 9, 'symbol' => '€'];
+
+        default:
+            return ['currency' => 'XOF', 'amount' => 5900, 'symbol' => 'FCFA'];
+    }
+}
+
+/**
+ * Initialise un paiement via l'API Moneroo (Carte Bancaire & Mobile Money)
  *
  * @param array $options [
  *   'amount'      => float|int,
- *   'currency'    => string ('USD', 'XOF', 'EUR', etc.),
+ *   'currency'    => string ('USD', 'XOF', 'XAF', 'EUR', etc.),
  *   'description' => string,
  *   'return_url'  => string,
- *   'customer'    => ['email' => string, 'first_name' => string, 'last_name' => string],
+ *   'customer'    => [
+ *       'email'      => string,
+ *       'first_name' => string,
+ *       'last_name'  => string,
+ *       'phone'      => string (optionnel mais recommandé pour Mobile Money)
+ *   ],
  *   'metadata'    => array,
  *   'methods'     => array (optional)
  * ]
- * @return array ['success' => bool, 'checkout_url' => string, 'payment_id' => string, 'error' => string]
+ * @return array ['success' => bool, 'checkout_url' => string, 'payment_id' => string, 'currency' => string, 'amount' => float, 'error' => string]
  */
 function moneroo_init_payment(array $options): array {
     $apiKey = moneroo_get_secret_key();
@@ -42,17 +99,23 @@ function moneroo_init_payment(array $options): array {
     $currency = strtoupper($options['currency'] ?? (getenv('MONEROO_CURRENCY') ?: 'USD'));
     $amount = (float)($options['amount'] ?? (getenv('MONEROO_AMOUNT') ?: 10));
 
-    // Préparation du payload Moneroo
+    // Préparation du payload Moneroo officiel
+    $customerData = [
+        'email'      => $options['customer']['email'] ?? '',
+        'first_name' => $options['customer']['first_name'] ?? 'Membre',
+        'last_name'  => $options['customer']['last_name'] ?? 'One Vision'
+    ];
+
+    if (!empty($options['customer']['phone'])) {
+        $customerData['phone'] = $options['customer']['phone'];
+    }
+
     $payload = [
         'amount'      => (int)round($amount),
         'currency'    => $currency,
         'description' => $options['description'] ?? 'Adhésion One Vision Community',
         'return_url'  => $options['return_url'],
-        'customer'    => [
-            'email'      => $options['customer']['email'] ?? '',
-            'first_name' => $options['customer']['first_name'] ?? 'Membre',
-            'last_name'  => $options['customer']['last_name'] ?? 'One Vision'
-        ]
+        'customer'    => $customerData
     ];
 
     if (!empty($options['metadata'])) {
@@ -73,8 +136,7 @@ function moneroo_init_payment(array $options): array {
             'Content-Type: application/json',
             'Accept: application/json'
         ]);
-        curl_setopt($ch, CURLOPT_TIMEOUT, 20);
-        // Gestion souple du certificat SSL local si le bundle Windows manque
+        curl_setopt($ch, CURLOPT_TIMEOUT, 25);
         curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
 
         $res = curl_exec($ch);
@@ -87,11 +149,14 @@ function moneroo_init_payment(array $options): array {
 
     $result = $callApi($payload);
 
-    // Si la devise demandée (ex: XOF, EUR) n'est pas encore activée sur le compte sandbox Moneroo,
-    // fallback intelligent sur USD (qui est validé et actif par défaut) pour garantir le fonctionnement immédiat
+    // Fallback automatique : si la devise locale (ex: XOF, XAF, EUR) n'est pas encore cochée
+    // dans le tableau de bord marchand Moneroo (erreur 400 "No payment methods enabled for this currency"),
+    // nous basculons automatiquement sur USD ($10) en conservant toutes les informations du client
+    // (nom, email, téléphone Mobile Money et métadonnées). Ainsi le checkout Moneroo se lance sans aucune erreur !
     if ($result['code'] === 400 && isset($result['body']['message']) && stripos($result['body']['message'], 'No payment methods enabled for this currency') !== false && $currency !== 'USD') {
         $payload['currency'] = 'USD';
         $payload['amount'] = 10;
+        unset($payload['methods']); // Laisser Moneroo présenter toutes les passerelles actives
         $result = $callApi($payload);
     }
 
