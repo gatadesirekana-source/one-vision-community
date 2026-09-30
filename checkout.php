@@ -109,10 +109,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     }
                 }
 
-            // Générer les numéros de commande et de facture
-            $randomNum = rand(100, 999);
-            $orderNumber = 'ORD-' . date('Y') . '-' . $randomNum . '-' . strtoupper(substr(uniqid(), -4));
-            $invoiceNumber = 'OV-' . date('Y') . '-' . str_pad($randomNum, 4, '0', STR_PAD_LEFT);
+            // Génération garantie 100% UNIQUE et anti-collision des numéros de commande et de facture
+            do {
+                $orderNumber = 'ORD-' . date('Ymd') . '-' . strtoupper(bin2hex(random_bytes(4)));
+                $checkOrd = $db->prepare("SELECT 1 FROM orders WHERE order_number = ? LIMIT 1");
+                $checkOrd->execute([$orderNumber]);
+            } while ($checkOrd->fetch());
+
+            do {
+                $invoiceNumber = 'OV-' . date('Ymd') . '-' . strtoupper(bin2hex(random_bytes(4)));
+                $checkInv = $db->prepare("SELECT 1 FROM orders WHERE invoice_number = ? LIMIT 1");
+                $checkInv->execute([$invoiceNumber]);
+            } while ($checkInv->fetch());
 
             // Formatage du numéro complet de téléphone pour Mobile Money
             $cleanMomoPhone = preg_replace('/[^\d]/', '', $momoPhone);
@@ -190,21 +198,46 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         ?, ?, ?, ?
                     )
                 ");
-                $stmt->execute([
-                    $orderNumber,
-                    $userId,
-                    $orderAmount,
-                    $orderCurrency,
-                    $paymentMethodLabel,
-                    $name,
-                    $email,
-                    'France',
-                    $invoiceNumber,
-                    $fullMomoPhone,
-                    $momoOperator,
-                    $paymentId,
-                    $checkoutUrl
-                ]);
+
+                try {
+                    $stmt->execute([
+                        $orderNumber,
+                        $userId,
+                        $orderAmount,
+                        $orderCurrency,
+                        $paymentMethodLabel,
+                        $name,
+                        $email,
+                        'France',
+                        $invoiceNumber,
+                        $fullMomoPhone,
+                        $momoOperator,
+                        $paymentId,
+                        $checkoutUrl
+                    ]);
+                } catch (PDOException $pdoErr) {
+                    if ($pdoErr->getCode() == 23000) {
+                        // En cas de collision rarissime, générer un identifiant unique avec entropie maximale et réessayer
+                        $invoiceNumber = 'OV-' . date('Ymd') . '-' . strtoupper(bin2hex(random_bytes(6)));
+                        $stmt->execute([
+                            $orderNumber,
+                            $userId,
+                            $orderAmount,
+                            $orderCurrency,
+                            $paymentMethodLabel,
+                            $name,
+                            $email,
+                            'France',
+                            $invoiceNumber,
+                            $fullMomoPhone,
+                            $momoOperator,
+                            $paymentId,
+                            $checkoutUrl
+                        ]);
+                    } else {
+                        throw $pdoErr;
+                    }
+                }
 
                 $_SESSION['pending_order_number'] = $orderNumber;
                 $_SESSION['pending_user_id'] = $userId;
@@ -235,19 +268,41 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         ?, ?
                     )
                 ");
-                $stmt->execute([
-                    $orderNumber,
-                    $userId,
-                    $orderAmount,
-                    $orderCurrency,
-                    $paymentMethodLabel,
-                    $name,
-                    $email,
-                    'France',
-                    $invoiceNumber,
-                    $momoPhone,
-                    $momoOperator
-                ]);
+
+                try {
+                    $stmt->execute([
+                        $orderNumber,
+                        $userId,
+                        $orderAmount,
+                        $orderCurrency,
+                        $paymentMethodLabel,
+                        $name,
+                        $email,
+                        'France',
+                        $invoiceNumber,
+                        $fullMomoPhone,
+                        $momoOperator
+                    ]);
+                } catch (PDOException $pdoErr) {
+                    if ($pdoErr->getCode() == 23000) {
+                        $invoiceNumber = 'OV-' . date('Ymd') . '-' . strtoupper(bin2hex(random_bytes(6)));
+                        $stmt->execute([
+                            $orderNumber,
+                            $userId,
+                            $orderAmount,
+                            $orderCurrency,
+                            $paymentMethodLabel,
+                            $name,
+                            $email,
+                            'France',
+                            $invoiceNumber,
+                            $fullMomoPhone,
+                            $momoOperator
+                        ]);
+                    } else {
+                        throw $pdoErr;
+                    }
+                }
 
                 $db->prepare("UPDATE users SET subscription_status = 'active', subscription_started_at = CURRENT_TIMESTAMP WHERE id = ?")
                    ->execute([$userId]);
