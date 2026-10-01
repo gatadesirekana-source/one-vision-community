@@ -188,27 +188,27 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         throw new Exception("La passerelle SasPay n'est pas encore configurée.");
                     }
 
-                    $targetAmount = '5900.00';
-                    $targetCurrency = 'XOF';
-                    $targetCountry = !empty($_POST['country']) ? strtoupper(trim($_POST['country'])) : null;
-                    if (empty($targetCountry) && !empty($_POST['country_prefix'])) {
-                        $currInfo = saspay_get_currency_info(trim($_POST['country_prefix']));
-                        $targetCountry = $currInfo['country'] ?? null;
-                    }
+                    $prefix = trim($_POST['country_prefix'] ?? '+225');
+                    $currInfo = saspay_get_currency_info($prefix);
+
+                    $targetCountry = !empty($_POST['country']) ? strtoupper(trim($_POST['country'])) : ($currInfo['country'] ?? 'CI');
+                    $targetCurrency = $currInfo['currency'] ?? 'XOF';
+                    $targetAmount = $currInfo['amount'] ?? '5900.00';
                     $customerPhone = trim($_POST['momoPhone'] ?? $_POST['phone'] ?? $_POST['customer_phone'] ?? '');
                     $returnUrl = APP_URL . '/checkout-success.php?order=' . urlencode($orderNumber);
 
                     $sessionPayload = [
                         'amount'         => $targetAmount,
                         'currency'       => $targetCurrency,
-                        'description'    => "Adhésion One Vision Community — Mobile Money",
+                        'description'    => "Adhésion One Vision Community — " . $name,
                         'customer_email' => $email,
                         'customer_name'  => $name,
                         'return_url'     => $returnUrl,
                         'metadata'       => [
-                            'order_number' => $orderNumber,
-                            'user_id'      => $userId,
-                            'payment_mode' => 'mobile_money'
+                            'order_number'   => $orderNumber,
+                            'invoice_number' => $invoiceNumber,
+                            'user_id'        => (string)$userId,
+                            'payment_mode'   => 'mobile_money'
                         ]
                     ];
 
@@ -228,22 +228,33 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     $paymentId = $saspaySession['id'];
                     $checkoutUrl = $saspaySession['checkout_url'];
 
+                    $countryNames = [
+                        'CI' => "Côte d'Ivoire", 'SN' => 'Sénégal', 'CM' => 'Cameroun',
+                        'BJ' => 'Bénin', 'BF' => 'Burkina Faso', 'TG' => 'Togo',
+                        'ML' => 'Mali', 'CD' => 'RDC', 'GN' => 'Guinée',
+                        'GA' => 'Gabon', 'NE' => 'Niger', 'CG' => 'Congo'
+                    ];
+                    $billingCountry = $countryNames[$targetCountry] ?? "Côte d'Ivoire";
+
                     $stmt = $db->prepare("
                         INSERT INTO orders (
                             order_number, user_id, amount, currency, status,
                             payment_method, billing_name, billing_email, billing_country, invoice_number, 
                             payment_id, checkout_url
                         ) VALUES (
-                            ?, ?, 5900, 'XOF', 'pending',
-                            'Mobile Money (SasPay Gateway)', ?, ?, 'Côte d''Ivoire', ?, 
+                            ?, ?, ?, ?, 'pending',
+                            'Mobile Money (SasPay Gateway)', ?, ?, ?, ?, 
                             ?, ?
                         )
                     ");
                     $stmt->execute([
                         $orderNumber,
                         $userId,
+                        (float)$targetAmount,
+                        $targetCurrency,
                         $name,
                         $email,
+                        $billingCountry,
                         $invoiceNumber,
                         $paymentId,
                         $checkoutUrl

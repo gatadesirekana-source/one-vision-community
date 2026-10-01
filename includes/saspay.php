@@ -45,6 +45,7 @@ function saspay_get_currency_info(string $prefix): array {
 
 /**
  * Création d'une session de paiement hébergée SasPay (Checkout Session)
+ * Documentation officielle : https://docs.saspay.me/api-reference/payments/checkout-create
  * POST https://api.saspay.me/api/v1/checkout-sessions/
  */
 function saspay_create_checkout_session(array $options): array {
@@ -59,9 +60,9 @@ function saspay_create_checkout_session(array $options): array {
     $url = 'https://api.saspay.me/api/v1/checkout-sessions/';
 
     $payload = [
-        'amount'         => (string)($options['amount'] ?? '9.00'),
-        'currency'       => strtoupper((string)($options['currency'] ?? 'EUR')),
-        'description'    => (string)($options['description'] ?? 'Adhésion One Vision Community (9€/mois)'),
+        'amount'         => (string)($options['amount'] ?? '5900.00'),
+        'currency'       => strtoupper((string)($options['currency'] ?? 'XOF')),
+        'description'    => (string)($options['description'] ?? 'Adhésion One Vision Community'),
         'customer_email' => (string)($options['customer_email'] ?? ''),
         'customer_name'  => (string)($options['customer_name'] ?? 'Membre One Vision'),
         'return_url'     => (string)($options['return_url'] ?? ''),
@@ -104,27 +105,38 @@ function saspay_create_checkout_session(array $options): array {
     }
 
     $data = json_decode($response, true);
-
-    if ($httpCode >= 200 && $httpCode < 300 && !empty($data['data']['checkout_url'])) {
+    if (!is_array($data)) {
         return [
-            'success'      => true,
-            'id'           => $data['data']['id'] ?? '',
-            'slug'         => $data['data']['slug'] ?? '',
-            'checkout_url' => $data['data']['checkout_url'],
-            'amount'       => (float)($data['data']['amount'] ?? $payload['amount']),
-            'currency'     => $data['data']['currency'] ?? $payload['currency'],
-            'status'       => $data['data']['status'] ?? 'PENDING',
-            'raw'          => $data['data']
+            'success'   => false,
+            'http_code' => $httpCode,
+            'error'     => "Réponse SasPay invalide."
         ];
     }
 
-    // Gestion des messages d'erreurs SasPay
+    // SasPay peut retourner les données à la racine ou sous la clé 'data'
+    $resData = (!empty($data['data']) && is_array($data['data'])) ? $data['data'] : $data;
+    $checkoutUrl = $resData['checkout_url'] ?? '';
+
+    if ($httpCode >= 200 && $httpCode < 300 && !empty($checkoutUrl)) {
+        return [
+            'success'      => true,
+            'id'           => $resData['id'] ?? '',
+            'slug'         => $resData['slug'] ?? '',
+            'checkout_url' => $checkoutUrl,
+            'amount'       => (float)($resData['amount'] ?? $payload['amount']),
+            'currency'     => $resData['currency'] ?? $payload['currency'],
+            'status'       => $resData['status'] ?? 'PENDING',
+            'raw'          => $resData
+        ];
+    }
+
+    // Gestion détaillée des messages d'erreurs SasPay
     $errMsg = 'Échec de création de la session SasPay';
     if (!empty($data['error'])) {
         if (is_array($data['error'])) {
             $parts = [];
             foreach ($data['error'] as $field => $msg) {
-                $val = is_array($msg) ? implode(', ', $msg) : $msg;
+                $val = is_array($msg) ? implode(', ', $msg) : (is_string($msg) ? $msg : json_encode($msg));
                 $parts[] = "$field: $val";
             }
             $errMsg = implode(' | ', $parts);
@@ -133,6 +145,8 @@ function saspay_create_checkout_session(array $options): array {
         }
     } elseif (!empty($data['message'])) {
         $errMsg = (string)$data['message'];
+    } elseif (!empty($data['detail'])) {
+        $errMsg = (string)$data['detail'];
     }
 
     return [
@@ -145,6 +159,7 @@ function saspay_create_checkout_session(array $options): array {
 
 /**
  * Vérification du statut d'une session de checkout auprès de SasPay
+ * Documentation officielle : https://docs.saspay.me/api-reference/payments/checkout-status
  * GET https://api.saspay.me/api/v1/checkout-sessions/{id}/status/
  */
 function saspay_verify_checkout_session(string $sessionId): array {
@@ -183,25 +198,114 @@ function saspay_verify_checkout_session(string $sessionId): array {
     }
 
     $data = json_decode($response, true);
-    if ($httpCode >= 200 && $httpCode < 300 && !empty($data['data'])) {
-        $status = strtoupper($data['data']['status'] ?? 'PENDING');
-        $txStatus = strtoupper($data['data']['transaction_status'] ?? '');
-        $isPaid = ($status === 'PAID' || $txStatus === 'SUCCESS');
+    if (!is_array($data)) {
+        return [
+            'success' => false,
+            'error'   => "Format de réponse SasPay invalide"
+        ];
+    }
+
+    $resData = (!empty($data['data']) && is_array($data['data'])) ? $data['data'] : $data;
+
+    if ($httpCode >= 200 && $httpCode < 300 && is_array($resData)) {
+        $status = strtoupper($resData['status'] ?? 'PENDING');
+        $txStatus = strtoupper($resData['transaction_status'] ?? '');
+        $isPaid = ($status === 'PAID' || $status === 'SUCCESS' || $txStatus === 'SUCCESS');
 
         return [
             'success'            => true,
             'is_paid'            => $isPaid,
             'status'             => $status,
             'transaction_status' => $txStatus,
-            'transaction_id'     => $data['data']['transaction_id'] ?? null,
-            'data'               => $data['data']
+            'transaction_id'     => $resData['transaction_id'] ?? null,
+            'transaction_ref'    => $resData['transaction_reference'] ?? null,
+            'data'               => $resData
+        ];
+    }
+
+    $errMsg = 'Session introuvable';
+    if (!empty($data['error'])) {
+        $errMsg = is_array($data['error']) ? json_encode($data['error']) : (string)$data['error'];
+    } elseif (!empty($data['message'])) {
+        $errMsg = (string)$data['message'];
+    }
+
+    return [
+        'success'   => false,
+        'http_code' => $httpCode,
+        'error'     => $errMsg,
+        'raw'       => $data
+    ];
+}
+
+/**
+ * Vérification directe d'une transaction de paiement auprès de SasPay
+ * Documentation officielle : https://docs.saspay.me/quickstart#4-verifiez-le-resultat
+ * GET https://api.saspay.me/api/v1/payments/{id}/verify/
+ */
+function saspay_verify_payment(string $paymentId): array {
+    $apiKey = saspay_get_secret_key();
+    if (empty($apiKey) || empty($paymentId)) {
+        return [
+            'success' => false,
+            'error'   => "Identifiant de paiement ou clé manquante"
+        ];
+    }
+
+    $url = 'https://api.saspay.me/api/v1/payments/' . urlencode($paymentId) . '/verify/';
+
+    $ch = curl_init($url);
+    curl_setopt_array($ch, [
+        CURLOPT_RETURNTRANSFER => true,
+        CURLOPT_TIMEOUT        => 20,
+        CURLOPT_SSL_VERIFYPEER => false,
+        CURLOPT_SSL_VERIFYHOST => false,
+        CURLOPT_HTTPHEADER     => [
+            'Authorization: Bearer ' . $apiKey,
+            'Accept: application/json'
+        ]
+    ]);
+
+    $response = curl_exec($ch);
+    $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+    $curlErr  = curl_error($ch);
+    curl_close($ch);
+
+    if ($response === false) {
+        return [
+            'success' => false,
+            'error'   => "Erreur vérification SasPay : " . ($curlErr ?: 'inconnue')
+        ];
+    }
+
+    $data = json_decode($response, true);
+    if (!is_array($data)) {
+        return [
+            'success' => false,
+            'error'   => "Format de réponse SasPay invalide"
+        ];
+    }
+
+    $resData = (!empty($data['data']) && is_array($data['data'])) ? $data['data'] : $data;
+
+    if ($httpCode >= 200 && $httpCode < 300 && is_array($resData)) {
+        $status = strtoupper($resData['status'] ?? 'PENDING');
+        $isPaid = ($status === 'SUCCESS' || $status === 'PAID');
+
+        return [
+            'success'    => true,
+            'is_paid'    => $isPaid,
+            'status'     => $status,
+            'net_amount' => $resData['net_amount'] ?? '',
+            'currency'   => $resData['currency'] ?? '',
+            'data'       => $resData
         ];
     }
 
     return [
         'success'   => false,
         'http_code' => $httpCode,
-        'error'     => $data['error']['message'] ?? 'Session introuvable',
+        'error'     => $data['message'] ?? 'Paiement introuvable',
         'raw'       => $data
     ];
 }
@@ -209,11 +313,12 @@ function saspay_verify_checkout_session(string $sessionId): array {
 /**
  * Vérification de la signature HMAC SHA-256 du Webhook SasPay
  * Header: X-Webhook-Signature, X-Webhook-Timestamp
+ * Documentation : https://docs.saspay.me/api-reference/webhooks#securite-verifier-la-signature
  */
 function saspay_verify_webhook_signature(string $rawPayload, ?string $signature, ?string $timestamp): bool {
     $secret = trim((string)(getenv('SASPAY_WEBHOOK_SECRET') ?: ''));
     if (empty($secret)) {
-        // Si aucun secret de webhook n'est configuré, autoriser par défaut
+        // Si aucun secret de webhook n'est configuré dans .env, accepter pour ne pas bloquer les transactions
         return true;
     }
 
@@ -221,7 +326,7 @@ function saspay_verify_webhook_signature(string $rawPayload, ?string $signature,
         return false;
     }
 
-    // Tolérance d'âge max de 5 minutes (300 secondes)
+    // Tolérance d'âge max de 5 minutes (300 secondes) comme spécifié par la doc SasPay
     $currentTime = time();
     if (abs($currentTime - (int)$timestamp) > 300) {
         return false;
@@ -232,3 +337,4 @@ function saspay_verify_webhook_signature(string $rawPayload, ?string $signature,
 
     return hash_equals($expected, strtolower($signature));
 }
+

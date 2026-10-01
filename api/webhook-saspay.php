@@ -56,16 +56,34 @@ try {
     if ($eventName === 'transaction.success' || $eventName === 'payment.success') {
         $transactionId = $data['id'] ?? '';
         $reference = $data['reference'] ?? '';
-        $msisdn = $data['msisdn'] ?? '';
-        $network = $data['network'] ?? '';
+        $externalRef = $data['external_reference'] ?? '';
+        $msisdn = $data['msisdn'] ?? ($data['operation_msisdn'] ?? '');
+        $network = $data['network'] ?? ($data['network_code'] ?? '');
+        $metaOrderNumber = $data['metadata']['order_number'] ?? '';
+        $metaInvoiceNumber = $data['metadata']['invoice_number'] ?? '';
+        $checkoutSessionId = $data['checkout_session_id'] ?? ($data['checkout_session'] ?? '');
 
-        // Retrouver la commande correspondante par payment_id ou reference
+        // Retrouver la commande correspondante par payment_id, metadata, session ou référence
         $stmt = $db->prepare("
             SELECT * FROM orders 
-            WHERE payment_id = ? OR order_number = ? OR invoice_number = ?
+            WHERE payment_id = ? 
+               OR (order_number = ? AND ? != '')
+               OR (invoice_number = ? AND ? != '')
+               OR (payment_id = ? AND ? != '')
+               OR order_number = ? 
+               OR invoice_number = ?
+               OR (order_number = ? AND ? != '')
             LIMIT 1
         ");
-        $stmt->execute([$transactionId, $reference, $reference]);
+        $stmt->execute([
+            $transactionId,
+            $metaOrderNumber, $metaOrderNumber,
+            $metaInvoiceNumber, $metaInvoiceNumber,
+            $checkoutSessionId, $checkoutSessionId,
+            $reference,
+            $reference,
+            $externalRef, $externalRef
+        ]);
         $order = $stmt->fetch();
 
         if ($order) {
@@ -79,14 +97,34 @@ try {
             ");
             $updateOrder->execute([$msisdn, $network, $order['id']]);
 
-            // Activer immédiatement l'abonnement du membre
+            // Activer immédiatement l'abonnement du membre avec renouvellement 30 jours
             $updateUser = $db->prepare("
                 UPDATE users 
                 SET subscription_status = 'active', 
-                    subscription_started_at = CURRENT_TIMESTAMP 
+                    subscription_started_at = COALESCE(subscription_started_at, CURRENT_TIMESTAMP),
+                    subscription_expires_at = datetime('now', '+30 days'),
+                    next_billing_date = date('now', '+30 days'),
+                    last_billing_date = date('now'),
+                    failed_renewals_count = 0
                 WHERE id = ?
             ");
             $updateUser->execute([$order['user_id']]);
+        }
+    } elseif ($eventName === 'transaction.failed' || $eventName === 'transaction.cancelled') {
+        $transactionId = $data['id'] ?? '';
+        $reference = $data['reference'] ?? '';
+        $metaOrderNumber = $data['metadata']['order_number'] ?? '';
+
+        $stmt = $db->prepare("
+            SELECT id FROM orders 
+            WHERE payment_id = ? OR order_number = ? OR order_number = ?
+            LIMIT 1
+        ");
+        $stmt->execute([$transactionId, $reference, $metaOrderNumber]);
+        $order = $stmt->fetch();
+        if ($order) {
+            $status = ($eventName === 'transaction.cancelled') ? 'cancelled' : 'failed';
+            $db->prepare("UPDATE orders SET status = ? WHERE id = ?")->execute([$status, $order['id']]);
         }
     }
 
