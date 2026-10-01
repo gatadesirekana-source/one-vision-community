@@ -7,11 +7,14 @@ require_once __DIR__ . '/includes/config.php';
 require_once __DIR__ . '/includes/db.php';
 require_once __DIR__ . '/includes/auth.php';
 require_once __DIR__ . '/includes/flash.php';
+require_once __DIR__ . '/includes/subscriptions.php';
 
-require_auth('login.php');
+// Contrôle d'accès strict : seuls les membres payés et à jour accèdent au dashboard
+require_active_subscription('subscription-expired.php');
 
 $db = get_db();
 $currentUser = current_user();
+$userSub = check_user_subscription((int)$currentUser['id']);
 
 // En-têtes de sécurité HTTP
 if (!headers_sent()) {
@@ -20,11 +23,12 @@ if (!headers_sent()) {
     header('Referrer-Policy: strict-origin-when-cross-origin');
 }
 
-// Traitement POST : Mise à jour du profil membre
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'update_profile') {
-    if (!verify_csrf_token($_POST['csrf_token'] ?? null)) {
-        set_flash('error', 'Session de formulaire expirée. Veuillez actualiser et réessayer.');
-    } else {
+// Traitement POST : Actions membre (Profil, Prélèvement mensuel, Simulation d'échéance)
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
+    if ($_POST['action'] === 'update_profile') {
+        if (!verify_csrf_token($_POST['csrf_token'] ?? null)) {
+            set_flash('error', 'Session de formulaire expirée. Veuillez actualiser et réessayer.');
+        } else {
         $fullName = trim($_POST['settingsFullName'] ?? '');
         $role = trim($_POST['settingsRole'] ?? '');
         $avatar = trim($_POST['settingsAvatar'] ?? ($currentUser['avatar'] ?? './img/avatar-maxime.jpg'));
@@ -66,6 +70,29 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
             }
             $currentUser = current_user();
             $_SESSION['user_name'] = $currentUser['full_name'];
+        }
+    }
+} elseif ($_POST['action'] === 'trigger_recurring_charge') {
+        if (!verify_csrf_token($_POST['csrf_token'] ?? null)) {
+            set_flash('error', 'Session de formulaire expirée.');
+        } else {
+            $renewResult = process_recurring_charge($currentUser);
+            if ($renewResult['success']) {
+                set_flash('success', "Prélèvement automatique mensuel de 9,00 € effectué avec succès ! Facture #" . $renewResult['invoice_number'] . " émise et adhésion prolongée de 30 jours.");
+            } else {
+                set_flash('error', "Échec du prélèvement automatique : " . ($renewResult['error'] ?? 'Carte refusée'));
+            }
+            header('Location: dashboard.php');
+            exit;
+        }
+    } elseif ($_POST['action'] === 'simulate_expire_subscription') {
+        if (!verify_csrf_token($_POST['csrf_token'] ?? null)) {
+            set_flash('error', 'Session de formulaire expirée.');
+        } else {
+            revoke_user_access((int)$currentUser['id'], 'Simulation de fin de période de 30 jours');
+            set_flash('error', "Votre période de 30 jours est expirée. Vos accès ont été révoqués.");
+            header('Location: subscription-expired.php');
+            exit;
         }
     }
 }
@@ -1223,30 +1250,44 @@ if (($currentUser['role'] ?? '') === 'admin') {
 
           <div class="account-details-grid">
             <div class="account-info-item">
-              <span class="info-label">Statut du compte</span>
-              <span class="info-val status-green">● À jour & Actif</span>
+              <span class="info-label">Statut de l'abonnement</span>
+              <span class="info-val status-green">● <?= ($userSub['status'] === 'active') ? 'Actif (' . $userSub['days_left'] . ' jours restants)' : htmlspecialchars(ucfirst($userSub['status'])) ?></span>
             </div>
             <div class="account-info-item">
               <span class="info-label">Prochaine échéance</span>
-              <span class="info-val" id="nextBillingDate">Le 23 du mois prochain (9,00 €)</span>
+              <span class="info-val" id="nextBillingDate"><?= !empty($currentUser['next_billing_date']) ? date('d/m/Y', strtotime($currentUser['next_billing_date'])) : date('d/m/Y', strtotime('+30 days')) ?> (9,00 €)</span>
             </div>
             <div class="account-info-item">
-              <span class="info-label">Mode de règlement</span>
-              <span class="info-val" id="dashBillingPaymentMethod">Carte bancaire (•••• 4242)</span>
+              <span class="info-label">Moyen de paiement enregistré</span>
+              <span class="info-val" id="dashBillingPaymentMethod"><?= !empty($currentUser['card_last4']) ? htmlspecialchars($currentUser['card_brand'] ?: 'Carte') . ' (•••• ' . htmlspecialchars($currentUser['card_last4']) . ')' : 'Mobile Money' ?></span>
             </div>
             <div class="account-info-item">
-              <span class="info-label">Engagement</span>
-              <span class="info-val">Zéro engagement (résiliable en 1 clic)</span>
+              <span class="info-label">Prélèvement automatique mensuel</span>
+              <span class="info-val" style="color:#16a34a; font-weight:700;"><?= ($currentUser['auto_renew'] ?? 1) ? '✓ Activé (prélèvement à terme)' : 'Désactivé' ?></span>
             </div>
           </div>
 
-          <div class="account-actions-row">
+          <div class="account-actions-row" style="flex-wrap:wrap; gap:0.75rem; align-items:center;">
             <a href="facture.php" target="_blank" class="btn btn-secondary btn-sm" id="btnDownloadInvoice" style="text-decoration:none; display:inline-flex; align-items:center; gap:0.4rem;">
               📥 Télécharger ma dernière facture (9,00 €)
             </a>
-            <button type="button" class="btn btn-outline-danger btn-sm" id="btnCancelSubscription">
-              Suspendre ou résilier mon abonnement
-            </button>
+
+            <!-- Formulaires de test pour la récurrence et la révocation -->
+            <form method="POST" action="dashboard.php" style="display:inline-block; margin:0;">
+              <?= csrf_field() ?>
+              <input type="hidden" name="action" value="trigger_recurring_charge">
+              <button type="submit" class="btn btn-primary btn-sm" style="display:inline-flex; align-items:center; gap:0.35rem;" title="Déclencher immédiatement le prélèvement mensuel automatique">
+                <span>⚡ Tester le prélèvement mensuel (9,00 €)</span>
+              </button>
+            </form>
+
+            <form method="POST" action="dashboard.php" style="display:inline-block; margin:0;" onsubmit="return confirm('Voulez-vous simuler l\'expiration ? Vos accès seront révoqués et vous serez redirigé vers la page de réabonnement.');">
+              <?= csrf_field() ?>
+              <input type="hidden" name="action" value="simulate_expire_subscription">
+              <button type="submit" class="btn btn-outline-danger btn-sm" style="display:inline-flex; align-items:center; gap:0.35rem;" title="Simuler l'échéance des 30 jours et révoquer les accès">
+                <span>🔒 Simuler fin de période (Révocation)</span>
+              </button>
+            </form>
           </div>
         </div>
 

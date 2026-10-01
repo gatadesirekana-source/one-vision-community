@@ -25,9 +25,33 @@ function get_db(): PDO {
         $pdo->exec('PRAGMA foreign_keys = ON;');
         $pdo->exec('CREATE TABLE IF NOT EXISTS login_attempts (id INTEGER PRIMARY KEY AUTOINCREMENT, ip TEXT NOT NULL, attempt_time INTEGER NOT NULL);');
 
-        // Colonnes optionnelles de commandes
+        // Colonnes optionnelles de commandes pour SasPay et Mobile Money
+        try { $pdo->exec("ALTER TABLE orders ADD COLUMN payment_id TEXT DEFAULT ''"); } catch (Exception $e) {}
+        try { $pdo->exec("ALTER TABLE orders ADD COLUMN checkout_url TEXT DEFAULT ''"); } catch (Exception $e) {}
         try { $pdo->exec("ALTER TABLE orders ADD COLUMN momo_phone TEXT DEFAULT ''"); } catch (Exception $e) {}
         try { $pdo->exec("ALTER TABLE orders ADD COLUMN momo_operator TEXT DEFAULT ''"); } catch (Exception $e) {}
+
+        // Colonnes de gestion de l'abonnement récurrent, expiration, révocation et carte enregistrée
+        try { $pdo->exec("ALTER TABLE users ADD COLUMN subscription_expires_at DATETIME"); } catch (Exception $e) {}
+        try { $pdo->exec("ALTER TABLE users ADD COLUMN auto_renew INTEGER DEFAULT 1"); } catch (Exception $e) {}
+        try { $pdo->exec("ALTER TABLE users ADD COLUMN card_last4 TEXT DEFAULT ''"); } catch (Exception $e) {}
+        try { $pdo->exec("ALTER TABLE users ADD COLUMN card_brand TEXT DEFAULT ''"); } catch (Exception $e) {}
+        try { $pdo->exec("ALTER TABLE users ADD COLUMN card_exp TEXT DEFAULT ''"); } catch (Exception $e) {}
+        try { $pdo->exec("ALTER TABLE users ADD COLUMN card_holder TEXT DEFAULT ''"); } catch (Exception $e) {}
+        try { $pdo->exec("ALTER TABLE users ADD COLUMN next_billing_date DATE"); } catch (Exception $e) {}
+        try { $pdo->exec("ALTER TABLE users ADD COLUMN last_billing_date DATE"); } catch (Exception $e) {}
+        try { $pdo->exec("ALTER TABLE users ADD COLUMN failed_renewals_count INTEGER DEFAULT 0"); } catch (Exception $e) {}
+
+        // Initialiser l'échéance à 30 jours pour les membres actifs existants sans date d'expiration
+        try {
+            $pdo->exec("
+                UPDATE users 
+                SET subscription_expires_at = datetime(COALESCE(subscription_started_at, 'now'), '+30 days'),
+                    next_billing_date = date(COALESCE(subscription_started_at, 'now'), '+30 days'),
+                    last_billing_date = date(COALESCE(subscription_started_at, 'now'))
+                WHERE subscription_expires_at IS NULL AND subscription_status = 'active'
+            ");
+        } catch (Exception $e) {}
 
         if ($isNewDb || filesize(DB_FILE) === 0) {
             init_database($pdo);
@@ -51,8 +75,17 @@ function init_database(PDO $pdo): void {
             job_title TEXT DEFAULT '',
             bio TEXT DEFAULT '',
             skills TEXT DEFAULT '',
-            subscription_status TEXT DEFAULT 'active', -- active, trial, cancelled
+            subscription_status TEXT DEFAULT 'pending', -- pending, active, expired, cancelled
             subscription_started_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            subscription_expires_at DATETIME,
+            auto_renew INTEGER DEFAULT 1,
+            card_last4 TEXT DEFAULT '',
+            card_brand TEXT DEFAULT '',
+            card_exp TEXT DEFAULT '',
+            card_holder TEXT DEFAULT '',
+            next_billing_date DATE,
+            last_billing_date DATE,
+            failed_renewals_count INTEGER DEFAULT 0,
             created_at DATETIME DEFAULT CURRENT_TIMESTAMP
         );
     ");

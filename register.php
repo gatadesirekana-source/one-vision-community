@@ -35,8 +35,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         ]);
 
         if ($result['success']) {
-            set_flash('success', 'Bienvenue dans One Vision Community ! Votre compte a été créé avec succès.');
-            header('Location: dashboard.php');
+            set_flash('success', 'Votre profil est prêt ! Réglez votre adhésion sécurisée (9€/mois) pour activer instantanément vos accès à l\'Académie.');
+            header('Location: checkout.php');
             exit;
         } else {
             $error = $result['error'];

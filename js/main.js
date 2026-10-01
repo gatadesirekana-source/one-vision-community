@@ -1476,10 +1476,70 @@ function initCheckoutPage() {
   const cvcInput = document.getElementById('cardCvc');
   const cardHolderInput = document.getElementById('cardHolder');
 
-  // Champs Mobile Money
+  // Champs & Éléments Mobile Money / Scan QR Code
   const momoCountryPrefix = document.getElementById('momoCountryPrefix');
   const momoPhone = document.getElementById('momoPhone');
   const momoOperatorCards = document.querySelectorAll('.momo-operator-card');
+  const qrOperatorBadge = document.getElementById('qrOperatorBadge');
+  const qrLoadingSpinner = document.getElementById('qrLoadingSpinner');
+  const momoQrImage = document.getElementById('momoQrImage');
+  const qrSuccessOverlay = document.getElementById('qrSuccessOverlay');
+  const btnOpenMobileApp = document.getElementById('btnOpenMobileApp');
+  const btnOpenMobileAppText = document.getElementById('btnOpenMobileAppText');
+  const momoInstructionsContent = document.getElementById('momoInstructionsContent');
+  const liveDetectionStatusText = document.getElementById('liveDetectionStatusText');
+  const momoDirectLink = document.getElementById('momoDirectLink');
+  const sbTl = document.getElementById('sbTl');
+  const sbTr = document.getElementById('sbTr');
+  const sbBl = document.getElementById('sbBl');
+  const sbBr = document.getElementById('sbBr');
+
+  // Configuration par opérateur Mobile Money pour l'espace d'attente
+  const operatorConfig = {
+    wave: {
+      name: 'Wave',
+      badge: "🌊 Scannez avec l'application Wave ou confirmez sur SasPay",
+      color: '#0284c7',
+      bg: '#f0f9ff',
+      btnText: 'Rouvrir la fenêtre SasPay',
+      instructions: `
+        <div>• <strong>Sur votre téléphone :</strong> Finalisez la validation sur l'onglet sécurisé SasPay ou ouvrez Wave.</div>
+        <div>• <strong>Par scan :</strong> Ouvrez l'application Wave, touchez l'icône « Scanner » et visez le code ci-dessus pour régler <strong>5 900 FCFA</strong>.</div>
+      `
+    },
+    orange: {
+      name: 'Orange Money',
+      badge: '🍊 Scannez ou composez #144*82# pour Orange Money',
+      color: '#ea580c',
+      bg: '#fff7ed',
+      btnText: 'Rouvrir la fenêtre SasPay',
+      instructions: `
+        <div>• <strong>Sur votre téléphone :</strong> Finalisez sur l'onglet SasPay ou confirmez la notification USSD.</div>
+        <div>• <strong>Code d'autorisation :</strong> Composez le <strong>#144*82#</strong> (option 2) si votre code d'autorisation vous est demandé.</div>
+      `
+    },
+    mtn: {
+      name: 'MTN MoMo',
+      badge: '🟡 Scannez ou validez avec MTN MoMo',
+      color: '#ca8a04',
+      bg: '#fefce8',
+      btnText: 'Rouvrir la fenêtre SasPay',
+      instructions: `
+        <div>• <strong>Sur votre mobile :</strong> Validez la notification push reçue sur votre téléphone avec votre code secret MTN.</div>
+        <div>• Vous pouvez également scanner le QR Code avec votre smartphone.</div>
+      `
+    },
+    moov: {
+      name: 'Moov Money',
+      badge: '🟢 Scannez ou validez avec Moov Money',
+      color: '#16a34a',
+      bg: '#f0fdf4',
+      btnText: 'Rouvrir la fenêtre SasPay',
+      instructions: `
+        <div>• <strong>Sur votre mobile :</strong> Validez le paiement de <strong>5 900 FCFA</strong> avec votre code secret Moov Money.</div>
+      `
+    }
+  };
 
   // Éléments du formulaire multi-étapes
   const checkoutStep1 = document.getElementById('checkoutStep1');
@@ -1497,7 +1557,24 @@ function initCheckoutPage() {
   const submitBtn = document.getElementById('submitPaymentBtn');
   const submitText = document.getElementById('submitPaymentText');
 
+  // Éléments Passerelle SasPay Mobile Money
+  const momoOpenedNotice = document.getElementById('momoOpenedNotice');
+
+  // Éléments Vérification 3D-Secure Bancaire
+  const threeDSecureModal = document.getElementById('threeDSecureModal');
+  const threeDSIconPending = document.getElementById('threeDSIconPending');
+  const threeDSIconSuccess = document.getElementById('threeDSIconSuccess');
+  const threeDSTitle = document.getElementById('threeDSTitle');
+  const threeDSDesc = document.getElementById('threeDSDesc');
+  const threeDSHolder = document.getElementById('threeDSHolder');
+  const threeDSCardMasked = document.getElementById('threeDSCardMasked');
+  const threeDSProgressFill = document.getElementById('threeDSProgressFill');
+
   let currentPaymentMethod = 'card'; // 'card' ou 'mobile_money'
+  let selectedOperator = 'wave';
+  let activeMomoSession = null;
+  let momoStatusPollInterval = null;
+  let isMomoLoading = false;
 
   // Pré-remplissage si déjà sauvegardé
   const savedName = localStorage.getItem('ov_member_name') || localStorage.getItem('ov_captured_name');
@@ -1511,24 +1588,115 @@ function initCheckoutPage() {
     if (currentPaymentMethod === 'card') {
       submitText.textContent = "Payer 9,00 € par Carte Bancaire";
     } else {
-      const activeOperatorRadio = document.querySelector('.momo-operator-card.active input[type="radio"]') || document.querySelector('input[name="momoOperator"]:checked');
-      const operatorName = activeOperatorRadio ? activeOperatorRadio.value : 'Orange Money';
-      const prefix = momoCountryPrefix ? momoCountryPrefix.value : '+225';
-      
-      let amountStr = "5 900 FCFA";
-      if (prefix === '+243') {
-        amountStr = "25 000 CDF";
-      } else if (prefix === '+224') {
-        amountStr = "85 000 GNF";
-      } else if (prefix === '+33' || prefix === '+32' || prefix === '+41') {
-        amountStr = "9,00 €";
-      }
-
-      submitText.textContent = `Payer ${amountStr} via ${operatorName}`;
+      submitText.textContent = "Continuer vers le paiement";
     }
   }
 
-  // 2. Bascule entre Carte Bancaire et Mobile Money
+  // 2. Gestion de l'habillage visuel de l'opérateur sélectionné
+  function updateOperatorTheme(opKey) {
+    const config = operatorConfig[opKey] || operatorConfig.wave;
+    selectedOperator = opKey;
+
+    if (momoOperatorCards && momoOperatorCards.length > 0) {
+      momoOperatorCards.forEach(card => {
+        const isCurrent = card.getAttribute('data-op') === opKey;
+        if (isCurrent) {
+          card.classList.add('active');
+          card.style.borderColor = config.color;
+          card.style.background = config.bg;
+          card.style.borderWidth = '1.5px';
+        } else {
+          card.classList.remove('active');
+          card.style.borderColor = '#e2e8f0';
+          card.style.background = '#ffffff';
+          card.style.borderWidth = '1.5px';
+        }
+      });
+    }
+
+    // Coins scanner dans la zone d'attente
+    [sbTl, sbTr, sbBl, sbBr].forEach(sb => {
+      if (sb) sb.style.borderColor = config.color;
+    });
+
+    const qrWaitingTitle = document.getElementById('qrWaitingTitle');
+    if (qrWaitingTitle) {
+      qrWaitingTitle.innerHTML = config.badge;
+    }
+
+    if (momoInstructionsContent) {
+      momoInstructionsContent.innerHTML = config.instructions;
+    }
+  }
+
+  // 3. Affichage du QR code et démarrage de l'écoute en direct
+  function displayMomoQrCode(sessionData) {
+    if (momoQrImage) {
+      momoQrImage.src = sessionData.qr_url;
+      momoQrImage.onload = () => {
+        if (qrLoadingSpinner) qrLoadingSpinner.style.display = 'none';
+        momoQrImage.style.display = 'block';
+        momoQrImage.style.opacity = '0';
+        momoQrImage.style.transition = 'opacity 0.3s ease';
+        requestAnimationFrame(() => { momoQrImage.style.opacity = '1'; });
+      };
+    }
+    if (btnOpenMobileApp) {
+      btnOpenMobileApp.href = sessionData.checkout_url;
+    }
+    if (momoDirectLink) {
+      momoDirectLink.href = sessionData.checkout_url;
+    }
+    if (liveDetectionStatusText) {
+      liveDetectionStatusText.textContent = "Détection automatique en cours... Redirection dès confirmation";
+      liveDetectionStatusText.style.color = "#166534";
+    }
+  }
+
+  function startMomoStatusPolling(sessionId, orderNumber) {
+    if (momoStatusPollInterval) clearInterval(momoStatusPollInterval);
+    if (!sessionId) return;
+
+    momoStatusPollInterval = setInterval(() => {
+      fetch(`checkout.php?action=check_payment_status&session_id=${encodeURIComponent(sessionId)}&order=${encodeURIComponent(orderNumber || '')}`, {
+        headers: { 'X-Requested-With': 'XMLHttpRequest' }
+      })
+      .then(r => r.json())
+      .then(data => {
+        if (data && data.success && data.is_paid) {
+          clearInterval(momoStatusPollInterval);
+          momoStatusPollInterval = null;
+
+          if (qrSuccessOverlay) {
+            qrSuccessOverlay.style.display = 'flex';
+          }
+          if (liveDetectionStatusText) {
+            liveDetectionStatusText.innerHTML = "<strong>Paiement reçu avec succès !</strong> Redirection en cours...";
+            liveDetectionStatusText.style.color = "#16a34a";
+          }
+          localStorage.setItem('ov_has_paid', 'true');
+          setTimeout(() => {
+            window.location.href = data.redirect_url || `checkout-success.php?order=${encodeURIComponent(orderNumber || '')}`;
+          }, 1200);
+        }
+      })
+      .catch(() => {});
+    }, 2500);
+  }
+
+  // Clic sur les cartes d'opérateurs Mobile Money
+  if (momoOperatorCards && momoOperatorCards.length > 0) {
+    momoOperatorCards.forEach(card => {
+      card.addEventListener('click', () => {
+        const op = card.getAttribute('data-op') || 'wave';
+        const radio = card.querySelector('input[type="radio"]');
+        if (radio) radio.checked = true;
+        updateOperatorTheme(op);
+      });
+    });
+  }
+
+  // 5. Bascule entre Carte Bancaire et Mobile Money
   function selectPaymentMethod(method) {
     currentPaymentMethod = method;
     if (paymentMethodHidden) paymentMethodHidden.value = method;
@@ -1538,11 +1706,19 @@ function initCheckoutPage() {
       if (methodMobileMoney) methodMobileMoney.classList.remove('selected');
       if (cardDetailsBox) cardDetailsBox.style.display = 'block';
       if (mobileMoneyDetailsBox) mobileMoneyDetailsBox.style.display = 'none';
+      if (submitBtn) {
+        submitBtn.style.display = 'flex';
+        submitBtn.disabled = false;
+      }
     } else {
       if (methodMobileMoney) methodMobileMoney.classList.add('selected');
       if (methodCard) methodCard.classList.remove('selected');
       if (cardDetailsBox) cardDetailsBox.style.display = 'none';
       if (mobileMoneyDetailsBox) mobileMoneyDetailsBox.style.display = 'block';
+      if (submitBtn) {
+        submitBtn.style.display = 'flex';
+        submitBtn.disabled = false;
+      }
     }
     updateSubmitButtonLabel();
   }
@@ -1567,31 +1743,74 @@ function initCheckoutPage() {
     });
   }
 
-  // Sélection opérateur Mobile Money
-  if (momoOperatorCards && momoOperatorCards.length > 0) {
-    momoOperatorCards.forEach(card => {
-      card.addEventListener('click', () => {
-        momoOperatorCards.forEach(c => {
-          c.classList.remove('active');
-          c.style.borderColor = '#e2e8f0';
-          c.style.background = '#fff';
-        });
-        card.classList.add('active');
-        card.style.borderColor = '#6366f1';
-        card.style.background = '#f5f3ff';
-        const radio = card.querySelector('input[type="radio"]');
-        if (radio) radio.checked = true;
-        updateSubmitButtonLabel();
-      });
-    });
-  }
-
   if (momoCountryPrefix) {
     momoCountryPrefix.addEventListener('change', updateSubmitButtonLabel);
   }
 
   // Initialiser le libellé au chargement
   updateSubmitButtonLabel();
+
+  // Éléments de détection visuelle de marque de carte
+  const badgeCb = document.getElementById('badgeCb');
+  const badgeVisa = document.getElementById('badgeVisa');
+  const badgeMc = document.getElementById('badgeMc');
+  const detectedBrandLabel = document.getElementById('detectedBrandLabel');
+  const defaultCardSvg = document.getElementById('defaultCardSvg');
+  const activeBrandSvg = document.getElementById('activeBrandSvg');
+
+  // Mini logos SVG pour le champ de saisie
+  const svgVisaSmall = `<svg width="26" height="17" viewBox="0 0 38 24" fill="none"><rect width="38" height="24" rx="3" fill="#FFFFFF" stroke="#CBD5E1"/><path d="M15.2 16.8L17.3 7.2H19.7L17.6 16.8H15.2ZM24.4 7.4C23.9 7.2 23.1 7 22.1 7C19.6 7 17.8 8.3 17.8 10.2C17.8 11.6 19.1 12.4 20 12.9C20.9 13.4 21.3 13.7 21.3 14.1C21.3 14.8 20.5 15.1 19.7 15.1C18.8 15.1 18.2 14.9 17.4 14.6L17.1 14.4L16.8 16.3C17.4 16.6 18.4 16.8 19.5 16.8C22.1 16.8 23.9 15.5 23.9 13.5C23.9 12.4 23.2 11.5 21.7 10.8C20.8 10.3 20.2 10 20.2 9.5C20.2 9.1 20.7 8.6 21.7 8.6C22.6 8.6 23.2 8.8 23.7 9L23.9 9.1L24.4 7.4ZM30.8 7.2H28.8C28.2 7.2 27.7 7.4 27.5 8L23.7 16.8H26.3L26.8 15.3H30.1L30.4 16.8H32.7L30.8 7.2ZM27.5 13.4L28.9 9.6L29.7 13.4H27.5ZM12.6 7.2L10.2 13.7L9.9 12.3C9.4 10.8 7.9 9 6.2 8.1L8.5 16.8H11.2L15.1 7.2H12.6Z" fill="#1434CB"/><path d="M8.2 7.2H4.2L4.1 7.4C7.3 8.2 9.5 10.1 10.4 12.5L9.4 7.9C9.2 7.3 8.8 7.2 8.2 7.2Z" fill="#F7B600"/></svg>`;
+  const svgMcSmall = `<svg width="26" height="17" viewBox="0 0 38 24" fill="none"><rect width="38" height="24" rx="3" fill="#0F172A"/><circle cx="14.5" cy="12" r="6.8" fill="#EB001B"/><circle cx="23.5" cy="12" r="6.8" fill="#F79E1B"/><path d="M19 7.48C20.7 8.7 21.8 10.22 21.8 12C21.8 13.78 20.7 15.3 19 16.52C17.3 15.3 16.2 13.78 16.2 12C16.2 10.22 17.3 8.7 19 7.48Z" fill="#FF5F00"/></svg>`;
+  const svgCbSmall = `<svg width="26" height="17" viewBox="0 0 38 24" fill="none"><rect width="38" height="24" rx="3" fill="#009975"/><path d="M19 0H34C36.2091 0 38 1.79086 38 4V20C38 22.2091 36.2091 24 34 24H19V0Z" fill="#0F4C81"/><text x="19" y="16.5" font-family="sans-serif" font-weight="900" font-size="12" fill="#ffffff" text-anchor="middle" letter-spacing="1">CB</text></svg>`;
+
+  function updateCardBrandUI(brand) {
+    const badges = [badgeCb, badgeVisa, badgeMc];
+    badges.forEach(b => {
+      if (b) b.classList.remove('card-brand-active', 'card-brand-dimmed');
+    });
+
+    if (brand === 'Visa') {
+      if (badgeVisa) badgeVisa.classList.add('card-brand-active');
+      if (badgeCb) badgeCb.classList.add('card-brand-dimmed');
+      if (badgeMc) badgeMc.classList.add('card-brand-dimmed');
+      if (detectedBrandLabel) {
+        detectedBrandLabel.textContent = 'Visa Détectée ✓';
+        detectedBrandLabel.style.color = '#1434cb';
+      }
+      if (defaultCardSvg) defaultCardSvg.style.display = 'none';
+      if (activeBrandSvg) {
+        activeBrandSvg.innerHTML = svgVisaSmall;
+        activeBrandSvg.style.display = 'block';
+      }
+    } else if (brand === 'Mastercard') {
+      if (badgeMc) badgeMc.classList.add('card-brand-active');
+      if (badgeVisa) badgeVisa.classList.add('card-brand-dimmed');
+      if (badgeCb) badgeCb.classList.add('card-brand-dimmed');
+      if (detectedBrandLabel) {
+        detectedBrandLabel.textContent = 'Mastercard Détectée ✓';
+        detectedBrandLabel.style.color = '#ea580c';
+      }
+      if (defaultCardSvg) defaultCardSvg.style.display = 'none';
+      if (activeBrandSvg) {
+        activeBrandSvg.innerHTML = svgMcSmall;
+        activeBrandSvg.style.display = 'block';
+      }
+    } else if (brand === 'American Express') {
+      if (badgeVisa) badgeVisa.classList.add('card-brand-dimmed');
+      if (badgeMc) badgeMc.classList.add('card-brand-dimmed');
+      if (badgeCb) badgeCb.classList.add('card-brand-dimmed');
+      if (detectedBrandLabel) {
+        detectedBrandLabel.textContent = 'American Express ✓';
+        detectedBrandLabel.style.color = '#0284c7';
+      }
+      if (defaultCardSvg) defaultCardSvg.style.display = 'block';
+      if (activeBrandSvg) activeBrandSvg.style.display = 'none';
+    } else {
+      if (detectedBrandLabel) detectedBrandLabel.textContent = '';
+      if (defaultCardSvg) defaultCardSvg.style.display = 'block';
+      if (activeBrandSvg) activeBrandSvg.style.display = 'none';
+    }
+  }
 
   // Fonctions de validation de carte (Norme Luhn)
   function isValidLuhn(numberStr) {
@@ -1632,18 +1851,37 @@ function initCheckoutPage() {
     const currentMonth = now.getMonth() + 1;
     if (year < currentYear) return false;
     if (year === currentYear && month < currentMonth) return false;
-    if (year > currentYear + 20) return false;
+    if (year > currentYear + 25) return false;
     return true;
   }
 
-  // Formatage direct du numéro de carte
+  // Formatage direct du numéro de carte & Allumage dynamique de la marque
   if (cardInput) {
     cardInput.addEventListener('input', (e) => {
-      let val = e.target.value.replace(/\D/g, '');
-      if (val.length > 19) val = val.substring(0, 19);
-      const parts = val.match(/.{1,4}/g);
+      let raw = e.target.value.replace(/\D/g, '');
+      if (raw.length > 19) raw = raw.substring(0, 19);
+
+      const brand = detectCardBrand(raw);
+      updateCardBrandUI(raw.length > 0 ? brand : '');
+
+      const parts = raw.match(/.{1,4}/g);
       e.target.value = parts ? parts.join(' ') : '';
-      hideError('cardError', cardInput);
+
+      // Contrôle dynamique lorsque le numéro est complet
+      const targetLen = (brand === 'American Express') ? 15 : 16;
+      if (raw.length >= targetLen) {
+        if (isValidLuhn(raw)) {
+          cardInput.classList.add('input-valid');
+          cardInput.classList.remove('input-error');
+          hideError('cardError', cardInput);
+        } else {
+          cardInput.classList.remove('input-valid');
+          showError('cardError', cardInput, "Numéro de carte non reconnu (échec du contrôle de sécurité bancaire).");
+        }
+      } else {
+        cardInput.classList.remove('input-valid');
+        hideError('cardError', cardInput);
+      }
     });
   }
 
@@ -1672,6 +1910,12 @@ function initCheckoutPage() {
   if (momoPhone) {
     momoPhone.addEventListener('input', () => {
       hideError('momoPhoneError', momoPhone);
+    });
+  }
+
+  if (cardHolderInput) {
+    cardHolderInput.addEventListener('input', () => {
+      hideError('cardHolderError', cardHolderInput);
     });
   }
 
@@ -1813,39 +2057,151 @@ function initCheckoutPage() {
     if (currentPaymentMethod === 'card') {
       const cardVal = cardInput ? cardInput.value.replace(/\s/g, '') : '';
       const expVal = expInput ? expInput.value.trim() : '';
-      if (cardVal && cardVal.length < 13) {
-        showError('cardError', cardInput, "Numéro de carte bancaire incomplet.");
+      const cvcVal = cvcInput ? cvcInput.value.trim() : '';
+      const holderVal = (cardHolderInput && cardHolderInput.value.trim()) || nameVal;
+
+      const detectedBrand = detectCardBrand(cardVal);
+      const targetCardLen = (detectedBrand === 'American Express') ? 15 : 16;
+
+      if (!cardVal || cardVal.length < 13) {
+        showError('cardError', cardInput, "Veuillez renseigner votre numéro de carte bancaire (" + targetCardLen + " chiffres).");
+        hasError = true;
+      } else if (!isValidLuhn(cardVal)) {
+        showError('cardError', cardInput, "Numéro de carte bancaire invalide : échec du contrôle de sécurité bancaire (Luhn).");
         hasError = true;
       } else {
         hideError('cardError', cardInput);
       }
-      if (expVal && (!expVal.includes('/') || !isCardNotExpired(expVal))) {
-        showError('expError', expInput, "Date d'expiration invalide ou expirée.");
+
+      if (!expVal || !expVal.includes('/') || !isCardNotExpired(expVal)) {
+        showError('expError', expInput, "Date d'expiration invalide ou carte expirée (format MM/AA).");
         hasError = true;
       } else {
         hideError('expError', expInput);
       }
-    }
 
-    if (hasError) {
-      const firstError = checkoutForm.querySelector('.form-input.input-error');
-      if (firstError) firstError.focus();
+      const targetCvcLen = (detectedBrand === 'American Express') ? 4 : 3;
+      if (!cvcVal || cvcVal.length < targetCvcLen) {
+        showError('cvcError', cvcInput, `Cryptogramme CVC incomplet (${targetCvcLen} chiffres requis).`);
+        hasError = true;
+      } else {
+        hideError('cvcError', cvcInput);
+      }
+
+      if (cardHolderInput && (!holderVal || holderVal.length < 2)) {
+        showError('cardHolderError', cardHolderInput, "Nom du titulaire de la carte requis.");
+        hasError = true;
+      } else if (cardHolderInput) {
+        hideError('cardHolderError', cardHolderInput);
+      }
+
+      if (hasError) {
+        const firstError = checkoutForm.querySelector('.form-input.input-error');
+        if (firstError) firstError.focus();
+        return;
+      }
+
+      // Déclenchement de l'authentification 3D-Secure
+      if (threeDSecureModal) {
+        if (threeDSHolder) threeDSHolder.textContent = holderVal;
+        if (threeDSCardMasked) threeDSCardMasked.textContent = '•••• •••• •••• ' + cardVal.slice(-4);
+        if (threeDSIconPending) threeDSIconPending.style.display = 'flex';
+        if (threeDSIconSuccess) threeDSIconSuccess.style.display = 'none';
+        if (threeDSTitle) threeDSTitle.textContent = "Authentification 3D-Secure" + (detectedBrand !== 'Carte' ? ' ' + detectedBrand : '');
+        if (threeDSDesc) threeDSDesc.innerHTML = "Communication sécurisée avec votre banque émettrice pour autoriser le règlement de <strong>9,00 €</strong>...";
+        if (threeDSProgressFill) threeDSProgressFill.style.width = '45%';
+
+        // Mise en valeur de la marque détectée dans le modal 3DS
+        const mCb = document.getElementById('threeDSBadgeCb');
+        const mVisa = document.getElementById('threeDSBadgeVisa');
+        const mMc = document.getElementById('threeDSBadgeMc');
+        if (mCb) mCb.style.opacity = (detectedBrand === 'Carte' || detectedBrand === 'CB') ? '1' : '0.35';
+        if (mVisa) {
+          mVisa.style.opacity = (detectedBrand === 'Visa') ? '1' : '0.35';
+          mVisa.style.boxShadow = (detectedBrand === 'Visa') ? '0 0 10px rgba(20,52,203,0.4)' : 'none';
+          mVisa.style.border = (detectedBrand === 'Visa') ? '1.5px solid #1434cb' : 'none';
+        }
+        if (mMc) {
+          mMc.style.opacity = (detectedBrand === 'Mastercard') ? '1' : '0.35';
+          mMc.style.boxShadow = (detectedBrand === 'Mastercard') ? '0 0 10px rgba(234,88,12,0.4)' : 'none';
+          mMc.style.border = (detectedBrand === 'Mastercard') ? '1.5px solid #ea580c' : 'none';
+        }
+
+        threeDSecureModal.style.display = 'flex';
+      }
+
+      if (submitBtn) {
+        submitBtn.disabled = true;
+        if (submitText) submitText.textContent = "Validation bancaire en cours...";
+      }
+
+      localStorage.setItem('ov_has_paid', 'true');
+      localStorage.setItem('ov_member_name', nameVal);
+      localStorage.setItem('ov_member_email', emailVal);
+
+      const formData = new FormData(checkoutForm);
+      formData.set('action', 'checkout');
+      formData.set('paymentMethod', 'card');
+      formData.set('checkoutName', nameVal);
+      formData.set('checkoutEmail', emailVal);
+      formData.set('cardHolder', holderVal);
+      if (passVal) formData.set('checkoutPassword', passVal);
+
+      fetch('checkout.php', {
+        method: 'POST',
+        body: formData,
+        headers: { 'X-Requested-With': 'XMLHttpRequest' }
+      })
+      .then(res => res.json())
+      .then(data => {
+        if (data && data.success && data.redirect_url) {
+          if (threeDSProgressFill) threeDSProgressFill.style.width = '100%';
+          if (threeDSIconPending) threeDSIconPending.style.display = 'none';
+          if (threeDSIconSuccess) threeDSIconSuccess.style.display = 'flex';
+          if (threeDSTitle) threeDSTitle.textContent = "Paiement Validé ✓";
+          if (threeDSDesc) threeDSDesc.innerHTML = "Autorisation bancaire accordée avec succès. Redirection vers votre espace membre...";
+          setTimeout(() => {
+            window.location.href = data.redirect_url;
+          }, 1100);
+        } else if (data && !data.success && data.error) {
+          if (threeDSecureModal) threeDSecureModal.style.display = 'none';
+          if (submitBtn) submitBtn.disabled = false;
+          updateSubmitButtonLabel();
+          showError('cardError', cardInput, data.error);
+          const globalErr = document.getElementById('checkoutGlobalError');
+          const globalErrText = document.getElementById('checkoutGlobalErrorText');
+          if (globalErr && globalErrText) {
+            globalErrText.textContent = data.error;
+            globalErr.style.display = 'flex';
+          }
+          if (cardInput) cardInput.focus();
+        } else {
+          window.location.href = `checkout-success.php?order=${encodeURIComponent((data && data.order_number) ? data.order_number : '')}`;
+        }
+      })
+      .catch(() => {
+        if (threeDSecureModal) threeDSecureModal.style.display = 'none';
+        checkoutForm.submit();
+      });
       return;
     }
 
-    if (submitBtn) {
-      submitBtn.disabled = true;
-      if (submitText) submitText.textContent = "Activation de votre adhésion en cours...";
-    }
+    if (currentPaymentMethod === 'mobile_money') {
+      if (isMomoLoading) return;
+      isMomoLoading = true;
 
-    localStorage.setItem('ov_has_paid', 'true');
-    localStorage.setItem('ov_member_name', nameVal);
-    localStorage.setItem('ov_member_email', emailVal);
+      // Pré-ouvrir la fenêtre pour éviter le blocage des popups par les navigateurs
+      const saspayPopup = window.open('about:blank', '_blank');
 
-    const isPhp = isPhpEnvironment();
-    if (isPhp) {
+      if (submitBtn) submitBtn.disabled = true;
+      if (submitText) submitText.textContent = "Redirection vers SasPay...";
+
+      localStorage.setItem('ov_member_name', nameVal);
+      localStorage.setItem('ov_member_email', emailVal);
+
       const formData = new FormData(checkoutForm);
-      formData.set('paymentMethod', currentPaymentMethod);
+      formData.set('action', 'init_saspay_momo');
+      formData.set('paymentMethod', 'mobile_money');
       formData.set('checkoutName', nameVal);
       formData.set('checkoutEmail', emailVal);
       if (passVal) formData.set('checkoutPassword', passVal);
@@ -1857,30 +2213,52 @@ function initCheckoutPage() {
       })
       .then(res => res.json())
       .then(data => {
-        if (data && data.success && data.redirect_url) {
-          window.location.href = data.redirect_url;
-        } else if (data && !data.success && data.error) {
-          if (submitBtn) submitBtn.disabled = false;
-          updateSubmitButtonLabel();
+        isMomoLoading = false;
+        if (submitBtn) submitBtn.disabled = false;
+        updateSubmitButtonLabel();
+
+        if (data && data.success && data.checkout_url) {
+          if (saspayPopup) {
+            try {
+              saspayPopup.location.href = data.checkout_url;
+            } catch (e) {
+              window.location.href = data.checkout_url;
+            }
+          } else {
+            window.location.href = data.checkout_url;
+          }
+        } else {
+          if (saspayPopup) {
+            try { saspayPopup.close(); } catch (e) {}
+          }
+          const errMsg = (data && data.error) ? data.error : "Impossible d'initialiser la passerelle SasPay.";
           const globalErr = document.getElementById('checkoutGlobalError');
           const globalErrText = document.getElementById('checkoutGlobalErrorText');
           if (globalErr && globalErrText) {
-            globalErrText.textContent = data.error;
+            globalErrText.textContent = errMsg;
             globalErr.style.display = 'flex';
-          } else {
-            alert(data.error);
           }
-        } else {
-          window.location.href = `checkout-success.php?order=${encodeURIComponent((data && data.order_number) ? data.order_number : '')}`;
         }
       })
       .catch(() => {
-        checkoutForm.submit();
+        isMomoLoading = false;
+        if (submitBtn) submitBtn.disabled = false;
+        updateSubmitButtonLabel();
+        if (saspayPopup) {
+          try { saspayPopup.close(); } catch (e) {}
+        }
+        const globalErr = document.getElementById('checkoutGlobalError');
+        const globalErrText = document.getElementById('checkoutGlobalErrorText');
+        if (globalErr && globalErrText) {
+          globalErrText.textContent = "Erreur de communication avec la passerelle SasPay.";
+          globalErr.style.display = 'flex';
+        }
       });
-    } else {
-      const defaultOrderNum = 'ORD-' + new Date().getFullYear() + '-' + Math.floor(100 + Math.random() * 900);
-      window.location.href = `checkout-success.html?order=${encodeURIComponent(defaultOrderNum)}`;
+      return;
     }
+
+    const defaultOrderNum = 'ORD-' + new Date().getFullYear() + '-' + Math.floor(100 + Math.random() * 900);
+    window.location.href = `checkout-success.php?order=${encodeURIComponent(defaultOrderNum)}`;
   });
 }
 

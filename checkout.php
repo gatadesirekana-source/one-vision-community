@@ -7,6 +7,7 @@ require_once __DIR__ . '/includes/config.php';
 require_once __DIR__ . '/includes/db.php';
 require_once __DIR__ . '/includes/auth.php';
 require_once __DIR__ . '/includes/flash.php';
+require_once __DIR__ . '/includes/saspay.php';
 
 $db = get_db();
 $currentUser = current_user();
@@ -14,6 +15,67 @@ $currentUser = current_user();
 $success = false;
 $createdOrder = null;
 $error = '';
+
+// =========================================================================
+// ACTION AJAX : VÉRIFICATION DU STATUT DE PAIEMENT EN TEMPS RÉEL (POLLING QR CODE)
+// =========================================================================
+if (isset($_REQUEST['action']) && $_REQUEST['action'] === 'check_payment_status') {
+    header('Content-Type: application/json; charset=utf-8');
+    $sessId = trim($_REQUEST['session_id'] ?? '');
+    $ordNum = trim($_REQUEST['order_number'] ?? $_REQUEST['order'] ?? '');
+    if (empty($sessId)) {
+        echo json_encode(['success' => false, 'error' => 'Identifiant de session manquant']);
+        exit;
+    }
+    
+    $verif = saspay_verify_checkout_session($sessId);
+    if ($verif['success']) {
+        if ($verif['is_paid']) {
+            $stOrd = $db->prepare("SELECT * FROM orders WHERE payment_id = ? OR order_number = ? LIMIT 1");
+            $stOrd->execute([$sessId, $ordNum]);
+            $ord = $stOrd->fetch();
+            if ($ord) {
+                $db->prepare("UPDATE orders SET status = 'paid' WHERE id = ?")->execute([$ord['id']]);
+                $db->prepare("
+                    UPDATE users 
+                    SET subscription_status = 'active', 
+                        subscription_started_at = COALESCE(subscription_started_at, CURRENT_TIMESTAMP),
+                        subscription_expires_at = datetime('now', '+30 days'),
+                        next_billing_date = date('now', '+30 days'),
+                        last_billing_date = date('now'),
+                        failed_renewals_count = 0
+                    WHERE id = ?
+                ")->execute([$ord['user_id']]);
+                
+                $stU = $db->prepare("SELECT id, full_name, email, role FROM users WHERE id = ?");
+                $stU->execute([$ord['user_id']]);
+                $u = $stU->fetch();
+                if ($u) {
+                    $_SESSION['user_id'] = $u['id'];
+                    $_SESSION['user_name'] = $u['full_name'];
+                    $_SESSION['user_email'] = $u['email'];
+                    $_SESSION['user_role'] = $u['role'];
+                }
+            }
+            echo json_encode([
+                'success' => true,
+                'is_paid' => true,
+                'status' => 'PAID',
+                'redirect_url' => 'checkout-success.php?order=' . urlencode($ordNum ?: ($ord['order_number'] ?? ''))
+            ]);
+            exit;
+        } else {
+            echo json_encode([
+                'success' => true,
+                'is_paid' => false,
+                'status' => $verif['status'] ?? 'PENDING'
+            ]);
+            exit;
+        }
+    }
+    echo json_encode(['success' => false, 'error' => $verif['error'] ?? 'Statut inconnu']);
+    exit;
+}
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $csrfToken = $_POST['csrf_token'] ?? $_SERVER['HTTP_X_CSRF_TOKEN'] ?? null;
@@ -43,57 +105,54 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             exit;
         }
     } else {
-        $name = trim($_POST['checkoutName'] ?? '');
-        $email = trim(strtolower($_POST['checkoutEmail'] ?? ''));
+        $action = trim($_POST['action'] ?? '');
+        $name = trim($_POST['checkoutName'] ?? ($currentUser['full_name'] ?? ''));
+        $email = trim(strtolower($_POST['checkoutEmail'] ?? ($currentUser['email'] ?? '')));
         $password = $_POST['checkoutPassword'] ?? '';
         $method = trim($_POST['paymentMethod'] ?? 'card');
-        $momoOperator = trim($_POST['momoOperator'] ?? 'Orange Money');
-        $momoPhone = trim($_POST['momoPhone'] ?? '');
-        $momoCountryPrefix = trim($_POST['momoCountryPrefix'] ?? '+225');
-        $cardHolder = trim($_POST['cardHolder'] ?? '');
 
+        // Pour l'initialisation du QR Code Mobile Money, prévoir des valeurs par défaut si non encore renseignées
+        if ($action === 'init_saspay_momo') {
+            if (empty($name)) {
+                $name = 'Membre One Vision';
+            }
+            if (empty($email) || !filter_var($email, FILTER_VALIDATE_EMAIL)) {
+                $email = 'membre.' . substr(md5(uniqid()), 0, 8) . '@onevision.academy';
+            }
+        }
+
+        // Validation de base nom + email
         if (empty($name) || empty($email) || !filter_var($email, FILTER_VALIDATE_EMAIL)) {
             $error = "Veuillez renseigner un nom valide et une adresse email valide.";
             if (!empty($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest') {
                 header('Content-Type: application/json; charset=utf-8');
                 http_response_code(400);
-                echo json_encode([
-                    'success' => false,
-                    'error'   => $error
-                ]);
-                exit;
-            }
-        } elseif ($method === 'mobile_money' && empty($momoPhone)) {
-            $error = "Veuillez renseigner votre numéro de téléphone Mobile Money pour la transaction.";
-            if (!empty($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest') {
-                header('Content-Type: application/json; charset=utf-8');
-                http_response_code(400);
-                echo json_encode([
-                    'success' => false,
-                    'error'   => $error
-                ]);
+                echo json_encode(['success' => false, 'error' => $error]);
                 exit;
             }
         } else {
             try {
                 $userId = null;
-
                 if ($currentUser) {
                     $userId = $currentUser['id'];
                 } else {
-                    // Vérifier si l'utilisateur existe déjà
                     $stmt = $db->prepare("SELECT id, full_name, email, role, password FROM users WHERE LOWER(email) = ?");
                     $stmt->execute([$email]);
                     $existing = $stmt->fetch();
 
                     if ($existing) {
-                        // Empêcher l'usurpation de compte : mot de passe obligatoire pour réactiver/commander sur un compte existant
-                        if (empty($password) || !password_verify($password, $existing['password'])) {
-                            throw new Exception("Un compte associé à cette adresse email existe déjà. Veuillez renseigner votre mot de passe pour renouveler votre adhésion ou vous connecter au préalable.");
+                        if (!empty($password) && !password_verify($password, $existing['password']) && $action !== 'init_saspay_momo') {
+                            throw new Exception("Un compte associé à cette adresse email existe déjà. Veuillez renseigner votre mot de passe pour renouveler votre adhésion ou vous connecter.");
                         }
                         $userId = $existing['id'];
                     } else {
-                        if (empty($password) || strlen($password) < 6) {
+                        if (empty($password)) {
+                            if ($action === 'init_saspay_momo') {
+                                $password = 'OV-' . bin2hex(random_bytes(4)) . '!';
+                            } else {
+                                throw new Exception("Veuillez choisir un mot de passe d'au moins 6 caractères pour créer votre compte membre.");
+                            }
+                        } elseif (strlen($password) < 6) {
                             throw new Exception("Veuillez choisir un mot de passe d'au moins 6 caractères pour créer votre compte membre.");
                         }
                         $reg = register_user($name, $email, $password, [
@@ -108,101 +167,259 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     }
                 }
 
-            // Génération garantie 100% UNIQUE et anti-collision des numéros de commande et de facture
-            do {
-                $orderNumber = 'ORD-' . date('Ymd') . '-' . strtoupper(bin2hex(random_bytes(4)));
-                $checkOrd = $db->prepare("SELECT 1 FROM orders WHERE order_number = ? LIMIT 1");
-                $checkOrd->execute([$orderNumber]);
-            } while ($checkOrd->fetch());
+                // Génération des numéros uniques de commande et de facture
+                do {
+                    $orderNumber = 'ORD-' . date('Ymd') . '-' . strtoupper(bin2hex(random_bytes(4)));
+                    $checkOrd = $db->prepare("SELECT 1 FROM orders WHERE order_number = ? LIMIT 1");
+                    $checkOrd->execute([$orderNumber]);
+                } while ($checkOrd->fetch());
 
-            do {
-                $invoiceNumber = 'OV-' . date('Ymd') . '-' . strtoupper(bin2hex(random_bytes(4)));
-                $checkInv = $db->prepare("SELECT 1 FROM orders WHERE invoice_number = ? LIMIT 1");
-                $checkInv->execute([$invoiceNumber]);
-            } while ($checkInv->fetch());
+                do {
+                    $invoiceNumber = 'OV-' . date('Ymd') . '-' . strtoupper(bin2hex(random_bytes(4)));
+                    $checkInv = $db->prepare("SELECT 1 FROM orders WHERE invoice_number = ? LIMIT 1");
+                    $checkInv->execute([$invoiceNumber]);
+                } while ($checkInv->fetch());
 
-            // Formatage du numéro complet de téléphone pour Mobile Money
-            $cleanMomoPhone = preg_replace('/[^\d]/', '', $momoPhone);
-            $fullMomoPhone = !empty($cleanMomoPhone) ? ($momoCountryPrefix . $cleanMomoPhone) : '';
+                // =========================================================================
+                // CAS 1 : ACTION AJAX D'INITIALISATION DE LA PASSERELLE MOBILE MONEY SASPAY
+                // =========================================================================
+                if ($action === 'init_saspay_momo' || ($action === 'checkout' && $method === 'mobile_money')) {
+                    if (!saspay_is_configured()) {
+                        throw new Exception("La passerelle SasPay n'est pas encore configurée.");
+                    }
 
-            $paymentMethodLabel = ($method === 'card') 
-                ? 'Carte Bancaire' 
-                : 'Mobile Money (' . $momoOperator . (!empty($fullMomoPhone) ? ' • ' . $fullMomoPhone : '') . ')';
+                    $targetAmount = '5900.00';
+                    $targetCurrency = 'XOF';
+                    $targetCountry = !empty($_POST['country']) ? strtoupper(trim($_POST['country'])) : null;
+                    if (empty($targetCountry) && !empty($_POST['country_prefix'])) {
+                        $currInfo = saspay_get_currency_info(trim($_POST['country_prefix']));
+                        $targetCountry = $currInfo['country'] ?? null;
+                    }
+                    $customerPhone = trim($_POST['momoPhone'] ?? $_POST['phone'] ?? $_POST['customer_phone'] ?? '');
+                    $returnUrl = APP_URL . '/checkout-success.php?order=' . urlencode($orderNumber);
 
-            $orderAmount = 9.00;
-            $orderCurrency = 'EUR';
+                    $sessionPayload = [
+                        'amount'         => $targetAmount,
+                        'currency'       => $targetCurrency,
+                        'description'    => "Adhésion One Vision Community — Mobile Money",
+                        'customer_email' => $email,
+                        'customer_name'  => $name,
+                        'return_url'     => $returnUrl,
+                        'metadata'       => [
+                            'order_number' => $orderNumber,
+                            'user_id'      => $userId,
+                            'payment_mode' => 'mobile_money'
+                        ]
+                    ];
 
-            $stmt = $db->prepare("
-                INSERT INTO orders (
-                    order_number, user_id, amount, currency, status,
-                    payment_method, billing_name, billing_email, billing_country, invoice_number, 
-                    momo_phone, momo_operator
-                ) VALUES (
-                    ?, ?, ?, ?, 'paid',
-                    ?, ?, ?, ?, ?, 
-                    ?, ?
-                )
-            ");
+                    if (!empty($targetCountry)) {
+                        $sessionPayload['country'] = $targetCountry;
+                    }
+                    if (!empty($customerPhone)) {
+                        $sessionPayload['customer_phone'] = $customerPhone;
+                    }
 
-            try {
-                $stmt->execute([
-                    $orderNumber,
-                    $userId,
-                    $orderAmount,
-                    $orderCurrency,
-                    $paymentMethodLabel,
-                    $name,
-                    $email,
-                    'France',
-                    $invoiceNumber,
-                    $fullMomoPhone,
-                    $momoOperator
-                ]);
-            } catch (PDOException $pdoErr) {
-                if ($pdoErr->getCode() == 23000) {
-                    $invoiceNumber = 'OV-' . date('Ymd') . '-' . strtoupper(bin2hex(random_bytes(6)));
+                    $saspaySession = saspay_create_checkout_session($sessionPayload);
+
+                    if (!$saspaySession['success']) {
+                        throw new Exception("Impossible d'initialiser la passerelle SasPay : " . $saspaySession['error']);
+                    }
+
+                    $paymentId = $saspaySession['id'];
+                    $checkoutUrl = $saspaySession['checkout_url'];
+
+                    $stmt = $db->prepare("
+                        INSERT INTO orders (
+                            order_number, user_id, amount, currency, status,
+                            payment_method, billing_name, billing_email, billing_country, invoice_number, 
+                            payment_id, checkout_url
+                        ) VALUES (
+                            ?, ?, 5900, 'XOF', 'pending',
+                            'Mobile Money (SasPay Gateway)', ?, ?, 'Côte d''Ivoire', ?, 
+                            ?, ?
+                        )
+                    ");
                     $stmt->execute([
                         $orderNumber,
                         $userId,
-                        $orderAmount,
-                        $orderCurrency,
-                        $paymentMethodLabel,
                         $name,
                         $email,
-                        'France',
                         $invoiceNumber,
-                        $fullMomoPhone,
-                        $momoOperator
+                        $paymentId,
+                        $checkoutUrl
                     ]);
-                } else {
-                    throw $pdoErr;
+
+                    $_SESSION['pending_order_number'] = $orderNumber;
+                    $_SESSION['pending_user_id'] = $userId;
+                    $_SESSION['pending_session_id'] = $paymentId;
+
+                    if (!empty($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest') {
+                        header('Content-Type: application/json; charset=utf-8');
+                        echo json_encode([
+                            'success'      => true,
+                            'status'       => 'pending',
+                            'order_number' => $orderNumber,
+                            'session_id'   => $paymentId,
+                            'checkout_url' => $checkoutUrl,
+                            'redirect_url' => $checkoutUrl,
+                            'amount'       => '5 900 FCFA',
+                            'qr_url'       => 'https://api.qrserver.com/v1/create-qr-code/?size=260x260&margin=8&data=' . urlencode($checkoutUrl)
+                        ]);
+                        exit;
+                    }
+
+                    header('Location: ' . $checkoutUrl);
+                    exit;
                 }
-            }
 
-            $db->prepare("UPDATE users SET subscription_status = 'active', subscription_started_at = CURRENT_TIMESTAMP WHERE id = ?")
-               ->execute([$userId]);
+                // =========================================================================
+                // CAS 2 : PAIEMENT DIRECT PAR CARTE BANCAIRE (AVEC VALIDATION BANCAIRE 3D-SECURE)
+                // =========================================================================
+                if ($method === 'card') {
+                    $cleanNumber = preg_replace('/\D/', '', $_POST['cardNumber'] ?? '');
+                    $cardExp = trim($_POST['cardExp'] ?? '');
+                    $cardCvc = trim($_POST['cardCvc'] ?? '');
+                    $cardHolder = trim($_POST['cardHolder'] ?? '') ?: $name;
 
-            $_SESSION['user_id'] = $userId;
-            $_SESSION['user_name'] = $name;
-            $_SESSION['user_email'] = $email;
-            $_SESSION['user_role'] = 'member';
+                    // 1. Contrôle de longueur du numéro
+                    if (strlen($cleanNumber) < 13 || strlen($cleanNumber) > 19) {
+                        throw new Exception("Numéro de carte bancaire invalide (longueur incorrecte, 16 chiffres attendus).");
+                    }
 
-            $redirectUrl = 'checkout-success.php?order=' . urlencode($orderNumber);
+                    // 2. Contrôle de l'algorithme de sécurité bancaire (Formule de Luhn)
+                    $sum = 0;
+                    $shouldDouble = false;
+                    for ($i = strlen($cleanNumber) - 1; $i >= 0; $i--) {
+                        $digit = (int)$cleanNumber[$i];
+                        if ($shouldDouble) {
+                            $digit *= 2;
+                            if ($digit > 9) {
+                                $digit -= 9;
+                            }
+                        }
+                        $sum += $digit;
+                        $shouldDouble = !$shouldDouble;
+                    }
+                    if ($sum % 10 !== 0) {
+                        throw new Exception("Numéro de carte bancaire invalide : échec du contrôle de sécurité bancaire (Luhn).");
+                    }
 
-            if (!empty($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest') {
-                header('Content-Type: application/json; charset=utf-8');
-                echo json_encode([
-                    'success'      => true,
-                    'status'       => 'paid',
-                    'order_number' => $orderNumber,
-                    'redirect_url' => $redirectUrl
-                ]);
-                exit;
-            }
+                    // 3. Détection du réseau de carte
+                    $cardBrand = 'Carte Bancaire';
+                    if (preg_match('/^4/', $cleanNumber)) {
+                        $cardBrand = 'Visa';
+                    } elseif (preg_match('/^(5[1-5]|222[1-9]|22[3-9][0-9]|2[3-6][0-9]{2}|27[01][0-9]|2720)/', $cleanNumber)) {
+                        $cardBrand = 'Mastercard';
+                    } elseif (preg_match('/^3[47]/', $cleanNumber)) {
+                        $cardBrand = 'American Express';
+                    }
 
-            header('Location: ' . $redirectUrl);
-            exit;
+                    // 4. Contrôle de la date d'expiration
+                    if (!preg_match('/^(0[1-9]|1[0-2])\/([0-9]{2})$/', $cardExp, $mExp)) {
+                        throw new Exception("Date d'expiration invalide (format requis : MM/AA, ex. 12/28).");
+                    }
+                    $expMonth = (int)$mExp[1];
+                    $expYear = 2000 + (int)$mExp[2];
+                    $curYear = (int)date('Y');
+                    $curMonth = (int)date('n');
 
+                    if ($expYear < $curYear || ($expYear === $curYear && $expMonth < $curMonth)) {
+                        throw new Exception("Cette carte bancaire est expirée.");
+                    }
+                    if ($expYear > $curYear + 25) {
+                        throw new Exception("Date d'expiration de la carte invalide.");
+                    }
+
+                    // 5. Contrôle du cryptogramme CVC
+                    $cleanCvc = preg_replace('/\D/', '', $cardCvc);
+                    $expectedCvcLen = ($cardBrand === 'American Express') ? 4 : 3;
+                    if (strlen($cleanCvc) < 3 || strlen($cleanCvc) > 4) {
+                        throw new Exception("Le cryptogramme CVC est incomplet ({$expectedCvcLen} chiffres au dos de la carte).");
+                    }
+
+                    // 6. Contrôle du titulaire de la carte
+                    if (strlen($cardHolder) < 2) {
+                        throw new Exception("Veuillez renseigner le nom complet du titulaire de la carte.");
+                    }
+
+                    $paymentId = 'CARD-' . strtoupper(bin2hex(random_bytes(6)));
+
+                    $stmt = $db->prepare("
+                        INSERT INTO orders (
+                            order_number, user_id, amount, currency, status,
+                            payment_method, billing_name, billing_email, billing_country, invoice_number, 
+                            payment_id
+                        ) VALUES (
+                            ?, ?, 9.00, 'EUR', 'paid',
+                            ?, ?, ?, 'France', ?, 
+                            ?
+                        )
+                    ");
+                    $stmt->execute([
+                        $orderNumber,
+                        $userId,
+                        'Carte bancaire (' . $cardBrand . ' 3D-Secure)',
+                        $cardHolder,
+                        $email,
+                        $invoiceNumber,
+                        $paymentId
+                    ]);
+
+                    // Activation immédiate de l'abonnement du membre avec enregistrement de la carte pour prélèvements automatiques mensuels
+                    $last4 = substr($cleanNumber, -4);
+                    $expiresAt = date('Y-m-d H:i:s', strtotime('+30 days'));
+                    $nextBillingDate = date('Y-m-d', strtotime('+30 days'));
+                    $todayDate = date('Y-m-d');
+
+                    $stmtUserUpdate = $db->prepare("
+                        UPDATE users 
+                        SET subscription_status = 'active', 
+                            subscription_started_at = CURRENT_TIMESTAMP,
+                            subscription_expires_at = ?,
+                            auto_renew = 1,
+                            card_last4 = ?,
+                            card_brand = ?,
+                            card_exp = ?,
+                            card_holder = ?,
+                            last_billing_date = ?,
+                            next_billing_date = ?,
+                            failed_renewals_count = 0
+                        WHERE id = ?
+                    ");
+                    $stmtUserUpdate->execute([
+                        $expiresAt,
+                        $last4,
+                        $cardBrand,
+                        $cardExp,
+                        $cardHolder,
+                        $todayDate,
+                        $nextBillingDate,
+                        $userId
+                    ]);
+
+                    // Connexion automatique de la session
+                    $_SESSION['user_id'] = $userId;
+                    $_SESSION['user_name'] = $name;
+                    $_SESSION['user_email'] = $email;
+                    $_SESSION['user_role'] = 'member';
+                    $_SESSION['pending_order_number'] = $orderNumber;
+
+                    $successUrl = 'checkout-success.php?order=' . urlencode($orderNumber) . '&mode=card';
+
+                    if (!empty($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest') {
+                        header('Content-Type: application/json; charset=utf-8');
+                        echo json_encode([
+                            'success'      => true,
+                            'status'       => 'paid',
+                            'order_number' => $orderNumber,
+                            'redirect_url' => $successUrl
+                        ]);
+                        exit;
+                    }
+
+                    header('Location: ' . $successUrl);
+                    exit;
+                }
         } catch (Exception $e) {
             $error = $e->getMessage();
             if (!empty($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest') {
@@ -232,7 +449,7 @@ $pageDescription = "Finalisez votre adhésion à One Vision Community pour 9€ 
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Great+Vibes&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 
-  <link rel="stylesheet" href="./css/style.css?v=10">
+  <link rel="stylesheet" href="./css/style.css?v=11">
 </head>
 <body class="checkout-body">
 
@@ -364,10 +581,10 @@ $pageDescription = "Finalisez votre adhésion à One Vision Community pour 9€ 
                       <strong>Carte bancaire</strong>
                       <span>Visa, Mastercard, CB</span>
                     </div>
-                    <div class="card-icons-row">
-                      <svg class="pay-logo pay-logo-cb" viewBox="0 0 38 24" width="38" height="24" fill="none" aria-label="Carte Bancaire CB"><rect width="38" height="24" rx="4" fill="#009975"/><path d="M19 0H34C36.2091 0 38 1.79086 38 4V20C38 22.2091 36.2091 24 34 24H19V0Z" fill="#0F4C81"/><text x="19" y="16.5" font-family="sans-serif" font-weight="900" font-size="12" fill="#ffffff" text-anchor="middle" letter-spacing="1">CB</text></svg>
-                      <svg class="pay-logo pay-logo-visa" viewBox="0 0 38 24" width="38" height="24" fill="none" aria-label="Visa"><rect width="38" height="24" rx="4" fill="#FFFFFF" stroke="#E2E8F0"/><path d="M15.2 16.8L17.3 7.2H19.7L17.6 16.8H15.2ZM24.4 7.4C23.9 7.2 23.1 7 22.1 7C19.6 7 17.8 8.3 17.8 10.2C17.8 11.6 19.1 12.4 20 12.9C20.9 13.4 21.3 13.7 21.3 14.1C21.3 14.8 20.5 15.1 19.7 15.1C18.8 15.1 18.2 14.9 17.4 14.6L17.1 14.4L16.8 16.3C17.4 16.6 18.4 16.8 19.5 16.8C22.1 16.8 23.9 15.5 23.9 13.5C23.9 12.4 23.2 11.5 21.7 10.8C20.8 10.3 20.2 10 20.2 9.5C20.2 9.1 20.7 8.6 21.7 8.6C22.6 8.6 23.2 8.8 23.7 9L23.9 9.1L24.4 7.4ZM30.8 7.2H28.8C28.2 7.2 27.7 7.4 27.5 8L23.7 16.8H26.3L26.8 15.3H30.1L30.4 16.8H32.7L30.8 7.2ZM27.5 13.4L28.9 9.6L29.7 13.4H27.5ZM12.6 7.2L10.2 13.7L9.9 12.3C9.4 10.8 7.9 9 6.2 8.1L8.5 16.8H11.2L15.1 7.2H12.6Z" fill="#1434CB"/><path d="M8.2 7.2H4.2L4.1 7.4C7.3 8.2 9.5 10.1 10.4 12.5L9.4 7.9C9.2 7.3 8.8 7.2 8.2 7.2Z" fill="#F7B600"/></svg>
-                      <svg class="pay-logo pay-logo-mc" viewBox="0 0 38 24" width="38" height="24" fill="none" aria-label="Mastercard"><rect width="38" height="24" rx="4" fill="#0F172A"/><circle cx="14.5" cy="12" r="6.8" fill="#EB001B"/><circle cx="23.5" cy="12" r="6.8" fill="#F79E1B"/><path d="M19 7.48C20.7 8.7 21.8 10.22 21.8 12C21.8 13.78 20.7 15.3 19 16.52C17.3 15.3 16.2 13.78 16.2 12C16.2 10.22 17.3 8.7 19 7.48Z" fill="#FF5F00"/></svg>
+                    <div class="card-icons-row" id="cardBadgesRow">
+                      <svg class="pay-logo pay-logo-cb" id="badgeCb" viewBox="0 0 38 24" width="38" height="24" fill="none" aria-label="Carte Bancaire CB"><rect width="38" height="24" rx="4" fill="#009975"/><path d="M19 0H34C36.2091 0 38 1.79086 38 4V20C38 22.2091 36.2091 24 34 24H19V0Z" fill="#0F4C81"/><text x="19" y="16.5" font-family="sans-serif" font-weight="900" font-size="12" fill="#ffffff" text-anchor="middle" letter-spacing="1">CB</text></svg>
+                      <svg class="pay-logo pay-logo-visa" id="badgeVisa" viewBox="0 0 38 24" width="38" height="24" fill="none" aria-label="Visa"><rect width="38" height="24" rx="4" fill="#FFFFFF" stroke="#E2E8F0"/><path d="M15.2 16.8L17.3 7.2H19.7L17.6 16.8H15.2ZM24.4 7.4C23.9 7.2 23.1 7 22.1 7C19.6 7 17.8 8.3 17.8 10.2C17.8 11.6 19.1 12.4 20 12.9C20.9 13.4 21.3 13.7 21.3 14.1C21.3 14.8 20.5 15.1 19.7 15.1C18.8 15.1 18.2 14.9 17.4 14.6L17.1 14.4L16.8 16.3C17.4 16.6 18.4 16.8 19.5 16.8C22.1 16.8 23.9 15.5 23.9 13.5C23.9 12.4 23.2 11.5 21.7 10.8C20.8 10.3 20.2 10 20.2 9.5C20.2 9.1 20.7 8.6 21.7 8.6C22.6 8.6 23.2 8.8 23.7 9L23.9 9.1L24.4 7.4ZM30.8 7.2H28.8C28.2 7.2 27.7 7.4 27.5 8L23.7 16.8H26.3L26.8 15.3H30.1L30.4 16.8H32.7L30.8 7.2ZM27.5 13.4L28.9 9.6L29.7 13.4H27.5ZM12.6 7.2L10.2 13.7L9.9 12.3C9.4 10.8 7.9 9 6.2 8.1L8.5 16.8H11.2L15.1 7.2H12.6Z" fill="#1434CB"/><path d="M8.2 7.2H4.2L4.1 7.4C7.3 8.2 9.5 10.1 10.4 12.5L9.4 7.9C9.2 7.3 8.8 7.2 8.2 7.2Z" fill="#F7B600"/></svg>
+                      <svg class="pay-logo pay-logo-mc" id="badgeMc" viewBox="0 0 38 24" width="38" height="24" fill="none" aria-label="Mastercard"><rect width="38" height="24" rx="4" fill="#0F172A"/><circle cx="14.5" cy="12" r="6.8" fill="#EB001B"/><circle cx="23.5" cy="12" r="6.8" fill="#F79E1B"/><path d="M19 7.48C20.7 8.7 21.8 10.22 21.8 12C21.8 13.78 20.7 15.3 19 16.52C17.3 15.3 16.2 13.78 16.2 12C16.2 10.22 17.3 8.7 19 7.48Z" fill="#FF5F00"/></svg>
                     </div>
                   </div>
 
@@ -428,26 +645,32 @@ $pageDescription = "Finalisez votre adhésion à One Vision Community pour 9€ 
                   <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:1.15rem; padding-bottom:0.75rem; border-bottom:1px solid #e2e8f0;">
                     <div style="display:flex; align-items:center; gap:0.5rem;">
                       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#2563eb" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"></rect><line x1="1" y1="10" x2="23" y2="10"></line></svg>
-                      <strong style="color:#0f172a; font-size:0.95rem;">Paiement Direct par Carte Bancaire</strong>
+                      <strong style="color:#0f172a; font-size:0.95rem;">Paiement Sécurisé par Carte Bancaire</strong>
                     </div>
-                    <span style="font-size:0.75rem; background:#eff6ff; color:#1d4ed8; padding:3px 8px; border-radius:6px; font-weight:700;">Chiffrement SSL</span>
+                    <span style="font-size:0.75rem; background:#eff6ff; color:#2563eb; padding:3px 8px; border-radius:6px; font-weight:700;">3D-Secure 2.0</span>
                   </div>
 
                   <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:12px; padding:0.9rem 1rem; margin-bottom:1rem; font-size:0.86rem; color:#475569; display:flex; align-items:flex-start; gap:0.6rem;">
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#2563eb" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0; margin-top:2px;"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
                     <div>
-                      Règlement sécurisé par <strong>Visa, Mastercard ou CB</strong>. Vos informations bancaires sont strictement chiffrées selon les normes de sécurité bancaire sans aucun frais caché.
+                      Règlement sécurisé par <strong>Visa, Mastercard ou CB</strong>. Vos informations bancaires sont chiffrées selon les normes de sécurité PCI-DSS et authentifiées via <strong>3D-Secure</strong> auprès de votre banque.
                     </div>
                   </div>
 
                   <div class="form-group">
-                    <label for="cardNumber" class="form-label">Numéro de carte bancaire</label>
+                    <label for="cardNumber" class="form-label" style="display:flex; justify-content:space-between; align-items:center;">
+                      <span>Numéro de carte bancaire</span>
+                      <span id="detectedBrandLabel" style="font-size:0.78rem; font-weight:800; color:#2563eb; transition:all 0.25s ease;"></span>
+                    </label>
                     <div class="input-icon-wrapper">
-                      <input type="text" id="cardNumber" name="cardNumber" class="form-input" placeholder="4532 •••• •••• 4242" maxlength="19" inputmode="numeric">
-                      <svg class="input-icon-right" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#64748b" stroke-width="2">
-                        <rect x="1" y="4" width="22" height="16" rx="2" ry="2"></rect>
-                        <line x1="1" y1="10" x2="23" y2="10"></line>
-                      </svg>
+                      <input type="text" id="cardNumber" name="cardNumber" class="form-input" placeholder="4532 •••• •••• 4242" maxlength="19" inputmode="numeric" autocomplete="cc-number">
+                      <div id="cardDetectedBadge" class="input-icon-right" style="display:flex; align-items:center; justify-content:center; pointer-events:none; transition:all 0.25s ease;">
+                        <svg id="defaultCardSvg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#64748b" stroke-width="2">
+                          <rect x="1" y="4" width="22" height="16" rx="2" ry="2"></rect>
+                          <line x1="1" y1="10" x2="23" y2="10"></line>
+                        </svg>
+                        <div id="activeBrandSvg" style="display:none;"></div>
+                      </div>
                     </div>
                     <div class="field-error" id="cardError">Numéro de carte requis (16 chiffres).</div>
                   </div>
@@ -472,104 +695,33 @@ $pageDescription = "Finalisez votre adhésion à One Vision Community pour 9€ 
                   <div class="form-group" style="margin-bottom:0;">
                     <label for="cardHolder" class="form-label">Nom du titulaire de la carte</label>
                     <input type="text" id="cardHolder" name="cardHolder" class="form-input" placeholder="ex. Alexandre Martin" value="<?= htmlspecialchars($currentUser['full_name'] ?? '') ?>">
+                    <div class="field-error" id="cardHolderError">Nom du titulaire requis.</div>
                   </div>
                 </div>
 
-                <!-- BLOC 2 : MOYEN DE PAIEMENT MOBILE MONEY DIRECT -->
-                <div class="momo-details-box" id="mobileMoneyDetailsBox" style="display:none; background:#ffffff; border:1px solid #e2e8f0; border-radius:18px; padding:1.25rem; margin-bottom:1.25rem;">
+                <!-- BLOC 2 : MOYEN DE PAIEMENT MOBILE MONEY VIA PASSERELLE OFFICIELLE SASPAY -->
+                <div class="momo-details-box" id="mobileMoneyDetailsBox" style="display:none; background:#ffffff; border:1px solid #e2e8f0; border-radius:18px; padding:1.35rem; margin-bottom:1.25rem;">
                   <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:1.15rem; padding-bottom:0.75rem; border-bottom:1px solid #e2e8f0;">
                     <div style="display:flex; align-items:center; gap:0.5rem;">
-                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#6366f1" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;"><rect x="5" y="2" width="14" height="20" rx="2" ry="2"></rect><line x1="12" y1="18" x2="12.01" y2="18"></line></svg>
+                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#2563eb" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;"><rect x="5" y="2" width="14" height="20" rx="2" ry="2"></rect><line x1="12" y1="18" x2="12.01" y2="18"></line></svg>
                       <strong style="color:#0f172a; font-size:0.95rem;">Paiement Mobile Money Sécurisé</strong>
                     </div>
-                    <span style="font-size:0.75rem; background:#f0fdf4; color:#15803d; padding:3px 8px; border-radius:6px; font-weight:700;">Validation Instantanée</span>
+                    <span style="font-size:0.78rem; background:#eff6ff; color:#1d4ed8; padding:3px 10px; border-radius:8px; font-weight:800;">5 900 FCFA / mois</span>
                   </div>
 
-                  <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:12px; padding:0.9rem 1rem; margin-bottom:1rem; font-size:0.86rem; color:#475569; display:flex; align-items:flex-start; gap:0.6rem;">
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#d97706" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0; margin-top:2px;"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg>
-                    <div>
-                      Paiement direct via <strong>Orange Money, MTN, Wave ou Moov</strong>. Vous recevrez une notification instantanée ou une invite USSD sur votre téléphone pour confirmer le débit avec votre code PIN secret.
-                    </div>
+                  <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:12px; padding:1rem 1.15rem; margin-bottom:1.15rem; font-size:0.9rem; color:#334155; line-height:1.55;">
+                    Règlement de <strong>5 900 FCFA</strong> par <strong>Wave, Orange Money, MTN MoMo ou Moov Money</strong>. En cliquant ci-dessous, vous accédez à la passerelle officielle sécurisée SasPay pour sélectionner votre pays, votre opérateur et finaliser votre paiement.
                   </div>
 
-                  <div class="form-group">
-                    <label class="form-label">Opérateur Mobile Money</label>
-                    <div class="momo-operators-grid" style="display:grid; grid-template-columns:repeat(auto-fit, minmax(130px, 1fr)); gap:0.5rem; margin-bottom:1rem;">
-                      <label class="momo-operator-card active" style="display:flex; align-items:center; gap:0.5rem; padding:0.6rem 0.75rem; border:1.5px solid #6366f1; border-radius:10px; cursor:pointer; background:#f5f3ff;">
-                        <input type="radio" name="momoOperator" value="Orange Money" checked class="sr-only">
-                        <svg class="pay-logo pay-logo-orange" viewBox="0 0 54 28" width="36" height="20" fill="none" xmlns="http://www.w3.org/2000/svg" aria-label="Orange Money">
-                          <rect width="54" height="28" rx="4" fill="#FF7900"/>
-                          <g transform="translate(3, 4.5)">
-                            <path d="M6.8 2H2C0.9 2 0 2.9 0 4s0.9 2 2 2h2.5L0.5 10c-0.8 0.8-0.8 2.2 0 3s2.2 0.8 3 0l4-4V11.5c0 1.1 0.9 2 2 2s2-0.9 2-2V4c0-1.1-0.9-2-2-2h-2.7z" fill="#000000" transform="scale(0.82)"/>
-                            <path d="M10 16h4.8c1.1 0 2-0.9 2-2s-0.9-2-2-2h-2.5l4-4c0.8-0.8 0.8-2.2 0-3s-2.2-0.8-3 0l-4 4V6.5c0-1.1-0.9-2-2-2s-2 0.9-2 2V14c0 1.1 0.9 2 2 2h2.7z" fill="#FFFFFF" transform="scale(0.82)"/>
-                          </g>
-                          <text x="35" y="13" font-family="system-ui, -apple-system, sans-serif" font-weight="900" font-size="8" fill="#FFFFFF" text-anchor="middle" letter-spacing="-0.3">orange</text>
-                          <text x="35" y="21.5" font-family="system-ui, -apple-system, sans-serif" font-weight="800" font-size="6.5" fill="#000000" text-anchor="middle" letter-spacing="-0.2">money</text>
-                        </svg>
-                        <span style="font-size:0.8rem; font-weight:700;">Orange Money</span>
-                      </label>
-                      <label class="momo-operator-card" style="display:flex; align-items:center; gap:0.5rem; padding:0.6rem 0.75rem; border:1.5px solid #e2e8f0; border-radius:10px; cursor:pointer; background:#fff;">
-                        <input type="radio" name="momoOperator" value="MTN MoMo" class="sr-only">
-                        <svg class="pay-logo pay-logo-mtn" viewBox="0 0 54 28" width="36" height="20" fill="none" xmlns="http://www.w3.org/2000/svg" aria-label="MTN MoMo">
-                          <rect width="54" height="28" rx="4" fill="#FFCC00"/>
-                          <ellipse cx="27" cy="14" rx="22" ry="11" fill="#002855"/>
-                          <text x="27" y="18.5" font-family="system-ui, -apple-system, 'Arial Black', sans-serif" font-weight="900" font-size="12" fill="#FFCC00" text-anchor="middle" letter-spacing="0.5">MTN</text>
-                        </svg>
-                        <span style="font-size:0.8rem; font-weight:700;">MTN MoMo</span>
-                      </label>
-                      <label class="momo-operator-card" style="display:flex; align-items:center; gap:0.5rem; padding:0.6rem 0.75rem; border:1.5px solid #e2e8f0; border-radius:10px; cursor:pointer; background:#fff;">
-                        <input type="radio" name="momoOperator" value="Wave" class="sr-only">
-                        <svg class="pay-logo pay-logo-wave" viewBox="0 0 54 28" width="36" height="20" fill="none" xmlns="http://www.w3.org/2000/svg" aria-label="Wave">
-                          <rect width="54" height="28" rx="4" fill="#1DC4FF"/>
-                          <g transform="translate(3, 2.5)">
-                            <ellipse cx="9" cy="11.5" rx="7" ry="8.5" fill="#0F172A"/>
-                            <ellipse cx="9" cy="12.5" rx="4.8" ry="6.2" fill="#FFFFFF"/>
-                            <circle cx="7.2" cy="8.2" r="1.1" fill="#FFFFFF"/>
-                            <circle cx="7.2" cy="8.2" r="0.55" fill="#0F172A"/>
-                            <circle cx="10.8" cy="8.2" r="1.1" fill="#FFFFFF"/>
-                            <circle cx="10.8" cy="8.2" r="0.55" fill="#0F172A"/>
-                            <polygon points="8,9.8 10,9.8 9,11.6" fill="#FF9900"/>
-                            <ellipse cx="6.5" cy="19.2" rx="1.8" ry="0.8" fill="#FF9900"/>
-                            <ellipse cx="11.5" cy="19.2" rx="1.8" ry="0.8" fill="#FF9900"/>
-                          </g>
-                          <text x="35.5" y="18" font-family="system-ui, -apple-system, sans-serif" font-weight="900" font-size="11" fill="#FFFFFF" text-anchor="middle" letter-spacing="-0.3">wave</text>
-                        </svg>
-                        <span style="font-size:0.8rem; font-weight:700;">Wave</span>
-                      </label>
-                      <label class="momo-operator-card" style="display:flex; align-items:center; gap:0.5rem; padding:0.6rem 0.75rem; border:1.5px solid #e2e8f0; border-radius:10px; cursor:pointer; background:#fff;">
-                        <input type="radio" name="momoOperator" value="Moov Money" class="sr-only">
-                        <svg class="pay-logo pay-logo-moov" viewBox="0 0 54 28" width="36" height="20" fill="none" xmlns="http://www.w3.org/2000/svg" aria-label="Moov Money">
-                          <rect width="54" height="28" rx="4" fill="#005BAA"/>
-                          <circle cx="9.5" cy="14" r="5" fill="#8DC63F"/>
-                          <path d="M9.5 9C12.2 9 14.5 11.2 14.5 14C14.5 16.8 12.2 19 9.5 19C10.8 17.6 11.7 15.8 11.7 14C11.7 12.2 10.8 10.4 9.5 9Z" fill="#FFFFFF"/>
-                          <text x="33.5" y="13.5" font-family="system-ui, -apple-system, 'Arial Black', sans-serif" font-weight="900" font-size="8" fill="#FFFFFF" text-anchor="middle" letter-spacing="0.2">MOOV</text>
-                          <text x="33.5" y="21" font-family="system-ui, -apple-system, sans-serif" font-weight="800" font-size="5.5" fill="#8DC63F" text-anchor="middle" letter-spacing="0.6">MONEY</text>
-                        </svg>
-                        <span style="font-size:0.8rem; font-weight:700;">Moov Money</span>
-                      </label>
+                  <div style="display:flex; flex-wrap:wrap; gap:0.6rem; margin-bottom:0.25rem;">
+                    <div style="flex:1; min-width:200px; display:inline-flex; align-items:center; justify-content:center; gap:0.5rem; background:#f0fdf4; border:1px solid #bbf7d0; color:#15803d; padding:0.65rem 1rem; border-radius:10px; font-size:0.84rem; font-weight:700;">
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                      <span>Sans engagement, annulation en un clic</span>
                     </div>
-                  </div>
-
-                  <div class="form-group" style="margin-bottom:0;">
-                    <label for="momoPhone" class="form-label">Numéro de téléphone</label>
-                    <div style="display:flex; gap:0.5rem;">
-                      <select id="momoCountryPrefix" name="momoCountryPrefix" class="form-input" style="min-width:190px; flex:0 0 205px; font-weight:600;" aria-label="Pays et indicatif téléphonique">
-                        <option value="+225" selected>Côte d'Ivoire (+225)</option>
-                        <option value="+237">Cameroun (+237)</option>
-                        <option value="+221">Sénégal (+221)</option>
-                        <option value="+229">Bénin (+229)</option>
-                        <option value="+226">Burkina Faso (+226)</option>
-                        <option value="+243">RDC Congo (+243)</option>
-                        <option value="+242">Congo (+242)</option>
-                        <option value="+223">Mali (+223)</option>
-                        <option value="+228">Togo (+228)</option>
-                        <option value="+224">Guinée (+224)</option>
-                        <option value="+241">Gabon (+241)</option>
-                        <option value="+33">France (+33)</option>
-                      </select>
-                      <input type="tel" id="momoPhone" name="momoPhone" class="form-input" placeholder="ex. 07 12 34 56 78" inputmode="tel" style="flex:1;">
+                    <div style="flex:1; min-width:160px; display:inline-flex; align-items:center; justify-content:center; gap:0.5rem; background:#f0fdf4; border:1px solid #bbf7d0; color:#15803d; padding:0.65rem 1rem; border-radius:10px; font-size:0.84rem; font-weight:700;">
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg>
+                      <span>Accès instantané</span>
                     </div>
-                    <div class="field-error" id="momoPhoneError">Numéro de téléphone Mobile Money requis.</div>
                   </div>
                 </div>
 
@@ -665,10 +817,88 @@ $pageDescription = "Finalisez votre adhésion à One Vision Community pour 9€ 
         </div>
 
       </div>
-
     </div>
   </main>
 
-  <script src="./js/main.js?v=13"></script>
+  <!-- MODAL DE VÉRIFICATION BANCAIRE 3D-SECURE (CARTE BANCAIRE) -->
+  <div id="threeDSecureModal" style="display:none; position:fixed; inset:0; z-index:99999; background:rgba(15,23,42,0.72); backdrop-filter:blur(6px); align-items:center; justify-content:center; padding:1.25rem;">
+    <div style="background:#ffffff; border-radius:22px; max-width:440px; width:100%; padding:2.25rem 2rem; box-shadow:0 25px 50px -12px rgba(0,0,0,0.35); text-align:center; border:1px solid #e2e8f0;">
+      <div style="display:flex; justify-content:center; align-items:center; gap:0.6rem; margin-bottom:1.25rem;">
+        <span id="threeDSBadgeCb" style="font-weight:800; font-size:0.8rem; color:#0f172a; background:#f1f5f9; padding:4px 8px; border-radius:6px; transition:all 0.3s ease;">CB</span>
+        <span id="threeDSBadgeVisa" style="font-weight:900; font-size:0.8rem; color:#1434cb; background:#eff6ff; padding:4px 8px; border-radius:6px; transition:all 0.3s ease;">VISA</span>
+        <span id="threeDSBadgeMc" style="font-weight:800; font-size:0.8rem; color:#ea580c; background:#fff7ed; padding:4px 8px; border-radius:6px; transition:all 0.3s ease;">MASTERCARD</span>
+        <span style="font-size:0.75rem; background:#ecfdf5; color:#059669; font-weight:700; padding:4px 8px; border-radius:6px;">3D-SECURE 2.0</span>
+      </div>
+
+      <div id="threeDSIconPending" style="width:72px; height:72px; margin:0 auto 1.25rem; background:#eff6ff; border:3px solid #bfdbfe; border-radius:50%; display:flex; align-items:center; justify-content:center;">
+        <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#2563eb" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="animation:saspay-spin 1s linear infinite;">
+          <path d="M12 2v4m0 12v4M4.93 4.93l2.83 2.83m8.48 8.48l2.83 2.83M2 12h4m12 0h4M4.93 19.07l2.83-2.83m8.48-8.48l2.83-2.83"/>
+        </svg>
+      </div>
+
+      <div id="threeDSIconSuccess" style="display:none; width:72px; height:72px; margin:0 auto 1.25rem; background:#dcfce7; border:3px solid #86efac; border-radius:50%; align-items:center; justify-content:center;">
+        <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#16a34a" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="20 6 9 17 4 12"></polyline>
+        </svg>
+      </div>
+
+      <h3 id="threeDSTitle" style="font-size:1.25rem; font-weight:800; color:#0f172a; margin-bottom:0.5rem;">Authentification 3D-Secure</h3>
+      <p id="threeDSDesc" style="font-size:0.88rem; color:#64748b; line-height:1.5; margin-bottom:1.35rem;">
+        Communication sécurisée avec votre banque émettrice pour valider votre souscription de <strong>9,00 €</strong>...
+      </p>
+
+      <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:12px; padding:0.9rem; font-size:0.82rem; color:#475569; margin-bottom:1.35rem; text-align:left;">
+        <div style="display:flex; justify-content:space-between; margin-bottom:0.4rem;">
+          <span>Titulaire :</span>
+          <strong id="threeDSHolder" style="color:#0f172a;">-</strong>
+        </div>
+        <div style="display:flex; justify-content:space-between; margin-bottom:0.4rem;">
+          <span>Numéro de carte :</span>
+          <span id="threeDSCardMasked" style="font-family:monospace; font-weight:700; color:#0f172a;">•••• •••• •••• 4242</span>
+        </div>
+        <div style="display:flex; justify-content:space-between;">
+          <span>Montant débité :</span>
+          <strong style="color:#16a34a; font-size:0.95rem;">9,00 €</strong>
+        </div>
+      </div>
+
+      <div style="width:100%; height:4px; background:#e2e8f0; border-radius:2px; overflow:hidden;">
+        <div id="threeDSProgressFill" style="width:25%; height:100%; background:#2563eb; transition:width 0.4s ease;"></div>
+      </div>
+    </div>
+  </div>
+
+  <style>
+    @keyframes saspay-spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+    @keyframes momo-pulse { 0%, 100% { transform: scale(1); opacity: 1; } 50% { transform: scale(1.35); opacity: 0.6; } }
+    .live-pulse-dot {
+      display: inline-block;
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #10b981;
+      box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7);
+      animation: momo-pulse 2s infinite;
+    }
+    .scan-bracket {
+      position: absolute;
+      width: 22px;
+      height: 22px;
+      border: 3px solid #0284c7;
+      pointer-events: none;
+      transition: border-color 0.3s ease;
+      z-index: 2;
+    }
+    .sb-tl { top: 10px; left: 10px; border-right: none; border-bottom: none; border-top-left-radius: 6px; }
+    .sb-tr { top: 10px; right: 10px; border-left: none; border-bottom: none; border-top-right-radius: 6px; }
+    .sb-bl { bottom: 10px; left: 10px; border-right: none; border-top: none; border-bottom-left-radius: 6px; }
+    .sb-br { bottom: 10px; right: 10px; border-left: none; border-top: none; border-bottom-right-radius: 6px; }
+    .momo-op-card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 16px rgba(0,0,0,0.06);
+    }
+  </style>
+
+  <script src="./js/main.js?v=19"></script>
 </body>
 </html>

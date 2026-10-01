@@ -7,9 +7,10 @@ require_once __DIR__ . '/includes/config.php';
 require_once __DIR__ . '/includes/db.php';
 require_once __DIR__ . '/includes/auth.php';
 require_once __DIR__ . '/includes/flash.php';
+require_once __DIR__ . '/includes/subscriptions.php';
 
-// Protection : seuls les membres connectés peuvent planifier un live officiel
-require_auth('login.php');
+// Protection : seuls les membres abonnés et actifs peuvent planifier un live officiel
+require_active_subscription('subscription-expired.php');
 
 $currentUser = current_user();
 $db = get_db();

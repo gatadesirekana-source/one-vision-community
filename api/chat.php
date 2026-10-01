@@ -73,6 +73,15 @@ if ($method === 'POST') {
         exit;
     }
 
+    // Contrôle d'abonnement actif
+    require_once __DIR__ . '/../includes/subscriptions.php';
+    $sub = check_user_subscription((int)$currentUser['id']);
+    if (!$sub['is_active']) {
+        http_response_code(403);
+        echo json_encode(['success' => false, 'error' => "Votre abonnement est expiré ou inactif. Veuillez le renouveler pour participer aux salons."]);
+        exit;
+    }
+
     $channel = trim($inputData['channel'] ?? 'general');
     $content = trim($inputData['content'] ?? '');
 
