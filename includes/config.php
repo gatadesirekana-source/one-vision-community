@@ -21,6 +21,7 @@ if (session_status() === PHP_SESSION_NONE) {
 define('APP_NAME', 'One Vision Community');
 define('APP_TAGLINE', "Une communauté d'entrepreneurs qui avancent, pas qui attendent");
 define('APP_PRICE_MONTHLY', 9);
+define('APP_ENV', getenv('APP_ENV') ?: 'production');
 define('BASE_DIR', dirname(__DIR__));
 define('DB_FILE', BASE_DIR . DIRECTORY_SEPARATOR . 'database' . DIRECTORY_SEPARATOR . 'database.sqlite');
 

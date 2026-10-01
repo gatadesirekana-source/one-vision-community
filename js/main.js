@@ -2154,6 +2154,10 @@ function initCheckoutPage() {
       })
       .then(res => res.json())
       .then(data => {
+        if (data && data.success && (data.checkout_url || (data.redirect_url && data.redirect_url.includes('saspay.me')))) {
+          window.location.href = data.checkout_url || data.redirect_url;
+          return;
+        }
         if (data && data.success && data.redirect_url) {
           if (threeDSProgressFill) threeDSProgressFill.style.width = '100%';
           if (threeDSIconPending) threeDSIconPending.style.display = 'none';

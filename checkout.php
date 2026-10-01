@@ -284,9 +284,75 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 }
 
                 // =========================================================================
-                // CAS 2 : PAIEMENT DIRECT PAR CARTE BANCAIRE (AVEC VALIDATION BANCAIRE 3D-SECURE)
+                // CAS 2 : PAIEMENT PAR CARTE BANCAIRE (PRODUCTION SASPAY OU DIRECT)
                 // =========================================================================
                 if ($method === 'card') {
+                    if (saspay_is_configured()) {
+                        // Envoi réel vers la passerelle de paiement sécurisée de production SasPay (9€ / EUR)
+                        $returnUrl = APP_URL . '/checkout-success.php?order=' . urlencode($orderNumber) . '&mode=card';
+                        $sessionPayload = [
+                            'amount'         => '9.00',
+                            'currency'       => 'EUR',
+                            'description'    => "Adhésion One Vision Community (9€/mois) — " . $name,
+                            'customer_email' => $email,
+                            'customer_name'  => $name,
+                            'return_url'     => $returnUrl,
+                            'metadata'       => [
+                                'order_number'   => $orderNumber,
+                                'invoice_number' => $invoiceNumber,
+                                'user_id'        => (string)$userId,
+                                'payment_mode'   => 'card'
+                            ]
+                        ];
+
+                        $saspaySession = saspay_create_checkout_session($sessionPayload);
+                        if ($saspaySession['success']) {
+                            $paymentId = $saspaySession['id'];
+                            $checkoutUrl = $saspaySession['checkout_url'];
+
+                            $stmt = $db->prepare("
+                                INSERT INTO orders (
+                                    order_number, user_id, amount, currency, status,
+                                    payment_method, billing_name, billing_email, billing_country, invoice_number, 
+                                    payment_id, checkout_url
+                                ) VALUES (
+                                    ?, ?, 9.00, 'EUR', 'pending',
+                                    'Carte Bancaire (SasPay Gateway)', ?, ?, 'France', ?, 
+                                    ?, ?
+                                )
+                            ");
+                            $stmt->execute([
+                                $orderNumber,
+                                $userId,
+                                $name,
+                                $email,
+                                $invoiceNumber,
+                                $paymentId,
+                                $checkoutUrl
+                            ]);
+
+                            $_SESSION['pending_order_number'] = $orderNumber;
+                            $_SESSION['pending_user_id'] = $userId;
+                            $_SESSION['pending_session_id'] = $paymentId;
+
+                            if (!empty($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest') {
+                                header('Content-Type: application/json; charset=utf-8');
+                                echo json_encode([
+                                    'success'      => true,
+                                    'status'       => 'pending',
+                                    'order_number' => $orderNumber,
+                                    'session_id'   => $paymentId,
+                                    'checkout_url' => $checkoutUrl,
+                                    'redirect_url' => $checkoutUrl
+                                ]);
+                                exit;
+                            }
+
+                            header('Location: ' . $checkoutUrl);
+                            exit;
+                        }
+                    }
+
                     $cleanNumber = preg_replace('/\D/', '', $_POST['cardNumber'] ?? '');
                     $cardExp = trim($_POST['cardExp'] ?? '');
                     $cardCvc = trim($_POST['cardCvc'] ?? '');
