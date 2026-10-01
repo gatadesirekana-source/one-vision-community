@@ -1835,7 +1835,7 @@ function initCheckoutPage() {
 
     if (submitBtn) {
       submitBtn.disabled = true;
-      if (submitText) submitText.textContent = "Redirection vers le paiement sécurisé...";
+      if (submitText) submitText.textContent = "Activation de votre adhésion en cours...";
     }
 
     localStorage.setItem('ov_has_paid', 'true');

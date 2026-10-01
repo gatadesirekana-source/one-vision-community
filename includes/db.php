@@ -25,9 +25,9 @@ function get_db(): PDO {
         $pdo->exec('PRAGMA foreign_keys = ON;');
         $pdo->exec('CREATE TABLE IF NOT EXISTS login_attempts (id INTEGER PRIMARY KEY AUTOINCREMENT, ip TEXT NOT NULL, attempt_time INTEGER NOT NULL);');
 
-        // Migration sécurisée des colonnes pour la passerelle Moneroo
-        try { $pdo->exec("ALTER TABLE orders ADD COLUMN payment_id TEXT DEFAULT ''"); } catch (Exception $e) {}
-        try { $pdo->exec("ALTER TABLE orders ADD COLUMN checkout_url TEXT DEFAULT ''"); } catch (Exception $e) {}
+        // Colonnes optionnelles de commandes
+        try { $pdo->exec("ALTER TABLE orders ADD COLUMN momo_phone TEXT DEFAULT ''"); } catch (Exception $e) {}
+        try { $pdo->exec("ALTER TABLE orders ADD COLUMN momo_operator TEXT DEFAULT ''"); } catch (Exception $e) {}
 
         if ($isNewDb || filesize(DB_FILE) === 0) {
             init_database($pdo);

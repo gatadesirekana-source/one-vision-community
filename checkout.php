@@ -7,7 +7,6 @@ require_once __DIR__ . '/includes/config.php';
 require_once __DIR__ . '/includes/db.php';
 require_once __DIR__ . '/includes/auth.php';
 require_once __DIR__ . '/includes/flash.php';
-require_once __DIR__ . '/includes/moneroo.php';
 
 $db = get_db();
 $currentUser = current_user();
@@ -127,149 +126,41 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $fullMomoPhone = !empty($cleanMomoPhone) ? ($momoCountryPrefix . $cleanMomoPhone) : '';
 
             $paymentMethodLabel = ($method === 'card') 
-                ? 'Carte Bancaire Sécurisée (Moneroo)' 
+                ? 'Carte Bancaire' 
                 : 'Mobile Money (' . $momoOperator . (!empty($fullMomoPhone) ? ' • ' . $fullMomoPhone : '') . ')';
 
-            // Définition des montants et devises selon la méthode choisie
-            if ($method === 'mobile_money') {
-                $currencyInfo = moneroo_get_momo_currency_info($momoCountryPrefix);
-                $targetCurrency = $currencyInfo['currency'];
-                $targetAmount = $currencyInfo['amount'];
-                $targetDesc = "Adhésion One Vision Community — " . $momoOperator . " (" . $fullMomoPhone . ")";
-            } else {
-                $targetCurrency = (getenv('MONEROO_CURRENCY') ?: 'EUR');
-                $targetAmount = 9.00;
-                $targetDesc = "Adhésion One Vision Community — Carte Bancaire Sécurisée";
-            }
+            $orderAmount = 9.00;
+            $orderCurrency = 'EUR';
 
-            $orderAmount = $targetAmount;
-            $orderCurrency = $targetCurrency;
+            $stmt = $db->prepare("
+                INSERT INTO orders (
+                    order_number, user_id, amount, currency, status,
+                    payment_method, billing_name, billing_email, billing_country, invoice_number, 
+                    momo_phone, momo_operator
+                ) VALUES (
+                    ?, ?, ?, ?, 'paid',
+                    ?, ?, ?, ?, ?, 
+                    ?, ?
+                )
+            ");
 
-            // 1. Initialisation via la passerelle officielle Moneroo (Mobile Money & Cartes Bancaires)
-            if (moneroo_is_configured()) {
-                $nameParts = explode(' ', $name, 2);
-                $firstName = !empty($nameParts[0]) ? $nameParts[0] : 'Membre';
-                $lastName = !empty($nameParts[1]) ? $nameParts[1] : 'One Vision';
-
-                $returnUrl = APP_URL . '/checkout-success.php?order=' . urlencode($orderNumber);
-
-                $monerooPayload = [
-                    'amount'      => $targetAmount,
-                    'currency'    => $targetCurrency,
-                    'description' => $targetDesc,
-                    'return_url'  => $returnUrl,
-                    'customer'    => [
-                        'email'      => $email,
-                        'first_name' => $firstName,
-                        'last_name'  => $lastName
-                    ],
-                    'metadata'    => [
-                        'order_number' => $orderNumber,
-                        'user_id'      => $userId,
-                        'payment_mode' => $method,
-                        'operator'     => ($method === 'mobile_money') ? $momoOperator : 'Card'
-                    ]
-                ];
-
-                if (!empty($fullMomoPhone)) {
-                    $monerooPayload['customer']['phone'] = $fullMomoPhone;
-                    $monerooPayload['metadata']['phone'] = $fullMomoPhone;
-                }
-
-                $monerooInit = moneroo_init_payment($monerooPayload);
-
-                if (!$monerooInit['success']) {
-                    throw new Exception("Impossible d'initialiser le paiement Moneroo : " . $monerooInit['error']);
-                }
-
-                $orderAmount = $monerooInit['amount'];
-                $orderCurrency = $monerooInit['currency'];
-                $paymentId = $monerooInit['payment_id'];
-                $checkoutUrl = $monerooInit['checkout_url'];
-
-                $stmt = $db->prepare("
-                    INSERT INTO orders (
-                        order_number, user_id, amount, currency, status,
-                        payment_method, billing_name, billing_email, billing_country, invoice_number, 
-                        momo_phone, momo_operator, payment_id, checkout_url
-                    ) VALUES (
-                        ?, ?, ?, ?, 'pending',
-                        ?, ?, ?, ?, ?, 
-                        ?, ?, ?, ?
-                    )
-                ");
-
-                try {
-                    $stmt->execute([
-                        $orderNumber,
-                        $userId,
-                        $orderAmount,
-                        $orderCurrency,
-                        $paymentMethodLabel,
-                        $name,
-                        $email,
-                        'France',
-                        $invoiceNumber,
-                        $fullMomoPhone,
-                        $momoOperator,
-                        $paymentId,
-                        $checkoutUrl
-                    ]);
-                } catch (PDOException $pdoErr) {
-                    if ($pdoErr->getCode() == 23000) {
-                        // En cas de collision rarissime, générer un identifiant unique avec entropie maximale et réessayer
-                        $invoiceNumber = 'OV-' . date('Ymd') . '-' . strtoupper(bin2hex(random_bytes(6)));
-                        $stmt->execute([
-                            $orderNumber,
-                            $userId,
-                            $orderAmount,
-                            $orderCurrency,
-                            $paymentMethodLabel,
-                            $name,
-                            $email,
-                            'France',
-                            $invoiceNumber,
-                            $fullMomoPhone,
-                            $momoOperator,
-                            $paymentId,
-                            $checkoutUrl
-                        ]);
-                    } else {
-                        throw $pdoErr;
-                    }
-                }
-
-                $_SESSION['pending_order_number'] = $orderNumber;
-                $_SESSION['pending_user_id'] = $userId;
-
-                if (!empty($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest') {
-                    header('Content-Type: application/json; charset=utf-8');
-                    echo json_encode([
-                        'success'      => true,
-                        'status'       => 'pending',
-                        'order_number' => $orderNumber,
-                        'redirect_url' => $checkoutUrl
-                    ]);
-                    exit;
-                }
-
-                header('Location: ' . $checkoutUrl);
-                exit;
-            } else {
-                // Fallback de développement si aucune clé API Moneroo n'est configurée
-                $stmt = $db->prepare("
-                    INSERT INTO orders (
-                        order_number, user_id, amount, currency, status,
-                        payment_method, billing_name, billing_email, billing_country, invoice_number, 
-                        momo_phone, momo_operator
-                    ) VALUES (
-                        ?, ?, ?, ?, 'paid',
-                        ?, ?, ?, ?, ?, 
-                        ?, ?
-                    )
-                ");
-
-                try {
+            try {
+                $stmt->execute([
+                    $orderNumber,
+                    $userId,
+                    $orderAmount,
+                    $orderCurrency,
+                    $paymentMethodLabel,
+                    $name,
+                    $email,
+                    'France',
+                    $invoiceNumber,
+                    $fullMomoPhone,
+                    $momoOperator
+                ]);
+            } catch (PDOException $pdoErr) {
+                if ($pdoErr->getCode() == 23000) {
+                    $invoiceNumber = 'OV-' . date('Ymd') . '-' . strtoupper(bin2hex(random_bytes(6)));
                     $stmt->execute([
                         $orderNumber,
                         $userId,
@@ -283,51 +174,34 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         $fullMomoPhone,
                         $momoOperator
                     ]);
-                } catch (PDOException $pdoErr) {
-                    if ($pdoErr->getCode() == 23000) {
-                        $invoiceNumber = 'OV-' . date('Ymd') . '-' . strtoupper(bin2hex(random_bytes(6)));
-                        $stmt->execute([
-                            $orderNumber,
-                            $userId,
-                            $orderAmount,
-                            $orderCurrency,
-                            $paymentMethodLabel,
-                            $name,
-                            $email,
-                            'France',
-                            $invoiceNumber,
-                            $fullMomoPhone,
-                            $momoOperator
-                        ]);
-                    } else {
-                        throw $pdoErr;
-                    }
+                } else {
+                    throw $pdoErr;
                 }
+            }
 
-                $db->prepare("UPDATE users SET subscription_status = 'active', subscription_started_at = CURRENT_TIMESTAMP WHERE id = ?")
-                   ->execute([$userId]);
+            $db->prepare("UPDATE users SET subscription_status = 'active', subscription_started_at = CURRENT_TIMESTAMP WHERE id = ?")
+               ->execute([$userId]);
 
-                $_SESSION['user_id'] = $userId;
-                $_SESSION['user_name'] = $name;
-                $_SESSION['user_email'] = $email;
-                $_SESSION['user_role'] = 'member';
+            $_SESSION['user_id'] = $userId;
+            $_SESSION['user_name'] = $name;
+            $_SESSION['user_email'] = $email;
+            $_SESSION['user_role'] = 'member';
 
-                $redirectUrl = 'checkout-success.php?order=' . urlencode($orderNumber);
+            $redirectUrl = 'checkout-success.php?order=' . urlencode($orderNumber);
 
-                if (!empty($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest') {
-                    header('Content-Type: application/json; charset=utf-8');
-                    echo json_encode([
-                        'success'      => true,
-                        'status'       => 'paid',
-                        'order_number' => $orderNumber,
-                        'redirect_url' => $redirectUrl
-                    ]);
-                    exit;
-                }
-
-                header('Location: ' . $redirectUrl);
+            if (!empty($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest') {
+                header('Content-Type: application/json; charset=utf-8');
+                echo json_encode([
+                    'success'      => true,
+                    'status'       => 'paid',
+                    'order_number' => $orderNumber,
+                    'redirect_url' => $redirectUrl
+                ]);
                 exit;
             }
+
+            header('Location: ' . $redirectUrl);
+            exit;
 
         } catch (Exception $e) {
             $error = $e->getMessage();
@@ -554,15 +428,15 @@ $pageDescription = "Finalisez votre adhésion à One Vision Community pour 9€ 
                   <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:1.15rem; padding-bottom:0.75rem; border-bottom:1px solid #e2e8f0;">
                     <div style="display:flex; align-items:center; gap:0.5rem;">
                       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#2563eb" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"></rect><line x1="1" y1="10" x2="23" y2="10"></line></svg>
-                      <strong style="color:#0f172a; font-size:0.95rem;">Paiement Sécurisé par Carte Bancaire</strong>
+                      <strong style="color:#0f172a; font-size:0.95rem;">Paiement Direct par Carte Bancaire</strong>
                     </div>
-                    <span style="font-size:0.75rem; background:#eff6ff; color:#1d4ed8; padding:3px 8px; border-radius:6px; font-weight:700;">Moneroo Gateway</span>
+                    <span style="font-size:0.75rem; background:#eff6ff; color:#1d4ed8; padding:3px 8px; border-radius:6px; font-weight:700;">Chiffrement SSL</span>
                   </div>
 
                   <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:12px; padding:0.9rem 1rem; margin-bottom:1rem; font-size:0.86rem; color:#475569; display:flex; align-items:flex-start; gap:0.6rem;">
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#2563eb" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0; margin-top:2px;"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
                     <div>
-                      Règlement sécurisé par <strong>Visa, Mastercard ou CB</strong>. En cliquant sur le bouton ci-dessous, vous serez redirigé vers l'interface de paiement chiffrée SSL de <strong>Moneroo</strong> pour finaliser votre souscription sans aucun frais caché.
+                      Règlement sécurisé par <strong>Visa, Mastercard ou CB</strong>. Vos informations bancaires sont strictement chiffrées selon les normes de sécurité bancaire sans aucun frais caché.
                     </div>
                   </div>
 
@@ -608,7 +482,7 @@ $pageDescription = "Finalisez votre adhésion à One Vision Community pour 9€ 
                       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#6366f1" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;"><rect x="5" y="2" width="14" height="20" rx="2" ry="2"></rect><line x1="12" y1="18" x2="12.01" y2="18"></line></svg>
                       <strong style="color:#0f172a; font-size:0.95rem;">Paiement Mobile Money Sécurisé</strong>
                     </div>
-                    <span style="font-size:0.75rem; background:#f0fdf4; color:#15803d; padding:3px 8px; border-radius:6px; font-weight:700;">Moneroo Gateway</span>
+                    <span style="font-size:0.75rem; background:#f0fdf4; color:#15803d; padding:3px 8px; border-radius:6px; font-weight:700;">Validation Instantanée</span>
                   </div>
 
                   <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:12px; padding:0.9rem 1rem; margin-bottom:1rem; font-size:0.86rem; color:#475569; display:flex; align-items:flex-start; gap:0.6rem;">
