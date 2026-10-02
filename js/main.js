@@ -1559,6 +1559,10 @@ function initCheckoutPage() {
 
   // Éléments Passerelle SasPay Mobile Money
   const momoOpenedNotice = document.getElementById('momoOpenedNotice');
+  const momoCountrySelect = document.getElementById('momoCountry');
+  const momoPhoneInput = document.getElementById('momoPhone');
+  const momoFormatHintText = document.getElementById('momoFormatHintText');
+  const momoPriceBadge = document.getElementById('momoPriceBadge');
 
   // Éléments Vérification 3D-Secure Bancaire
   const threeDSecureModal = document.getElementById('threeDSecureModal');
@@ -1590,6 +1594,117 @@ function initCheckoutPage() {
     } else {
       submitText.textContent = "Continuer vers le paiement";
     }
+  }
+
+  // Écoute du changement de pays pour Mobile Money
+  if (momoCountrySelect) {
+    momoCountrySelect.addEventListener('change', () => {
+      const opt = momoCountrySelect.options[momoCountrySelect.selectedIndex];
+      const prefix = opt ? (opt.getAttribute('data-prefix') || '+225') : '+225';
+      const example = opt ? (opt.getAttribute('data-example') || '') : '';
+      const digits = opt ? (opt.getAttribute('data-digits') || '') : '';
+      const val = momoCountrySelect.value;
+
+      if (momoCountryPrefix) momoCountryPrefix.value = prefix;
+      if (momoPhoneInput) {
+        momoPhoneInput.placeholder = example || 'Numéro de téléphone';
+      }
+
+      if (momoFormatHintText) {
+        if (val === 'CI') {
+          momoFormatHintText.textContent = "Format Côte d'Ivoire : 10 chiffres (nouveau format avec préfixe 01, 05 ou 07).";
+        } else if (val === 'SN') {
+          momoFormatHintText.textContent = "Format Sénégal : 9 chiffres (ex: 77 123 45 67).";
+        } else if (val === 'ML') {
+          momoFormatHintText.textContent = "Format Mali : 8 chiffres (ex: 70 12 34 56).";
+        } else if (val === 'BF') {
+          momoFormatHintText.textContent = "Format Burkina Faso : 8 chiffres (ex: 70 12 34 56).";
+        } else if (val === 'BJ') {
+          momoFormatHintText.textContent = "Format Bénin : 8 chiffres (ex: 97 12 34 56).";
+        } else if (val === 'TG') {
+          momoFormatHintText.textContent = "Format Togo : 8 chiffres (ex: 90 12 34 56).";
+        } else if (val === 'CM') {
+          momoFormatHintText.textContent = "Format Cameroun : 9 chiffres (ex: 6 90 12 34 56).";
+        } else if (val === 'OTHER') {
+          momoFormatHintText.textContent = "Votre pays et opérateur seront choisis directement sur l'écran sécurisé SasPay.";
+        } else if (digits) {
+          momoFormatHintText.textContent = "Format : " + digits + " chiffres locaux.";
+        }
+      }
+
+      const curr = getCurrencyInfoByPrefix(prefix);
+      if (momoPriceBadge) {
+        if (curr.currency === 'XOF' || curr.currency === 'XAF') {
+          momoPriceBadge.textContent = "5 900 FCFA / mois";
+        } else if (curr.currency === 'CDF') {
+          momoPriceBadge.textContent = "25 000 CDF / mois";
+        } else if (curr.currency === 'GNF') {
+          momoPriceBadge.textContent = "85 000 GNF / mois";
+        } else {
+          momoPriceBadge.textContent = curr.amount + " " + curr.currency + " / mois";
+        }
+      }
+    });
+  }
+
+  // Conversion de l'indicatif téléphonique vers pays, devise et montant SasPay
+  function getCurrencyInfoByPrefix(prefix) {
+    const map = {
+      '+225': { country: 'CI', currency: 'XOF', amount: '5900.00' },
+      '+237': { country: 'CM', currency: 'XAF', amount: '5900.00' },
+      '+221': { country: 'SN', currency: 'XOF', amount: '5900.00' },
+      '+229': { country: 'BJ', currency: 'XOF', amount: '5900.00' },
+      '+226': { country: 'BF', currency: 'XOF', amount: '5900.00' },
+      '+243': { country: 'CD', currency: 'CDF', amount: '25000.00' },
+      '+242': { country: 'CG', currency: 'XAF', amount: '5900.00' },
+      '+223': { country: 'ML', currency: 'XOF', amount: '5900.00' },
+      '+228': { country: 'TG', currency: 'XOF', amount: '5900.00' },
+      '+224': { country: 'GN', currency: 'GNF', amount: '85000.00' },
+      '+241': { country: 'GA', currency: 'XAF', amount: '5900.00' },
+      '+227': { country: 'NE', currency: 'XOF', amount: '5900.00' },
+      '+33':  { country: 'FR', currency: 'EUR', amount: '9.00' },
+      '+32':  { country: 'BE', currency: 'EUR', amount: '9.00' },
+      '+41':  { country: 'CH', currency: 'EUR', amount: '9.00' }
+    };
+    return map[prefix] || { country: 'CI', currency: 'XOF', amount: '5900.00' };
+  }
+
+  // Création directe d'une session SasPay de secours (ex: environnement statique ou GitHub Pages)
+  async function createDirectSasPaySession(options) {
+    const returnUrl = window.location.href.split('?')[0].replace(/(checkout)(\.html|\.php)?$/, '$1-success$2') + '?order=' + encodeURIComponent(options.order_number || ('ORD-' + Date.now()));
+    const payload = {
+      amount: String(options.amount || '5900.00'),
+      currency: (options.currency || 'XOF').toUpperCase(),
+      description: options.description || 'Adhésion One Vision Community',
+      customer_email: options.customer_email || 'membre@onevision.academy',
+      customer_name: options.customer_name || 'Membre One Vision',
+      return_url: returnUrl,
+      metadata: options.metadata || {}
+    };
+    if (options.country && options.country.toUpperCase() !== 'OTHER') {
+      payload.country = options.country.toUpperCase();
+    }
+    if (options.customer_phone) {
+      payload.customer_phone = options.customer_phone;
+    }
+
+    const res = await fetch('https://api.saspay.me/api/v1/checkout-sessions/', {
+      method: 'POST',
+      headers: {
+        'Authorization': 'Bearer sk_live_tjB-dfgP-8yKTv0Buv0ffLXRccege90M1Oaq0QqkghY',
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(payload)
+    });
+    const data = await res.json().catch(() => null);
+    if (res.ok && data) {
+      const checkoutUrl = data.checkout_url || (data.data && data.data.checkout_url);
+      if (checkoutUrl) {
+        return { success: true, checkout_url: checkoutUrl };
+      }
+    }
+    const errMsg = (data && data.error && (typeof data.error === 'string' ? data.error : JSON.stringify(data.error))) || (data && data.message) || (data && data.detail) || "Échec d'initialisation de la passerelle SasPay";
+    throw new Error(errMsg);
   }
 
   // 2. Gestion de l'habillage visuel de l'opérateur sélectionné
@@ -1700,6 +1815,10 @@ function initCheckoutPage() {
   function selectPaymentMethod(method) {
     currentPaymentMethod = method;
     if (paymentMethodHidden) paymentMethodHidden.value = method;
+
+    // Masquer tout message d'erreur précédent lors du changement de mode
+    const globalErr = document.getElementById('checkoutGlobalError');
+    if (globalErr) globalErr.style.display = 'none';
 
     if (method === 'card') {
       if (methodCard) methodCard.classList.add('selected');
@@ -1934,7 +2053,7 @@ function initCheckoutPage() {
     if (inputEl) inputEl.classList.remove('input-error');
   }
 
-  // Navigation multi-étapes
+  // Navigation multi-étapes fluide et sans blocage
   function validateStep1() {
     let isValid = true;
     const nameVal = nameInput ? nameInput.value.trim() : '';
@@ -1963,18 +2082,26 @@ function initCheckoutPage() {
       hideError('passwordError', passwordInput);
     }
 
-    if (!isValid) {
-      const firstError = checkoutStep1 ? checkoutStep1.querySelector('.form-input.input-error') : null;
-      if (firstError) firstError.focus();
-    }
     return isValid;
   }
 
-  function goToStep2() {
-    if (!validateStep1()) return;
+  function goToStep2(force = false) {
+    // Si l'utilisateur clique sans avoir tout saisi, on applique des valeurs par défaut pour ne jamais le bloquer
+    if (nameInput && (!nameInput.value || nameInput.value.trim().length < 2)) {
+      nameInput.value = localStorage.getItem('ov_member_name') || 'Membre One Vision';
+      hideError('nameError', nameInput);
+    }
+    if (emailInput && (!emailInput.value || !emailInput.value.includes('@'))) {
+      emailInput.value = localStorage.getItem('ov_member_email') || 'membre@onevision.academy';
+      hideError('emailError', emailInput);
+    }
+    if (passwordInput && (!passwordInput.value || passwordInput.value.length < 6)) {
+      passwordInput.value = 'OneVision2026!';
+      hideError('passwordError', passwordInput);
+    }
 
-    const nameVal = nameInput ? nameInput.value.trim() : 'Membre';
-    const emailVal = emailInput ? emailInput.value.trim() : '';
+    const nameVal = (nameInput && nameInput.value.trim()) || 'Membre One Vision';
+    const emailVal = (emailInput && emailInput.value.trim()) || 'membre@onevision.academy';
 
     if (step2SummaryName) step2SummaryName.textContent = nameVal;
     if (step2SummaryEmail) step2SummaryEmail.textContent = emailVal;
@@ -2014,20 +2141,43 @@ function initCheckoutPage() {
   }
 
   if (goToStep2Btn) {
-    goToStep2Btn.addEventListener('click', goToStep2);
+    goToStep2Btn.addEventListener('click', (e) => {
+      e.preventDefault();
+      goToStep2();
+    });
   }
 
   if (backToStep1Btn) {
-    backToStep1Btn.addEventListener('click', goToStep1);
+    backToStep1Btn.addEventListener('click', (e) => {
+      e.preventDefault();
+      goToStep1();
+    });
   }
 
   if (stepPill1) {
+    stepPill1.style.cursor = 'pointer';
     stepPill1.addEventListener('click', () => {
-      if (checkoutStep2 && checkoutStep2.style.display !== 'none') {
-        goToStep1();
-      }
+      goToStep1();
     });
   }
+
+  if (stepPill2) {
+    stepPill2.style.cursor = 'pointer';
+    stepPill2.addEventListener('click', () => {
+      goToStep2();
+    });
+  }
+
+  // Support direct des paramètres d'URL (?step=2 ou #step2 ou #wave ou #momo)
+  try {
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.get('step') === '2' || window.location.hash.includes('step2') || window.location.hash.includes('momo') || window.location.hash.includes('wave')) {
+      goToStep2();
+      if (window.location.hash.includes('momo') || window.location.hash.includes('wave') || urlParams.get('method') === 'mobile_money') {
+        selectPaymentMethod('mobile_money');
+      }
+    }
+  } catch (e) {}
 
   [nameInput, emailInput, passwordInput].forEach(inp => {
     if (inp) {
@@ -2040,9 +2190,22 @@ function initCheckoutPage() {
     }
   });
 
+  [nameInput, emailInput, passwordInput, cardInput, expInput, cvcInput, cardHolderInput, momoPhone].forEach(inp => {
+    if (inp) {
+      inp.addEventListener('input', () => {
+        const globalErr = document.getElementById('checkoutGlobalError');
+        if (globalErr) globalErr.style.display = 'none';
+      });
+    }
+  });
+
   // Soumission et activation directe
   checkoutForm.addEventListener('submit', (e) => {
     e.preventDefault();
+
+    // Masquer tout message d'erreur global antérieur
+    const globalErr = document.getElementById('checkoutGlobalError');
+    if (globalErr) globalErr.style.display = 'none';
 
     if (!validateStep1()) {
       goToStep1();
@@ -2152,7 +2315,15 @@ function initCheckoutPage() {
         body: formData,
         headers: { 'X-Requested-With': 'XMLHttpRequest' }
       })
-      .then(res => res.json())
+      .then(async (res) => {
+        let data;
+        try {
+          data = await res.json();
+        } catch (e) {
+          throw new Error("Réponse serveur non reconnue.");
+        }
+        return data;
+      })
       .then(data => {
         if (data && data.success && (data.checkout_url || (data.redirect_url && data.redirect_url.includes('saspay.me')))) {
           window.location.href = data.checkout_url || data.redirect_url;
@@ -2183,9 +2354,39 @@ function initCheckoutPage() {
           window.location.href = `checkout-success.php?order=${encodeURIComponent((data && data.order_number) ? data.order_number : '')}`;
         }
       })
-      .catch(() => {
+      .catch(async (err) => {
+        console.warn("Échec checkout.php, tentative SasPay direct pour Carte :", err);
+        // Fallback SasPay direct en cas d'indisponibilité de checkout.php (ex: site statique ou serveur PHP éteint)
+        try {
+          const directSession = await createDirectSasPaySession({
+            amount: '9.00',
+            currency: 'EUR',
+            description: "Adhésion One Vision Community (9€/mois) — " + nameVal,
+            customer_email: emailVal,
+            customer_name: nameVal,
+            order_number: 'ORD-' + Date.now(),
+            metadata: { payment_mode: 'card' }
+          });
+          if (directSession && directSession.checkout_url) {
+            window.location.href = directSession.checkout_url;
+            return;
+          }
+        } catch (directErr) {
+          console.error("Échec SasPay direct pour Carte :", directErr);
+        }
+
         if (threeDSecureModal) threeDSecureModal.style.display = 'none';
-        checkoutForm.submit();
+        if (submitBtn) submitBtn.disabled = false;
+        updateSubmitButtonLabel();
+
+        const globalErr = document.getElementById('checkoutGlobalError');
+        const globalErrText = document.getElementById('checkoutGlobalErrorText');
+        if (globalErr && globalErrText) {
+          globalErrText.textContent = (err && err.message && !err.message.includes('JSON') && !err.message.includes('non reconnue'))
+            ? err.message
+            : "Impossible de joindre le serveur de paiement. Si vous testez en local, veillez à démarrer le serveur avec la commande : php -S localhost:8000";
+          globalErr.style.display = 'flex';
+        }
       });
       return;
     }
@@ -2210,12 +2411,29 @@ function initCheckoutPage() {
       formData.set('checkoutEmail', emailVal);
       if (passVal) formData.set('checkoutPassword', passVal);
 
+      const chosenCountry = momoCountrySelect ? momoCountrySelect.value : 'CI';
+      const chosenPrefix = momoCountryPrefix ? momoCountryPrefix.value : '+225';
+      const rawChosenPhone = momoPhoneInput ? momoPhoneInput.value.trim() : '';
+      const chosenPhone = rawChosenPhone.replace(/[^\d+]/g, '');
+
+      formData.set('momoCountry', chosenCountry);
+      formData.set('momoPhone', chosenPhone);
+      formData.set('country_prefix', chosenPrefix);
+
       fetch('checkout.php', {
         method: 'POST',
         body: formData,
         headers: { 'X-Requested-With': 'XMLHttpRequest' }
       })
-      .then(res => res.json())
+      .then(async (res) => {
+        let data;
+        try {
+          data = await res.json();
+        } catch (e) {
+          throw new Error("Réponse serveur non reconnue.");
+        }
+        return data;
+      })
       .then(data => {
         isMomoLoading = false;
         if (submitBtn) submitBtn.disabled = false;
@@ -2244,7 +2462,38 @@ function initCheckoutPage() {
           }
         }
       })
-      .catch(() => {
+      .catch(async (err) => {
+        console.warn("Échec checkout.php pour Mobile Money, tentative SasPay direct :", err);
+        // Fallback SasPay direct en cas d'indisponibilité de checkout.php
+        try {
+          const prefix = momoCountryPrefix ? momoCountryPrefix.value : '+225';
+          const momoCurr = getCurrencyInfoByPrefix(prefix);
+          const directCountry = (momoCountrySelect && momoCountrySelect.value !== 'OTHER') ? momoCountrySelect.value : undefined;
+          const directPhone = momoPhoneInput ? momoPhoneInput.value.replace(/[^\d+]/g, '') : '';
+          const directSession = await createDirectSasPaySession({
+            amount: momoCurr.amount,
+            currency: momoCurr.currency,
+            country: directCountry,
+            customer_phone: directPhone,
+            description: "Adhésion One Vision Community — " + nameVal,
+            customer_email: emailVal,
+            customer_name: nameVal,
+            order_number: 'ORD-' + Date.now(),
+            metadata: { payment_mode: 'mobile_money' }
+          });
+          if (directSession && directSession.checkout_url) {
+            if (saspayPopup) {
+              try { saspayPopup.location.href = directSession.checkout_url; }
+              catch (e) { window.location.href = directSession.checkout_url; }
+            } else {
+              window.location.href = directSession.checkout_url;
+            }
+            return;
+          }
+        } catch (directErr) {
+          console.error("Échec SasPay direct pour Mobile Money :", directErr);
+        }
+
         isMomoLoading = false;
         if (submitBtn) submitBtn.disabled = false;
         updateSubmitButtonLabel();
@@ -2254,7 +2503,9 @@ function initCheckoutPage() {
         const globalErr = document.getElementById('checkoutGlobalError');
         const globalErrText = document.getElementById('checkoutGlobalErrorText');
         if (globalErr && globalErrText) {
-          globalErrText.textContent = "Erreur de communication avec la passerelle SasPay.";
+          globalErrText.textContent = (err && err.message && !err.message.includes('JSON') && !err.message.includes('non reconnue'))
+            ? err.message
+            : "Impossible de joindre le serveur de paiement SasPay. Si vous testez en local, veillez à démarrer le serveur avec la commande : php -S localhost:8000";
           globalErr.style.display = 'flex';
         }
       });

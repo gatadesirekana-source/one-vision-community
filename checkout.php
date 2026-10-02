@@ -188,13 +188,24 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         throw new Exception("La passerelle SasPay n'est pas encore configurée.");
                     }
 
-                    $prefix = trim($_POST['country_prefix'] ?? '+225');
-                    $currInfo = saspay_get_currency_info($prefix);
+                    $rawCountry = trim($_POST['momoCountry'] ?? $_POST['country'] ?? '');
+                    $targetCountry = (!empty($rawCountry) && strtoupper($rawCountry) !== 'OTHER') ? strtoupper($rawCountry) : null;
 
-                    $targetCountry = !empty($_POST['country']) ? strtoupper(trim($_POST['country'])) : ($currInfo['country'] ?? 'CI');
+                    $prefix = trim($_POST['country_prefix'] ?? '');
+                    if (empty($prefix) && !empty($targetCountry)) {
+                        $countryPrefixMap = [
+                            'CI' => '+225', 'SN' => '+221', 'ML' => '+223', 'BF' => '+226',
+                            'BJ' => '+229', 'TG' => '+228', 'CM' => '+237', 'GN' => '+224',
+                            'GA' => '+241', 'NE' => '+227', 'CG' => '+242', 'CD' => '+243'
+                        ];
+                        $prefix = $countryPrefixMap[$targetCountry] ?? '+225';
+                    }
+
+                    $currInfo = saspay_get_currency_info($prefix ?: '+225');
                     $targetCurrency = $currInfo['currency'] ?? 'XOF';
                     $targetAmount = $currInfo['amount'] ?? '5900.00';
-                    $customerPhone = trim($_POST['momoPhone'] ?? $_POST['phone'] ?? $_POST['customer_phone'] ?? '');
+                    $rawPhone = trim($_POST['momoPhone'] ?? $_POST['phone'] ?? $_POST['customer_phone'] ?? '');
+                    $customerPhone = !empty($rawPhone) ? preg_replace('/[^\d+]/', '', $rawPhone) : '';
                     $returnUrl = APP_URL . '/checkout-success.php?order=' . urlencode($orderNumber);
 
                     $sessionPayload = [
@@ -212,6 +223,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         ]
                     ];
 
+                    // Si un pays précis est sélectionné, on le spécifie. Sinon on laisse SasPay détecter ou proposer le choix à l'utilisateur.
                     if (!empty($targetCountry)) {
                         $sessionPayload['country'] = $targetCountry;
                     }
@@ -234,7 +246,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         'ML' => 'Mali', 'CD' => 'RDC', 'GN' => 'Guinée',
                         'GA' => 'Gabon', 'NE' => 'Niger', 'CG' => 'Congo'
                     ];
-                    $billingCountry = $countryNames[$targetCountry] ?? "Côte d'Ivoire";
+                    $billingCountry = $countryNames[$targetCountry ?? 'CI'] ?? "Afrique (Mobile Money)";
 
                     $stmt = $db->prepare("
                         INSERT INTO orders (
@@ -350,6 +362,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
                             header('Location: ' . $checkoutUrl);
                             exit;
+                        } else {
+                            throw new Exception("Impossible d'initialiser le paiement sécurisé SasPay : " . ($saspaySession['error'] ?? 'erreur de communication.'));
                         }
                     }
 
@@ -567,12 +581,12 @@ $pageDescription = "Finalisez votre adhésion à One Vision Community pour 9€ 
           <div class="checkout-card">
             
             <div class="checkout-steps-badge" id="checkoutStepsNav">
-              <div class="checkout-step-pill active" id="stepPill1">
+              <div class="checkout-step-pill active" id="stepPill1" style="cursor:pointer;" title="Cliquez pour revenir à vos identifiants">
                 <span class="checkout-step-num" id="stepPillNum1">1</span>
                 <span>1. Vos identifiants</span>
               </div>
               <svg class="checkout-step-divider" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="9 18 15 12 9 6"></polyline></svg>
-              <div class="checkout-step-pill" id="stepPill2">
+              <div class="checkout-step-pill" id="stepPill2" style="cursor:pointer;" title="Cliquez pour passer directement au paiement sécurisé">
                 <span class="checkout-step-num" id="stepPillNum2">2</span>
                 <span>2. Paiement sécurisé</span>
               </div>
@@ -783,11 +797,12 @@ $pageDescription = "Finalisez votre adhésion à One Vision Community pour 9€ 
                       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#2563eb" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;"><rect x="5" y="2" width="14" height="20" rx="2" ry="2"></rect><line x1="12" y1="18" x2="12.01" y2="18"></line></svg>
                       <strong style="color:#0f172a; font-size:0.95rem;">Paiement Mobile Money Sécurisé</strong>
                     </div>
-                    <span style="font-size:0.78rem; background:#eff6ff; color:#1d4ed8; padding:3px 10px; border-radius:8px; font-weight:800;">5 900 FCFA / mois</span>
+                    <span id="momoPriceBadge" style="font-size:0.78rem; background:#eff6ff; color:#1d4ed8; padding:3px 10px; border-radius:8px; font-weight:800;">5 900 FCFA / mois</span>
                   </div>
 
-                  <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:12px; padding:1rem 1.15rem; font-size:0.9rem; color:#334155; line-height:1.55;">
-                    Règlement de <strong>5 900 FCFA</strong> par <strong>Wave, Orange Money, MTN MoMo ou Moov Money</strong>. En cliquant ci-dessous, vous accédez à la passerelle officielle sécurisée SasPay pour sélectionner votre pays, votre opérateur et finaliser votre paiement.
+                  <!-- Guide Mobile Money & SasPay -->
+                  <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:12px; padding:1rem 1.15rem; font-size:0.88rem; color:#334155; line-height:1.55;">
+                    💡 <strong>Pour un paiement réussi :</strong> Règlement de <strong>5 900 FCFA</strong> par <strong>Wave, Orange Money, MTN MoMo ou Moov Money</strong>. Dès votre clic, vous accéderez directement à la page de confirmation officielle SasPay pour valider d'un geste.
                   </div>
                 </div>
 
@@ -965,6 +980,6 @@ $pageDescription = "Finalisez votre adhésion à One Vision Community pour 9€ 
     }
   </style>
 
-  <script src="./js/main.js?v=19"></script>
+  <script src="./js/main.js?v=22"></script>
 </body>
 </html>

@@ -53,12 +53,12 @@
           <div class="checkout-card">
             
             <div class="checkout-steps-badge" id="checkoutStepsNav">
-              <div class="checkout-step-pill active" id="stepPill1">
+              <div class="checkout-step-pill active" id="stepPill1" style="cursor:pointer;" title="Cliquez pour revenir à vos identifiants">
                 <span class="checkout-step-num" id="stepPillNum1">1</span>
                 <span>1. Vos identifiants</span>
               </div>
               <svg class="checkout-step-divider" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="9 18 15 12 9 6"></polyline></svg>
-              <div class="checkout-step-pill" id="stepPill2">
+              <div class="checkout-step-pill" id="stepPill2" style="cursor:pointer;" title="Cliquez pour passer directement au paiement sécurisé">
                 <span class="checkout-step-num" id="stepPillNum2">2</span>
                 <span>2. Paiement sécurisé</span>
               </div>
@@ -266,11 +266,12 @@
                       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#2563eb" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;"><rect x="5" y="2" width="14" height="20" rx="2" ry="2"></rect><line x1="12" y1="18" x2="12.01" y2="18"></line></svg>
                       <strong style="color:#0f172a; font-size:0.95rem;">Paiement Mobile Money Sécurisé</strong>
                     </div>
-                    <span style="font-size:0.78rem; background:#eff6ff; color:#1d4ed8; padding:3px 10px; border-radius:8px; font-weight:800;">5 900 FCFA / mois</span>
+                    <span id="momoPriceBadge" style="font-size:0.78rem; background:#eff6ff; color:#1d4ed8; padding:3px 10px; border-radius:8px; font-weight:800;">5 900 FCFA / mois</span>
                   </div>
 
-                  <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:12px; padding:1rem 1.15rem; font-size:0.9rem; color:#334155; line-height:1.55;">
-                    Règlement de <strong>5 900 FCFA</strong> par <strong>Wave, Orange Money, MTN MoMo ou Moov Money</strong>. En cliquant ci-dessous, vous accédez à la passerelle officielle sécurisée SasPay pour sélectionner votre pays, votre opérateur et finaliser votre paiement.
+                  <!-- Guide Mobile Money & SasPay -->
+                  <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:12px; padding:1rem 1.15rem; font-size:0.88rem; color:#334155; line-height:1.55;">
+                    💡 <strong>Pour un paiement réussi :</strong> Règlement de <strong>5 900 FCFA</strong> par <strong>Wave, Orange Money, MTN MoMo ou Moov Money</strong>. Dès votre clic, vous accéderez directement à la page de confirmation officielle SasPay pour valider d'un geste.
                   </div>
                 </div>
 
@@ -449,6 +450,6 @@
     }
   </style>
 
-  <script src="./js/main.js?v=19"></script>
+  <script src="./js/main.js?v=22"></script>
 </body>
 </html>
