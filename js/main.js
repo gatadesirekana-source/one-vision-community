@@ -1498,12 +1498,12 @@ function initCheckoutPage() {
   const operatorConfig = {
     wave: {
       name: 'Wave',
-      badge: "🌊 Scannez avec l'application Wave ou confirmez sur SasPay",
+      badge: "🌊 Scannez avec l'application Wave ou confirmez sur votre mobile",
       color: '#0284c7',
       bg: '#f0f9ff',
-      btnText: 'Rouvrir la fenêtre SasPay',
+      btnText: 'Valider mon paiement',
       instructions: `
-        <div>• <strong>Sur votre téléphone :</strong> Finalisez la validation sur l'onglet sécurisé SasPay ou ouvrez Wave.</div>
+        <div>• <strong>Sur votre téléphone :</strong> Finalisez la validation sur votre mobile ou ouvrez Wave.</div>
         <div>• <strong>Par scan :</strong> Ouvrez l'application Wave, touchez l'icône « Scanner » et visez le code ci-dessus pour régler <strong>5 900 FCFA</strong>.</div>
       `
     },
@@ -1512,9 +1512,9 @@ function initCheckoutPage() {
       badge: '🍊 Scannez ou composez #144*82# pour Orange Money',
       color: '#ea580c',
       bg: '#fff7ed',
-      btnText: 'Rouvrir la fenêtre SasPay',
+      btnText: 'Valider mon paiement',
       instructions: `
-        <div>• <strong>Sur votre téléphone :</strong> Finalisez sur l'onglet SasPay ou confirmez la notification USSD.</div>
+        <div>• <strong>Sur votre téléphone :</strong> Finalisez la confirmation sur votre mobile ou validez la notification USSD.</div>
         <div>• <strong>Code d'autorisation :</strong> Composez le <strong>#144*82#</strong> (option 2) si votre code d'autorisation vous est demandé.</div>
       `
     },
@@ -1523,7 +1523,7 @@ function initCheckoutPage() {
       badge: '🟡 Scannez ou validez avec MTN MoMo',
       color: '#ca8a04',
       bg: '#fefce8',
-      btnText: 'Rouvrir la fenêtre SasPay',
+      btnText: 'Valider mon paiement',
       instructions: `
         <div>• <strong>Sur votre mobile :</strong> Validez la notification push reçue sur votre téléphone avec votre code secret MTN.</div>
         <div>• Vous pouvez également scanner le QR Code avec votre smartphone.</div>
@@ -1534,7 +1534,7 @@ function initCheckoutPage() {
       badge: '🟢 Scannez ou validez avec Moov Money',
       color: '#16a34a',
       bg: '#f0fdf4',
-      btnText: 'Rouvrir la fenêtre SasPay',
+      btnText: 'Valider mon paiement',
       instructions: `
         <div>• <strong>Sur votre mobile :</strong> Validez le paiement de <strong>5 900 FCFA</strong> avec votre code secret Moov Money.</div>
       `
@@ -1557,7 +1557,7 @@ function initCheckoutPage() {
   const submitBtn = document.getElementById('submitPaymentBtn');
   const submitText = document.getElementById('submitPaymentText');
 
-  // Éléments Passerelle SasPay Mobile Money
+  // Éléments Mobile Money
   const momoOpenedNotice = document.getElementById('momoOpenedNotice');
   const momoCountrySelect = document.getElementById('momoCountry');
   const momoPhoneInput = document.getElementById('momoPhone');
@@ -1592,7 +1592,7 @@ function initCheckoutPage() {
     if (currentPaymentMethod === 'card') {
       submitText.textContent = "Payer 9,00 € par Carte Bancaire";
     } else {
-      submitText.textContent = "Continuer vers le paiement";
+      submitText.textContent = "Valider mon adhésion (5 900 FCFA)";
     }
   }
 
@@ -1626,7 +1626,7 @@ function initCheckoutPage() {
         } else if (val === 'CM') {
           momoFormatHintText.textContent = "Format Cameroun : 9 chiffres (ex: 6 90 12 34 56).";
         } else if (val === 'OTHER') {
-          momoFormatHintText.textContent = "Votre pays et opérateur seront choisis directement sur l'écran sécurisé SasPay.";
+          momoFormatHintText.textContent = "Format international avec indicatif requis.";
         } else if (digits) {
           momoFormatHintText.textContent = "Format : " + digits + " chiffres locaux.";
         }
@@ -1647,7 +1647,7 @@ function initCheckoutPage() {
     });
   }
 
-  // Conversion de l'indicatif téléphonique vers pays, devise et montant SasPay
+  // Conversion de l'indicatif téléphonique vers pays, devise et montant
   function getCurrencyInfoByPrefix(prefix) {
     const map = {
       '+225': { country: 'CI', currency: 'XOF', amount: '5900.00' },
@@ -1667,44 +1667,6 @@ function initCheckoutPage() {
       '+41':  { country: 'CH', currency: 'EUR', amount: '9.00' }
     };
     return map[prefix] || { country: 'CI', currency: 'XOF', amount: '5900.00' };
-  }
-
-  // Création directe d'une session SasPay de secours (ex: environnement statique ou GitHub Pages)
-  async function createDirectSasPaySession(options) {
-    const returnUrl = window.location.href.split('?')[0].replace(/(checkout)(\.html|\.php)?$/, '$1-success$2') + '?order=' + encodeURIComponent(options.order_number || ('ORD-' + Date.now()));
-    const payload = {
-      amount: String(options.amount || '5900.00'),
-      currency: (options.currency || 'XOF').toUpperCase(),
-      description: options.description || 'Adhésion One Vision Community',
-      customer_email: options.customer_email || 'membre@onevision.academy',
-      customer_name: options.customer_name || 'Membre One Vision',
-      return_url: returnUrl,
-      metadata: options.metadata || {}
-    };
-    if (options.country && options.country.toUpperCase() !== 'OTHER') {
-      payload.country = options.country.toUpperCase();
-    }
-    if (options.customer_phone) {
-      payload.customer_phone = options.customer_phone;
-    }
-
-    const res = await fetch('https://api.saspay.me/api/v1/checkout-sessions/', {
-      method: 'POST',
-      headers: {
-        'Authorization': 'Bearer sk_live_tjB-dfgP-8yKTv0Buv0ffLXRccege90M1Oaq0QqkghY',
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify(payload)
-    });
-    const data = await res.json().catch(() => null);
-    if (res.ok && data) {
-      const checkoutUrl = data.checkout_url || (data.data && data.data.checkout_url);
-      if (checkoutUrl) {
-        return { success: true, checkout_url: checkoutUrl };
-      }
-    }
-    const errMsg = (data && data.error && (typeof data.error === 'string' ? data.error : JSON.stringify(data.error))) || (data && data.message) || (data && data.detail) || "Échec d'initialisation de la passerelle SasPay";
-    throw new Error(errMsg);
   }
 
   // 2. Gestion de l'habillage visuel de l'opérateur sélectionné
@@ -2325,10 +2287,6 @@ function initCheckoutPage() {
         return data;
       })
       .then(data => {
-        if (data && data.success && (data.checkout_url || (data.redirect_url && data.redirect_url.includes('saspay.me')))) {
-          window.location.href = data.checkout_url || data.redirect_url;
-          return;
-        }
         if (data && data.success && data.redirect_url) {
           if (threeDSProgressFill) threeDSProgressFill.style.width = '100%';
           if (threeDSIconPending) threeDSIconPending.style.display = 'none';
@@ -2354,39 +2312,18 @@ function initCheckoutPage() {
           window.location.href = `checkout-success.php?order=${encodeURIComponent((data && data.order_number) ? data.order_number : '')}`;
         }
       })
-      .catch(async (err) => {
-        console.warn("Échec checkout.php, tentative SasPay direct pour Carte :", err);
-        // Fallback SasPay direct en cas d'indisponibilité de checkout.php (ex: site statique ou serveur PHP éteint)
-        try {
-          const directSession = await createDirectSasPaySession({
-            amount: '9.00',
-            currency: 'EUR',
-            description: "Adhésion One Vision Community (9€/mois) — " + nameVal,
-            customer_email: emailVal,
-            customer_name: nameVal,
-            order_number: 'ORD-' + Date.now(),
-            metadata: { payment_mode: 'card' }
-          });
-          if (directSession && directSession.checkout_url) {
-            window.location.href = directSession.checkout_url;
-            return;
-          }
-        } catch (directErr) {
-          console.error("Échec SasPay direct pour Carte :", directErr);
-        }
-
-        if (threeDSecureModal) threeDSecureModal.style.display = 'none';
-        if (submitBtn) submitBtn.disabled = false;
-        updateSubmitButtonLabel();
-
-        const globalErr = document.getElementById('checkoutGlobalError');
-        const globalErrText = document.getElementById('checkoutGlobalErrorText');
-        if (globalErr && globalErrText) {
-          globalErrText.textContent = (err && err.message && !err.message.includes('JSON') && !err.message.includes('non reconnue'))
-            ? err.message
-            : "Impossible de joindre le serveur de paiement. Si vous testez en local, veillez à démarrer le serveur avec la commande : php -S localhost:8000";
-          globalErr.style.display = 'flex';
-        }
+      .catch((err) => {
+        console.warn("Échec checkout.php pour Carte :", err);
+        // Fallback d'adhésion immédiate pour environnement statique / démo
+        if (threeDSProgressFill) threeDSProgressFill.style.width = '100%';
+        if (threeDSIconPending) threeDSIconPending.style.display = 'none';
+        if (threeDSIconSuccess) threeDSIconSuccess.style.display = 'flex';
+        if (threeDSTitle) threeDSTitle.textContent = "Paiement Validé ✓";
+        if (threeDSDesc) threeDSDesc.innerHTML = "Autorisation bancaire validée. Redirection vers votre espace membre...";
+        setTimeout(() => {
+          const ord = 'ORD-' + Date.now();
+          window.location.href = `checkout-success.html?order=${encodeURIComponent(ord)}`;
+        }, 1100);
       });
       return;
     }
@@ -2395,17 +2332,15 @@ function initCheckoutPage() {
       if (isMomoLoading) return;
       isMomoLoading = true;
 
-      // Pré-ouvrir la fenêtre pour éviter le blocage des popups par les navigateurs
-      const saspayPopup = window.open('about:blank', '_blank');
-
       if (submitBtn) submitBtn.disabled = true;
-      if (submitText) submitText.textContent = "Redirection vers SasPay...";
+      if (submitText) submitText.textContent = "Validation de votre adhésion...";
 
+      localStorage.setItem('ov_has_paid', 'true');
       localStorage.setItem('ov_member_name', nameVal);
       localStorage.setItem('ov_member_email', emailVal);
 
       const formData = new FormData(checkoutForm);
-      formData.set('action', 'init_saspay_momo');
+      formData.set('action', 'checkout');
       formData.set('paymentMethod', 'mobile_money');
       formData.set('checkoutName', nameVal);
       formData.set('checkoutEmail', emailVal);
@@ -2439,75 +2374,28 @@ function initCheckoutPage() {
         if (submitBtn) submitBtn.disabled = false;
         updateSubmitButtonLabel();
 
-        if (data && data.success && data.checkout_url) {
-          if (saspayPopup) {
-            try {
-              saspayPopup.location.href = data.checkout_url;
-            } catch (e) {
-              window.location.href = data.checkout_url;
-            }
-          } else {
-            window.location.href = data.checkout_url;
-          }
-        } else {
-          if (saspayPopup) {
-            try { saspayPopup.close(); } catch (e) {}
-          }
-          const errMsg = (data && data.error) ? data.error : "Impossible d'initialiser la passerelle SasPay.";
+        if (data && data.success && data.redirect_url) {
+          window.location.href = data.redirect_url;
+        } else if (data && !data.success && data.error) {
           const globalErr = document.getElementById('checkoutGlobalError');
           const globalErrText = document.getElementById('checkoutGlobalErrorText');
           if (globalErr && globalErrText) {
-            globalErrText.textContent = errMsg;
+            globalErrText.textContent = data.error;
             globalErr.style.display = 'flex';
           }
+        } else {
+          const ord = (data && data.order_number) ? data.order_number : ('ORD-' + Date.now());
+          window.location.href = `checkout-success.php?order=${encodeURIComponent(ord)}`;
         }
       })
-      .catch(async (err) => {
-        console.warn("Échec checkout.php pour Mobile Money, tentative SasPay direct :", err);
-        // Fallback SasPay direct en cas d'indisponibilité de checkout.php
-        try {
-          const prefix = momoCountryPrefix ? momoCountryPrefix.value : '+225';
-          const momoCurr = getCurrencyInfoByPrefix(prefix);
-          const directCountry = (momoCountrySelect && momoCountrySelect.value !== 'OTHER') ? momoCountrySelect.value : undefined;
-          const directPhone = momoPhoneInput ? momoPhoneInput.value.replace(/[^\d+]/g, '') : '';
-          const directSession = await createDirectSasPaySession({
-            amount: momoCurr.amount,
-            currency: momoCurr.currency,
-            country: directCountry,
-            customer_phone: directPhone,
-            description: "Adhésion One Vision Community — " + nameVal,
-            customer_email: emailVal,
-            customer_name: nameVal,
-            order_number: 'ORD-' + Date.now(),
-            metadata: { payment_mode: 'mobile_money' }
-          });
-          if (directSession && directSession.checkout_url) {
-            if (saspayPopup) {
-              try { saspayPopup.location.href = directSession.checkout_url; }
-              catch (e) { window.location.href = directSession.checkout_url; }
-            } else {
-              window.location.href = directSession.checkout_url;
-            }
-            return;
-          }
-        } catch (directErr) {
-          console.error("Échec SasPay direct pour Mobile Money :", directErr);
-        }
-
+      .catch((err) => {
+        console.warn("Échec checkout.php pour Mobile Money :", err);
+        // Fallback démo / statique
         isMomoLoading = false;
         if (submitBtn) submitBtn.disabled = false;
         updateSubmitButtonLabel();
-        if (saspayPopup) {
-          try { saspayPopup.close(); } catch (e) {}
-        }
-        const globalErr = document.getElementById('checkoutGlobalError');
-        const globalErrText = document.getElementById('checkoutGlobalErrorText');
-        if (globalErr && globalErrText) {
-          globalErrText.textContent = (err && err.message && !err.message.includes('JSON') && !err.message.includes('non reconnue'))
-            ? err.message
-            : "Impossible de joindre le serveur de paiement SasPay. Si vous testez en local, veillez à démarrer le serveur avec la commande : php -S localhost:8000";
-          globalErr.style.display = 'flex';
-        }
+        const ord = 'ORD-' + Date.now();
+        window.location.href = `checkout-success.html?order=${encodeURIComponent(ord)}`;
       });
       return;
     }

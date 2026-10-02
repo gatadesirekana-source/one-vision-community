@@ -35,15 +35,13 @@ La base de données s'auto-initialise avec des comptes de démonstration prêts 
 ```text
 ├── api/
 │   ├── chat.php                   # API REST JSON pour les messages des salons
-│   ├── lives.php                  # API REST JSON pour la liste des sessions live
-│   └── webhook-saspay.php         # Réception asynchrone des paiements SasPay
+│   └── lives.php                  # API REST JSON pour la liste des sessions live
 ├── database/
 │   └── database.sqlite            # Base de données SQLite (auto-générée & auto-seedée)
 ├── includes/
 │   ├── config.php                 # Configuration globale, sessions et constantes
 │   ├── db.php                     # Connexion PDO SQLite, migrations et seeds initiaux
 │   ├── auth.php                   # Fonctions d'authentification (login, register, logout, CSRF)
-│   ├── saspay.php                 # Passerelle de paiement SasPay (Mobile Money & Cartes)
 │   ├── flash.php                  # Gestion des notifications flash
 │   ├── header.php                 # Navigation globale avec état connecté/déconnecté
 │   └── footer.php                 # Pied de page unifié avec date dynamique

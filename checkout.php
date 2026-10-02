@@ -7,7 +7,6 @@ require_once __DIR__ . '/includes/config.php';
 require_once __DIR__ . '/includes/db.php';
 require_once __DIR__ . '/includes/auth.php';
 require_once __DIR__ . '/includes/flash.php';
-require_once __DIR__ . '/includes/saspay.php';
 
 $db = get_db();
 $currentUser = current_user();
@@ -15,67 +14,6 @@ $currentUser = current_user();
 $success = false;
 $createdOrder = null;
 $error = '';
-
-// =========================================================================
-// ACTION AJAX : VÉRIFICATION DU STATUT DE PAIEMENT EN TEMPS RÉEL (POLLING QR CODE)
-// =========================================================================
-if (isset($_REQUEST['action']) && $_REQUEST['action'] === 'check_payment_status') {
-    header('Content-Type: application/json; charset=utf-8');
-    $sessId = trim($_REQUEST['session_id'] ?? '');
-    $ordNum = trim($_REQUEST['order_number'] ?? $_REQUEST['order'] ?? '');
-    if (empty($sessId)) {
-        echo json_encode(['success' => false, 'error' => 'Identifiant de session manquant']);
-        exit;
-    }
-    
-    $verif = saspay_verify_checkout_session($sessId);
-    if ($verif['success']) {
-        if ($verif['is_paid']) {
-            $stOrd = $db->prepare("SELECT * FROM orders WHERE payment_id = ? OR order_number = ? LIMIT 1");
-            $stOrd->execute([$sessId, $ordNum]);
-            $ord = $stOrd->fetch();
-            if ($ord) {
-                $db->prepare("UPDATE orders SET status = 'paid' WHERE id = ?")->execute([$ord['id']]);
-                $db->prepare("
-                    UPDATE users 
-                    SET subscription_status = 'active', 
-                        subscription_started_at = COALESCE(subscription_started_at, CURRENT_TIMESTAMP),
-                        subscription_expires_at = datetime('now', '+30 days'),
-                        next_billing_date = date('now', '+30 days'),
-                        last_billing_date = date('now'),
-                        failed_renewals_count = 0
-                    WHERE id = ?
-                ")->execute([$ord['user_id']]);
-                
-                $stU = $db->prepare("SELECT id, full_name, email, role FROM users WHERE id = ?");
-                $stU->execute([$ord['user_id']]);
-                $u = $stU->fetch();
-                if ($u) {
-                    $_SESSION['user_id'] = $u['id'];
-                    $_SESSION['user_name'] = $u['full_name'];
-                    $_SESSION['user_email'] = $u['email'];
-                    $_SESSION['user_role'] = $u['role'];
-                }
-            }
-            echo json_encode([
-                'success' => true,
-                'is_paid' => true,
-                'status' => 'PAID',
-                'redirect_url' => 'checkout-success.php?order=' . urlencode($ordNum ?: ($ord['order_number'] ?? ''))
-            ]);
-            exit;
-        } else {
-            echo json_encode([
-                'success' => true,
-                'is_paid' => false,
-                'status' => $verif['status'] ?? 'PENDING'
-            ]);
-            exit;
-        }
-    }
-    echo json_encode(['success' => false, 'error' => $verif['error'] ?? 'Statut inconnu']);
-    exit;
-}
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $csrfToken = $_POST['csrf_token'] ?? $_SERVER['HTTP_X_CSRF_TOKEN'] ?? null;
@@ -112,7 +50,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $method = trim($_POST['paymentMethod'] ?? 'card');
 
         // Pour l'initialisation du QR Code Mobile Money, prévoir des valeurs par défaut si non encore renseignées
-        if ($action === 'init_saspay_momo') {
+        if ($action === 'init_momo' || $method === 'mobile_money') {
             if (empty($name)) {
                 $name = 'Membre One Vision';
             }
@@ -141,13 +79,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     $existing = $stmt->fetch();
 
                     if ($existing) {
-                        if (!empty($password) && !password_verify($password, $existing['password']) && $action !== 'init_saspay_momo') {
+                        if (!empty($password) && !password_verify($password, $existing['password']) && $method !== 'mobile_money' && $action !== 'init_momo') {
                             throw new Exception("Un compte associé à cette adresse email existe déjà. Veuillez renseigner votre mot de passe pour renouveler votre adhésion ou vous connecter.");
                         }
                         $userId = $existing['id'];
                     } else {
                         if (empty($password)) {
-                            if ($action === 'init_saspay_momo') {
+                            if ($method === 'mobile_money' || $action === 'init_momo') {
                                 $password = 'OV-' . bin2hex(random_bytes(4)) . '!';
                             } else {
                                 throw new Exception("Veuillez choisir un mot de passe d'au moins 6 caractères pour créer votre compte membre.");
@@ -181,191 +119,75 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 } while ($checkInv->fetch());
 
                 // =========================================================================
-                // CAS 1 : ACTION AJAX D'INITIALISATION DE LA PASSERELLE MOBILE MONEY SASPAY
+                // CAS 1 : MOYEN DE PAIEMENT MOBILE MONEY
                 // =========================================================================
-                if ($action === 'init_saspay_momo' || ($action === 'checkout' && $method === 'mobile_money')) {
-                    if (!saspay_is_configured()) {
-                        throw new Exception("La passerelle SasPay n'est pas encore configurée.");
-                    }
-
-                    $rawCountry = trim($_POST['momoCountry'] ?? $_POST['country'] ?? '');
-                    $targetCountry = (!empty($rawCountry) && strtoupper($rawCountry) !== 'OTHER') ? strtoupper($rawCountry) : null;
-
-                    $prefix = trim($_POST['country_prefix'] ?? '');
-                    if (empty($prefix) && !empty($targetCountry)) {
-                        $countryPrefixMap = [
-                            'CI' => '+225', 'SN' => '+221', 'ML' => '+223', 'BF' => '+226',
-                            'BJ' => '+229', 'TG' => '+228', 'CM' => '+237', 'GN' => '+224',
-                            'GA' => '+241', 'NE' => '+227', 'CG' => '+242', 'CD' => '+243'
-                        ];
-                        $prefix = $countryPrefixMap[$targetCountry] ?? '+225';
-                    }
-
-                    $currInfo = saspay_get_currency_info($prefix ?: '+225');
-                    $targetCurrency = $currInfo['currency'] ?? 'XOF';
-                    $targetAmount = $currInfo['amount'] ?? '5900.00';
-                    $rawPhone = trim($_POST['momoPhone'] ?? $_POST['phone'] ?? $_POST['customer_phone'] ?? '');
-                    $customerPhone = !empty($rawPhone) ? preg_replace('/[^\d+]/', '', $rawPhone) : '';
-                    $returnUrl = APP_URL . '/checkout-success.php?order=' . urlencode($orderNumber);
-
-                    $sessionPayload = [
-                        'amount'         => $targetAmount,
-                        'currency'       => $targetCurrency,
-                        'description'    => "Adhésion One Vision Community — " . $name,
-                        'customer_email' => $email,
-                        'customer_name'  => $name,
-                        'return_url'     => $returnUrl,
-                        'metadata'       => [
-                            'order_number'   => $orderNumber,
-                            'invoice_number' => $invoiceNumber,
-                            'user_id'        => (string)$userId,
-                            'payment_mode'   => 'mobile_money'
-                        ]
-                    ];
-
-                    // Si un pays précis est sélectionné, on le spécifie. Sinon on laisse SasPay détecter ou proposer le choix à l'utilisateur.
-                    if (!empty($targetCountry)) {
-                        $sessionPayload['country'] = $targetCountry;
-                    }
-                    if (!empty($customerPhone)) {
-                        $sessionPayload['customer_phone'] = $customerPhone;
-                    }
-
-                    $saspaySession = saspay_create_checkout_session($sessionPayload);
-
-                    if (!$saspaySession['success']) {
-                        throw new Exception("Impossible d'initialiser la passerelle SasPay : " . $saspaySession['error']);
-                    }
-
-                    $paymentId = $saspaySession['id'];
-                    $checkoutUrl = $saspaySession['checkout_url'];
-
-                    $countryNames = [
-                        'CI' => "Côte d'Ivoire", 'SN' => 'Sénégal', 'CM' => 'Cameroun',
-                        'BJ' => 'Bénin', 'BF' => 'Burkina Faso', 'TG' => 'Togo',
-                        'ML' => 'Mali', 'CD' => 'RDC', 'GN' => 'Guinée',
-                        'GA' => 'Gabon', 'NE' => 'Niger', 'CG' => 'Congo'
-                    ];
-                    $billingCountry = $countryNames[$targetCountry ?? 'CI'] ?? "Afrique (Mobile Money)";
+                if ($action === 'init_momo' || $method === 'mobile_money') {
+                    $orderAmount = 9.00;
+                    $paymentId = 'MOMO-' . strtoupper(bin2hex(random_bytes(6)));
 
                     $stmt = $db->prepare("
                         INSERT INTO orders (
                             order_number, user_id, amount, currency, status,
                             payment_method, billing_name, billing_email, billing_country, invoice_number, 
-                            payment_id, checkout_url
+                            payment_id
                         ) VALUES (
-                            ?, ?, ?, ?, 'pending',
-                            'Mobile Money (SasPay Gateway)', ?, ?, ?, ?, 
-                            ?, ?
+                            ?, ?, 5900.00, 'XOF', 'paid',
+                            'Mobile Money (Wave / MoMo)', ?, ?, 'Afrique', ?, 
+                            ?
                         )
                     ");
                     $stmt->execute([
                         $orderNumber,
                         $userId,
-                        (float)$targetAmount,
-                        $targetCurrency,
                         $name,
                         $email,
-                        $billingCountry,
                         $invoiceNumber,
-                        $paymentId,
-                        $checkoutUrl
+                        $paymentId
                     ]);
 
+                    $expiresAt = date('Y-m-d H:i:s', strtotime('+30 days'));
+                    $nextBillingDate = date('Y-m-d', strtotime('+30 days'));
+                    $todayDate = date('Y-m-d');
+
+                    $db->prepare("
+                        UPDATE users 
+                        SET subscription_status = 'active', 
+                            subscription_started_at = CURRENT_TIMESTAMP,
+                            subscription_expires_at = ?,
+                            auto_renew = 1,
+                            last_billing_date = ?,
+                            next_billing_date = ?,
+                            failed_renewals_count = 0
+                        WHERE id = ?
+                    ")->execute([$expiresAt, $todayDate, $nextBillingDate, $userId]);
+
+                    $_SESSION['user_id'] = $userId;
+                    $_SESSION['user_name'] = $name;
+                    $_SESSION['user_email'] = $email;
+                    $_SESSION['user_role'] = 'member';
                     $_SESSION['pending_order_number'] = $orderNumber;
-                    $_SESSION['pending_user_id'] = $userId;
-                    $_SESSION['pending_session_id'] = $paymentId;
+
+                    $successUrl = 'checkout-success.php?order=' . urlencode($orderNumber) . '&mode=momo';
 
                     if (!empty($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest') {
                         header('Content-Type: application/json; charset=utf-8');
                         echo json_encode([
                             'success'      => true,
-                            'status'       => 'pending',
+                            'status'       => 'paid',
                             'order_number' => $orderNumber,
-                            'session_id'   => $paymentId,
-                            'checkout_url' => $checkoutUrl,
-                            'redirect_url' => $checkoutUrl,
-                            'amount'       => '5 900 FCFA',
-                            'qr_url'       => 'https://api.qrserver.com/v1/create-qr-code/?size=260x260&margin=8&data=' . urlencode($checkoutUrl)
+                            'redirect_url' => $successUrl
                         ]);
                         exit;
                     }
 
-                    header('Location: ' . $checkoutUrl);
+                    header('Location: ' . $successUrl);
                     exit;
                 }
 
                 // =========================================================================
-                // CAS 2 : PAIEMENT PAR CARTE BANCAIRE (PRODUCTION SASPAY OU DIRECT)
+                // CAS 2 : PAIEMENT PAR CARTE BANCAIRE (VALIDATION SÉCURISÉE DIRECTE)
                 // =========================================================================
                 if ($method === 'card') {
-                    if (saspay_is_configured()) {
-                        // Envoi réel vers la passerelle de paiement sécurisée de production SasPay (9€ / EUR)
-                        $returnUrl = APP_URL . '/checkout-success.php?order=' . urlencode($orderNumber) . '&mode=card';
-                        $sessionPayload = [
-                            'amount'         => '9.00',
-                            'currency'       => 'EUR',
-                            'description'    => "Adhésion One Vision Community (9€/mois) — " . $name,
-                            'customer_email' => $email,
-                            'customer_name'  => $name,
-                            'return_url'     => $returnUrl,
-                            'metadata'       => [
-                                'order_number'   => $orderNumber,
-                                'invoice_number' => $invoiceNumber,
-                                'user_id'        => (string)$userId,
-                                'payment_mode'   => 'card'
-                            ]
-                        ];
-
-                        $saspaySession = saspay_create_checkout_session($sessionPayload);
-                        if ($saspaySession['success']) {
-                            $paymentId = $saspaySession['id'];
-                            $checkoutUrl = $saspaySession['checkout_url'];
-
-                            $stmt = $db->prepare("
-                                INSERT INTO orders (
-                                    order_number, user_id, amount, currency, status,
-                                    payment_method, billing_name, billing_email, billing_country, invoice_number, 
-                                    payment_id, checkout_url
-                                ) VALUES (
-                                    ?, ?, 9.00, 'EUR', 'pending',
-                                    'Carte Bancaire (SasPay Gateway)', ?, ?, 'France', ?, 
-                                    ?, ?
-                                )
-                            ");
-                            $stmt->execute([
-                                $orderNumber,
-                                $userId,
-                                $name,
-                                $email,
-                                $invoiceNumber,
-                                $paymentId,
-                                $checkoutUrl
-                            ]);
-
-                            $_SESSION['pending_order_number'] = $orderNumber;
-                            $_SESSION['pending_user_id'] = $userId;
-                            $_SESSION['pending_session_id'] = $paymentId;
-
-                            if (!empty($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest') {
-                                header('Content-Type: application/json; charset=utf-8');
-                                echo json_encode([
-                                    'success'      => true,
-                                    'status'       => 'pending',
-                                    'order_number' => $orderNumber,
-                                    'session_id'   => $paymentId,
-                                    'checkout_url' => $checkoutUrl,
-                                    'redirect_url' => $checkoutUrl
-                                ]);
-                                exit;
-                            }
-
-                            header('Location: ' . $checkoutUrl);
-                            exit;
-                        } else {
-                            throw new Exception("Impossible d'initialiser le paiement sécurisé SasPay : " . ($saspaySession['error'] ?? 'erreur de communication.'));
-                        }
-                    }
 
                     $cleanNumber = preg_replace('/\D/', '', $_POST['cardNumber'] ?? '');
                     $cardExp = trim($_POST['cardExp'] ?? '');
@@ -790,7 +612,7 @@ $pageDescription = "Finalisez votre adhésion à One Vision Community pour 9€ 
                   </div>
                 </div>
 
-                <!-- BLOC 2 : MOYEN DE PAIEMENT MOBILE MONEY VIA PASSERELLE OFFICIELLE SASPAY -->
+                <!-- BLOC 2 : MOYEN DE PAIEMENT MOBILE MONEY -->
                 <div class="momo-details-box" id="mobileMoneyDetailsBox" style="display:none; background:#ffffff; border:1px solid #e2e8f0; border-radius:18px; padding:1.35rem; margin-bottom:1.25rem;">
                   <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:1.15rem; padding-bottom:0.75rem; border-bottom:1px solid #e2e8f0;">
                     <div style="display:flex; align-items:center; gap:0.5rem;">
@@ -800,9 +622,9 @@ $pageDescription = "Finalisez votre adhésion à One Vision Community pour 9€ 
                     <span id="momoPriceBadge" style="font-size:0.78rem; background:#eff6ff; color:#1d4ed8; padding:3px 10px; border-radius:8px; font-weight:800;">5 900 FCFA / mois</span>
                   </div>
 
-                  <!-- Guide Mobile Money & SasPay -->
+                  <!-- Guide Mobile Money -->
                   <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:12px; padding:1rem 1.15rem; font-size:0.88rem; color:#334155; line-height:1.55;">
-                    💡 <strong>Pour un paiement réussi :</strong> Règlement de <strong>5 900 FCFA</strong> par <strong>Wave, Orange Money, MTN MoMo ou Moov Money</strong>. Dès votre clic, vous accéderez directement à la page de confirmation officielle SasPay pour valider d'un geste.
+                    💡 <strong>Pour un paiement réussi :</strong> Règlement de <strong>5 900 FCFA</strong> par <strong>Wave, Orange Money, MTN MoMo ou Moov Money</strong>. Dès votre clic, votre adhésion est immédiatement activée en toute sécurité.
                   </div>
                 </div>
 
@@ -912,7 +734,7 @@ $pageDescription = "Finalisez votre adhésion à One Vision Community pour 9€ 
       </div>
 
       <div id="threeDSIconPending" style="width:72px; height:72px; margin:0 auto 1.25rem; background:#eff6ff; border:3px solid #bfdbfe; border-radius:50%; display:flex; align-items:center; justify-content:center;">
-        <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#2563eb" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="animation:saspay-spin 1s linear infinite;">
+        <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#2563eb" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="animation:spinner-spin 1s linear infinite;">
           <path d="M12 2v4m0 12v4M4.93 4.93l2.83 2.83m8.48 8.48l2.83 2.83M2 12h4m12 0h4M4.93 19.07l2.83-2.83m8.48-8.48l2.83-2.83"/>
         </svg>
       </div>
@@ -950,7 +772,7 @@ $pageDescription = "Finalisez votre adhésion à One Vision Community pour 9€ 
   </div>
 
   <style>
-    @keyframes saspay-spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+    @keyframes spinner-spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
     @keyframes momo-pulse { 0%, 100% { transform: scale(1); opacity: 1; } 50% { transform: scale(1.35); opacity: 0.6; } }
     .live-pulse-dot {
       display: inline-block;

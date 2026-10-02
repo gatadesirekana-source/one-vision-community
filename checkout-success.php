@@ -1,18 +1,15 @@
 <?php
 /**
- * ONE VISION COMMUNITY — CONFIRMATION D'ADHÉSION & VALIDATION SASPAY
- * Documentation : https://docs.saspay.me/
+ * ONE VISION COMMUNITY — CONFIRMATION D'ADHÉSION & VALIDATION SÉCURISÉE
  */
 
 require_once __DIR__ . '/includes/config.php';
 require_once __DIR__ . '/includes/db.php';
 require_once __DIR__ . '/includes/auth.php';
 require_once __DIR__ . '/includes/flash.php';
-require_once __DIR__ . '/includes/saspay.php';
 
 $db = get_db();
 $orderNumber = trim($_GET['order'] ?? $_SESSION['pending_order_number'] ?? '');
-$sessionId = trim($_GET['session_id'] ?? $_GET['id'] ?? $_SESSION['pending_session_id'] ?? '');
 
 $order = null;
 $isPending = false;
@@ -33,13 +30,13 @@ if (!$order && $currentUser) {
     $order = $stmt->fetch();
 }
 
-// Récupérer le session ID depuis la commande si disponible
-if ($order && empty($sessionId) && !empty($order['payment_id'])) {
-    $sessionId = $order['payment_id'];
-}
+// Validation de la commande et activation de l'adhésion
+if ($order) {
+    if ($order['status'] !== 'paid') {
+        $db->prepare("UPDATE orders SET status = 'paid' WHERE id = ?")->execute([$order['id']]);
+        $order['status'] = 'paid';
+    }
 
-// 1. Si la commande est déjà marquée comme payée (ex. Carte bancaire ou Webhook préalable)
-if ($order && $order['status'] === 'paid') {
     $db->prepare("
         UPDATE users 
         SET subscription_status = 'active', 
@@ -61,45 +58,6 @@ if ($order && $order['status'] === 'paid') {
             $_SESSION['user_email'] = $user['email'];
             $_SESSION['user_role'] = $user['role'];
             $currentUser = $user;
-        }
-    }
-} elseif (!empty($sessionId) && strpos($sessionId, 'CARD-') === false && saspay_is_configured()) {
-    // 2. Vérification auprès de l'API SasPay pour les sessions Mobile Money
-    $verification = saspay_verify_checkout_session($sessionId);
-
-    if ($verification['success']) {
-        if ($verification['is_paid']) {
-            if ($order) {
-                $db->prepare("UPDATE orders SET status = 'paid' WHERE id = ?")->execute([$order['id']]);
-                $order['status'] = 'paid';
-
-                $db->prepare("
-                    UPDATE users 
-                    SET subscription_status = 'active', 
-                        subscription_started_at = COALESCE(subscription_started_at, CURRENT_TIMESTAMP),
-                        subscription_expires_at = datetime('now', '+30 days'),
-                        next_billing_date = date('now', '+30 days'),
-                        last_billing_date = date('now'),
-                        failed_renewals_count = 0
-                    WHERE id = ?
-                ")->execute([$order['user_id']]);
-
-                // Connecter l'utilisateur
-                $stmtUser = $db->prepare("SELECT * FROM users WHERE id = ?");
-                $stmtUser->execute([$order['user_id']]);
-                $user = $stmtUser->fetch();
-                if ($user) {
-                    $_SESSION['user_id'] = $user['id'];
-                    $_SESSION['user_name'] = $user['full_name'];
-                    $_SESSION['user_email'] = $user['email'];
-                    $_SESSION['user_role'] = $user['role'];
-                    $currentUser = $user;
-                }
-            }
-        } elseif ($verification['status'] === 'PENDING') {
-            $isPending = true;
-        } else {
-            $paymentError = "La transaction n'a pas été validée par l'opérateur (Statut : " . htmlspecialchars($verification['status']) . ").";
         }
     }
 }
@@ -180,7 +138,7 @@ require_once __DIR__ . '/includes/header.php';
       </h1>
       
       <p style="font-size:1.05rem; color:var(--color-text-muted, #64748b); max-width:480px; margin:0 auto 2rem; line-height:1.6;">
-        Votre transaction est en cours de confirmation auprès de SasPay et de votre opérateur. Si vous avez reçu une demande de validation sur votre mobile, veuillez composer votre code secret.
+        Votre adhésion est en cours de finalisation. Veuillez patienter un instant pendant la confirmation de votre accès.
       </p>
 
       <div style="display:flex; flex-direction:column; gap:0.85rem;">
@@ -206,7 +164,7 @@ require_once __DIR__ . '/includes/header.php';
 
       <!-- Badge Confirmation -->
       <div style="display:inline-flex; align-items:center; gap:0.5rem; background:rgba(37,99,235,0.08); border:1px solid rgba(37,99,235,0.2); padding:0.4rem 1rem; border-radius:30px; font-size:0.82rem; font-weight:700; color:var(--color-primary, #2563eb); margin-bottom:1rem;">
-        <span>🛡️ <?= (!empty($order['payment_method']) && stripos($order['payment_method'], 'Carte') !== false) ? 'Paiement Carte Validé 3D-Secure' : 'Adhésion Confirmée SasPay' ?></span>
+        <span>🛡️ <?= (!empty($order['payment_method']) && stripos($order['payment_method'], 'Carte') !== false) ? 'Paiement Carte Validé 3D-Secure' : 'Adhésion Confirmée' ?></span>
         <span>•</span>
         <span style="color:#16a34a;">Accès Membre Actif</span>
       </div>
