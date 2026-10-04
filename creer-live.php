@@ -98,16 +98,88 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 }
 
+$isCreateLivePage = true;
 $pageTitle = "Créer un Live ou un Mastermind — One Vision Community";
 $pageDescription = "Proposez une session live ou un retour d'expérience à la communauté. Enregistrement direct dans le calendrier officiel des membres.";
 $bodyClass = "create-live-body";
 
+// Vérification de la formule : la création est réservée à la formule Créateur (29€/mois) ou admin/speaker
+$userPlan = $currentUser['subscription_plan'] ?? 'member';
+$isAdminOrSpeaker = in_array($currentUser['role'] ?? '', ['admin', 'speaker'], true);
+
+// Permettre au testeur/admin de basculer facilement de rôle en local
+if (isset($_GET['test_plan'])) {
+    $sw = ($_GET['test_plan'] === 'creator') ? 'creator' : 'member';
+    $db->prepare("UPDATE users SET subscription_plan = ? WHERE id = ?")->execute([$sw, $currentUser['id']]);
+    header('Location: creer-live.php');
+    exit;
+}
+
+$isCreator = ($userPlan === 'creator') || $isAdminOrSpeaker;
+
 require_once __DIR__ . '/includes/header.php';
 ?>
+
+  <!-- MODAL DE CONFIRMATION D'ABANDON DE CRÉATION DE LIVE -->
+  <div id="confirmQuitLiveModal" style="display:none; position:fixed; inset:0; z-index:99999; background:rgba(15,23,42,0.65); backdrop-filter:blur(5px); align-items:center; justify-content:center; padding:1.25rem;">
+    <div style="background:#ffffff; border-radius:20px; max-width:440px; width:100%; padding:2rem 1.75rem; box-shadow:0 25px 50px -12px rgba(0,0,0,0.25); text-align:center; border:1px solid #e2e8f0;">
+      <div style="width:60px; height:60px; margin:0 auto 1.15rem; background:#fee2e2; border-radius:50%; display:flex; align-items:center; justify-content:center; color:#dc2626;">
+        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="10"></circle>
+          <line x1="12" y1="8" x2="12" y2="12"></line>
+          <line x1="12" y1="16" x2="12.01" y2="16"></line>
+        </svg>
+      </div>
+      <h3 style="font-size:1.25rem; font-weight:800; color:#0f172a; margin-bottom:0.5rem;">Êtes-vous sûr de quitter ?</h3>
+      <p style="font-size:0.88rem; color:#64748b; line-height:1.55; margin-bottom:1.5rem;">
+        Si vous quittez maintenant, la création de votre live ou mastermind sera annulée et toutes les informations saisies seront effacées.
+      </p>
+      <div style="display:flex; justify-content:center; gap:0.75rem;">
+        <button type="button" class="btn btn-secondary" id="btnStayOnCreatePage" style="padding:0.6rem 1.15rem; font-weight:700;">
+          Rester sur la page
+        </button>
+        <button type="button" class="btn btn-danger" id="btnConfirmQuitToDashboard" style="padding:0.6rem 1.15rem; font-weight:700; background:#dc2626; color:#ffffff; border:none; border-radius:10px; cursor:pointer;">
+          Oui, quitter
+        </button>
+      </div>
+    </div>
+  </div>
 
   <!-- CONTENU PRINCIPAL : CRÉATION DU LIVE & APERÇU EN DIRECT -->
   <main class="create-live-main section">
     <div class="container">
+
+      <?php if (!$isCreator): ?>
+        <!-- ÉCRAN DE BLOCAGE POUR LES MEMBRES FORMULE 9€/MOIS (UPGRADE 29€/MOIS CRÉATEUR) -->
+        <div class="creator-plan-lock-card" style="max-width:760px; margin:2rem auto; background:#ffffff; border:2px solid #e2e8f0; border-radius:24px; padding:2.85rem 2rem; text-align:center; box-shadow:0 15px 40px rgba(0,0,0,0.06);">
+          <div style="width:72px; height:72px; border-radius:50%; background:#fef3c7; color:#d97706; display:flex; align-items:center; justify-content:center; margin:0 auto 1.35rem; font-size:2.2rem;">
+            🎙️
+          </div>
+          <span style="display:inline-block; font-size:0.78rem; font-weight:800; text-transform:uppercase; letter-spacing:0.5px; background:#eff6ff; color:#2563eb; padding:4px 12px; border-radius:99px; margin-bottom:0.75rem;">
+            Formule Créateur requise (29 € / mois)
+          </span>
+          <h2 style="font-size:1.75rem; font-weight:800; color:#0f172a; margin-bottom:0.85rem;">
+            Animez vos propres Lives & Masterminds
+          </h2>
+          <p style="font-size:0.95rem; color:#64748b; line-height:1.6; max-width:580px; margin:0 auto 1.65rem;">
+            Votre formule actuelle <strong>Membre Illimité (9€/mois)</strong> vous permet d'assister à tous les lives, masterminds, salons et replays en tant que participant. Pour programmer vos propres ateliers, animer des sessions et accroître votre visibilité auprès des <strong>+1 200 entrepreneurs</strong> de la communauté, passez à la formule <strong>Créateur (29€/mois)</strong> !
+          </p>
+
+          <div style="display:flex; justify-content:center; gap:0.85rem; flex-wrap:wrap; margin-bottom:1.75rem;">
+            <a href="checkout.php?plan=creator" class="btn btn-primary btn-lg" style="text-decoration:none;">
+              <span>Passer à la Formule Créateur (29€/mois)</span>
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
+            </a>
+            <a href="dashboard.php" class="btn btn-secondary btn-lg" style="text-decoration:none;">
+              <span>Retour à mon espace</span>
+            </a>
+          </div>
+
+          <div style="font-size:0.82rem; color:#94a3b8; border-top:1px solid #f1f5f9; padding-top:1.25rem;">
+            💡 <em>Mode Démonstration & Test local :</em> <a href="creer-live.php?test_plan=creator" style="color:#2563eb; font-weight:700; text-decoration:underline;">Activer le rôle Créateur pour mon compte</a>
+          </div>
+        </div>
+      <?php else: ?>
 
       <!-- En-tête de la page -->
       <div class="create-live-intro">
@@ -501,6 +573,8 @@ require_once __DIR__ . '/includes/header.php';
         </div>
 
       </div>
+
+      <?php endif; ?>
 
     </div>
   </main>

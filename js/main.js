@@ -32,6 +32,7 @@ document.addEventListener('DOMContentLoaded', () => {
   initTestimonialsCarousel();
   initSmoothScroll();
   initCheckoutPage();
+  initCheckoutSummaryCarousel();
   initDashboard();
   initCreateLivePage();
 });
@@ -164,7 +165,8 @@ const LIVES_DATA = {
       desc: "Étude concrète du tunnel d'acquisition organique de Julien, membre de la Community. Questions & réponses ouvertes.",
       author: "Julien B.",
       role: "Fondateur SaaS & Coach B2B",
-      initials: "JB"
+      initials: "JB",
+      avatar: "./img/avatar-julien.jpg"
     },
     {
       tag: "Atelier Collaboratif",
@@ -173,7 +175,8 @@ const LIVES_DATA = {
       desc: "Session de review bienveillante : 4 volontaires présentent leur projet et reçoivent des retours critiques immédiats.",
       author: "Sophie M.",
       role: "Copywriter & Stratège",
-      initials: "SM"
+      initials: "SM",
+      avatar: "./img/avatar-sophie.jpg"
     },
     {
       tag: "Live Q&A",
@@ -182,7 +185,8 @@ const LIVES_DATA = {
       desc: "Le rendez-vous hebdomadaire sans filtre pour partager ses blocages, célébrer ses victoires et planifier sa semaine.",
       author: "Thomas R.",
       role: "Coach en leadership",
-      initials: "TR"
+      initials: "TR",
+      avatar: "./img/avatar-thomas.jpg"
     }
   ],
   upcoming: [
@@ -193,7 +197,8 @@ const LIVES_DATA = {
       desc: "Gagnez 10h par semaine grâce à des workflows simples et reproductibles sans aucune compétence technique préalable.",
       author: "Alexandre L.",
       role: "Expert No-Code",
-      initials: "AL"
+      initials: "AL",
+      avatar: "./img/avatar-alexandre.jpg"
     },
     {
       tag: "Pitch & Networking",
@@ -202,7 +207,8 @@ const LIVES_DATA = {
       desc: "3 minutes par salle tournante pour présenter son projet, échanger ses compétences et déceler des synergies immédiates.",
       author: "Clara D.",
       role: "Community Manager",
-      initials: "CD"
+      initials: "CD",
+      avatar: "./img/avatar-clara.jpg"
     },
     {
       tag: "Masterclass Vente",
@@ -211,7 +217,8 @@ const LIVES_DATA = {
       desc: "Démonstrations en direct d'appels de découverte et psychologie de conversion pour les coachs et indépendants.",
       author: "Marc V.",
       role: "Mentor Vente Haute Valeur",
-      initials: "MV"
+      initials: "MV",
+      avatar: "./img/avatar-marc.jpg"
     }
   ],
   replays: [
@@ -222,7 +229,8 @@ const LIVES_DATA = {
       desc: "Plus de 450 vues en rediffusion. Fiche modèle de contrat et simulateur de rentabilité téléchargeable inclus.",
       author: "Élodie P.",
       role: "Coach Business",
-      initials: "EP"
+      initials: "EP",
+      avatar: "./img/avatar-elodie.jpg"
     },
     {
       tag: "Masterclass Replay",
@@ -231,7 +239,8 @@ const LIVES_DATA = {
       desc: "Les 5 piliers psychologiques pour fidéliser ses premiers membres et générer du bouche-à-oreille naturel.",
       author: "Karim T.",
       role: "Créateur de communauté",
-      initials: "KT"
+      initials: "KT",
+      avatar: "./img/avatar-karim.jpg"
     },
     {
       tag: "Atelier Replay",
@@ -240,7 +249,8 @@ const LIVES_DATA = {
       desc: "Workflow d'enregistrement, outils gratuits et stratégie d'invitation pour attirer des profils inspirants.",
       author: "Sarah N.",
       role: "Podcasteuse & Consultante",
-      initials: "SN"
+      initials: "SN",
+      avatar: "./img/avatar-sarahn.jpg"
     }
   ]
 };
@@ -284,7 +294,7 @@ function initLiveScheduleTabs() {
         ? `<div class="live-community-badge">🤝 Proposé par un membre</div>` 
         : '';
       const avatarHtml = item.avatar 
-        ? `<div class="host-avatar-img"><img src="${item.avatar}" alt="${item.author}"></div>`
+        ? `<div class="host-avatar-img"><img src="${item.avatar}" alt="${item.author}" loading="lazy" onerror="this.parentElement.className='host-avatar'; this.parentElement.textContent='${item.initials || 'OV'}';"></div>`
         : `<div class="host-avatar">${item.initials}</div>`;
 
       return `
@@ -519,7 +529,7 @@ function initCheckoutModal() {
       } else {
         headerBtn.className = 'btn btn-primary open-checkout-btn';
         headerBtn.innerHTML = `
-          <span>Rejoindre pour 9€/mois</span>
+          <span>Rejoindre le réseau</span>
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
             <line x1="5" y1="12" x2="19" y2="12"></line>
             <polyline points="12 5 19 12 12 19"></polyline>
@@ -542,7 +552,7 @@ function initCheckoutModal() {
       } else {
         heroBtn.className = 'btn btn-primary btn-lg btn-pulse open-checkout-btn';
         heroBtn.innerHTML = `
-          <span>Rejoindre One Vision Community — 9€/mois</span>
+          <span>Rejoindre le réseau</span>
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
             <line x1="5" y1="12" x2="19" y2="12"></line>
             <polyline points="12 5 19 12 12 19"></polyline>
@@ -569,7 +579,7 @@ function initCheckoutModal() {
       } else {
         pricingBtn.className = 'btn btn-primary open-checkout-btn';
         pricingBtn.style.width = '100%';
-        pricingBtn.innerHTML = `Rejoindre pour 9€/mois`;
+        pricingBtn.innerHTML = `Rejoindre le réseau`;
       }
     }
 
@@ -625,17 +635,19 @@ function initCheckoutModal() {
 
     if (targetLogin) {
       e.preventDefault();
-      if (isPhpEnvironment()) {
-        window.location.href = 'login.php';
-        return;
-      }
-      const hasPaid = localStorage.getItem('ov_has_paid') === 'true';
-      if (hasPaid) {
-        window.location.href = getAppUrl('dashboard.html');
-      } else {
-        openModal('login');
-      }
+      openModal('login');
       return;
+
+
+
+
+
+
+
+
+
+
+
     }
   });
 
@@ -1586,14 +1598,124 @@ function initCheckoutPage() {
   if (savedName && nameInput && !nameInput.value) nameInput.value = savedName;
   if (savedEmail && emailInput && !emailInput.value) emailInput.value = savedEmail;
 
+  // Gestion dynamique de la formule d'adhésion (Membre 9€ vs Créateur 29€)
+  const planRadioMember = document.getElementById('radioPlanMember');
+  const planRadioCreator = document.getElementById('radioPlanCreator');
+  const planOptionMember = document.getElementById('planOptionMember');
+  const planOptionCreator = document.getElementById('planOptionCreator');
+  const subscriptionPlanInput = document.getElementById('subscriptionPlanInput');
+
+  let currentPlan = 'member';
+  try {
+    const urlParams = new URLSearchParams(window.location.search);
+    const urlPlan = urlParams.get('plan');
+    if (urlPlan === 'creator' || window.location.hash.includes('creator') || (subscriptionPlanInput && subscriptionPlanInput.value === 'creator') || (planRadioCreator && planRadioCreator.checked)) {
+      currentPlan = 'creator';
+    }
+  } catch (e) {}
+
   // 1. Mise à jour dynamique du libellé du bouton de paiement
   function updateSubmitButtonLabel() {
     if (!submitText) return;
+    const isCreator = (currentPlan === 'creator');
     if (currentPaymentMethod === 'card') {
-      submitText.textContent = "Payer 9,00 € par Carte Bancaire";
+      submitText.textContent = isCreator ? "Payer 29,00 € par Carte Bancaire" : "Payer 9,00 € par Carte Bancaire";
     } else {
-      submitText.textContent = "Valider mon adhésion (5 900 FCFA)";
+      submitText.textContent = isCreator ? "Valider mon adhésion (19 000 FCFA)" : "Valider mon adhésion (5 900 FCFA)";
     }
+  }
+
+  function setSubscriptionPlan(plan) {
+    currentPlan = (plan === 'creator') ? 'creator' : 'member';
+    if (subscriptionPlanInput) {
+      subscriptionPlanInput.value = currentPlan;
+    }
+
+    if (planOptionMember && planOptionCreator) {
+      if (currentPlan === 'creator') {
+        planOptionCreator.classList.add('selected');
+        planOptionCreator.style.borderColor = '#e63946';
+        planOptionCreator.style.background = '#fff7ed';
+
+        planOptionMember.classList.remove('selected');
+        planOptionMember.style.borderColor = '#e2e8f0';
+        planOptionMember.style.background = '#ffffff';
+
+        if (planRadioCreator) planRadioCreator.checked = true;
+        if (planRadioMember) planRadioMember.checked = false;
+      } else {
+        planOptionMember.classList.add('selected');
+        planOptionMember.style.borderColor = '#2563eb';
+        planOptionMember.style.background = '#f0f7ff';
+
+        planOptionCreator.classList.remove('selected');
+        planOptionCreator.style.borderColor = '#e2e8f0';
+        planOptionCreator.style.background = '#ffffff';
+
+        if (planRadioMember) planRadioMember.checked = true;
+        if (planRadioCreator) planRadioCreator.checked = false;
+      }
+    }
+
+    // Mise à jour des éléments du récapitulatif Slide 0
+    const summaryPillTitle = document.getElementById('summaryPillTitle');
+    const summaryFeatureHost = document.getElementById('summaryFeatureHost');
+    const summaryPriceVal = document.getElementById('summaryPriceVal');
+    const summaryTotalAmount = document.getElementById('summaryTotalAmount');
+    const summarySubtotalAmount = document.getElementById('summarySubtotalAmount');
+    const summaryPeriodText = document.getElementById('summaryPeriodText');
+    const summaryCardPriceNotice = document.getElementById('summaryCardPriceNotice');
+    const step1PlanLabel = document.getElementById('step1PlanLabel');
+
+    if (summaryPillTitle) {
+      summaryPillTitle.textContent = (currentPlan === 'creator') ? "Adhésion Créateur Host" : "Accès Membre Illimité";
+    }
+    if (summaryFeatureHost) {
+      summaryFeatureHost.style.display = (currentPlan === 'creator') ? 'flex' : 'none';
+    }
+    if (summaryPriceVal) {
+      summaryPriceVal.innerHTML = (currentPlan === 'creator') 
+        ? '29,00 € <small id="summaryPriceXofVal">(~19 000 FCFA)</small>' 
+        : '9,00 € <small id="summaryPriceXofVal">(~5 900 FCFA)</small>';
+    }
+    if (summaryTotalAmount) {
+      summaryTotalAmount.innerHTML = (currentPlan === 'creator') 
+        ? '29,00 € <span class="recur-text">/ mois</span>' 
+        : '9,00 € <span class="recur-text">/ mois</span>';
+    }
+    if (summarySubtotalAmount) {
+      summarySubtotalAmount.textContent = (currentPlan === 'creator') ? '29,00 €' : '9,00 €';
+    }
+    if (summaryPeriodText) {
+      summaryPeriodText.textContent = (currentPlan === 'creator') ? 'Facturé 29,00 € / mois • Sans engagement' : 'Facturé 9,00 € / mois • Sans engagement';
+    }
+    if (summaryCardPriceNotice) {
+      summaryCardPriceNotice.textContent = (currentPlan === 'creator') ? '29,00 € / mois' : '9,00 € / mois';
+    }
+    if (step1PlanLabel) {
+      step1PlanLabel.textContent = (currentPlan === 'creator') ? 'Formule Créateur Host (29€/mois)' : 'Formule Membre Illimité (9€/mois)';
+    }
+
+    // Mise à jour badge Mobile Money
+    if (momoPriceBadge) {
+      momoPriceBadge.textContent = (currentPlan === 'creator') ? "19 000 FCFA / mois" : "5 900 FCFA / mois";
+    }
+
+    // Mise à jour du bouton d'action
+    updateSubmitButtonLabel();
+  }
+
+  if (planOptionMember) {
+    planOptionMember.addEventListener('click', () => setSubscriptionPlan('member'));
+  }
+  if (planOptionCreator) {
+    planOptionCreator.addEventListener('click', () => setSubscriptionPlan('creator'));
+  }
+  if (planRadioMember) {
+    planRadioMember.addEventListener('change', () => setSubscriptionPlan('member'));
+  }
+  if (planRadioCreator) {
+    planRadioCreator.addEventListener('change', () => setSubscriptionPlan('creator'));
   }
 
   // Écoute du changement de pays pour Mobile Money
@@ -1635,11 +1757,11 @@ function initCheckoutPage() {
       const curr = getCurrencyInfoByPrefix(prefix);
       if (momoPriceBadge) {
         if (curr.currency === 'XOF' || curr.currency === 'XAF') {
-          momoPriceBadge.textContent = "5 900 FCFA / mois";
+          momoPriceBadge.textContent = (currentPlan === 'creator') ? "19 000 FCFA / mois" : "5 900 FCFA / mois";
         } else if (curr.currency === 'CDF') {
-          momoPriceBadge.textContent = "25 000 CDF / mois";
+          momoPriceBadge.textContent = (currentPlan === 'creator') ? "79 000 CDF / mois" : "25 000 CDF / mois";
         } else if (curr.currency === 'GNF') {
-          momoPriceBadge.textContent = "85 000 GNF / mois";
+          momoPriceBadge.textContent = (currentPlan === 'creator') ? "270 000 GNF / mois" : "85 000 GNF / mois";
         } else {
           momoPriceBadge.textContent = curr.amount + " " + curr.currency + " / mois";
         }
@@ -1649,24 +1771,30 @@ function initCheckoutPage() {
 
   // Conversion de l'indicatif téléphonique vers pays, devise et montant
   function getCurrencyInfoByPrefix(prefix) {
+    const isCreator = (currentPlan === 'creator');
+    const xofAmount = isCreator ? '19000.00' : '5900.00';
+    const cdfAmount = isCreator ? '79000.00' : '25000.00';
+    const gnfAmount = isCreator ? '270000.00' : '85000.00';
+    const eurAmount = isCreator ? '29.00' : '9.00';
+
     const map = {
-      '+225': { country: 'CI', currency: 'XOF', amount: '5900.00' },
-      '+237': { country: 'CM', currency: 'XAF', amount: '5900.00' },
-      '+221': { country: 'SN', currency: 'XOF', amount: '5900.00' },
-      '+229': { country: 'BJ', currency: 'XOF', amount: '5900.00' },
-      '+226': { country: 'BF', currency: 'XOF', amount: '5900.00' },
-      '+243': { country: 'CD', currency: 'CDF', amount: '25000.00' },
-      '+242': { country: 'CG', currency: 'XAF', amount: '5900.00' },
-      '+223': { country: 'ML', currency: 'XOF', amount: '5900.00' },
-      '+228': { country: 'TG', currency: 'XOF', amount: '5900.00' },
-      '+224': { country: 'GN', currency: 'GNF', amount: '85000.00' },
-      '+241': { country: 'GA', currency: 'XAF', amount: '5900.00' },
-      '+227': { country: 'NE', currency: 'XOF', amount: '5900.00' },
-      '+33':  { country: 'FR', currency: 'EUR', amount: '9.00' },
-      '+32':  { country: 'BE', currency: 'EUR', amount: '9.00' },
-      '+41':  { country: 'CH', currency: 'EUR', amount: '9.00' }
+      '+225': { country: 'CI', currency: 'XOF', amount: xofAmount },
+      '+237': { country: 'CM', currency: 'XAF', amount: xofAmount },
+      '+221': { country: 'SN', currency: 'XOF', amount: xofAmount },
+      '+229': { country: 'BJ', currency: 'XOF', amount: xofAmount },
+      '+226': { country: 'BF', currency: 'XOF', amount: xofAmount },
+      '+243': { country: 'CD', currency: 'CDF', amount: cdfAmount },
+      '+242': { country: 'CG', currency: 'XAF', amount: xofAmount },
+      '+223': { country: 'ML', currency: 'XOF', amount: xofAmount },
+      '+228': { country: 'TG', currency: 'XOF', amount: xofAmount },
+      '+224': { country: 'GN', currency: 'GNF', amount: gnfAmount },
+      '+241': { country: 'GA', currency: 'XAF', amount: xofAmount },
+      '+227': { country: 'NE', currency: 'XOF', amount: xofAmount },
+      '+33':  { country: 'FR', currency: 'EUR', amount: eurAmount },
+      '+32':  { country: 'BE', currency: 'EUR', amount: eurAmount },
+      '+41':  { country: 'CH', currency: 'EUR', amount: eurAmount }
     };
-    return map[prefix] || { country: 'CI', currency: 'XOF', amount: '5900.00' };
+    return map[prefix] || { country: 'CI', currency: 'XOF', amount: xofAmount };
   }
 
   // 2. Gestion de l'habillage visuel de l'opérateur sélectionné
@@ -2233,7 +2361,7 @@ function initCheckoutPage() {
         if (threeDSIconPending) threeDSIconPending.style.display = 'flex';
         if (threeDSIconSuccess) threeDSIconSuccess.style.display = 'none';
         if (threeDSTitle) threeDSTitle.textContent = "Authentification 3D-Secure" + (detectedBrand !== 'Carte' ? ' ' + detectedBrand : '');
-        if (threeDSDesc) threeDSDesc.innerHTML = "Communication sécurisée avec votre banque émettrice pour autoriser le règlement de <strong>9,00 €</strong>...";
+        if (threeDSDesc) threeDSDesc.innerHTML = "Communication sécurisée avec votre banque émettrice pour autoriser le règlement de <strong>" + (currentPlan === 'creator' ? '29,00 €' : '9,00 €') + "</strong>...";
         if (threeDSProgressFill) threeDSProgressFill.style.width = '45%';
 
         // Mise en valeur de la marque détectée dans le modal 3DS
@@ -2263,10 +2391,14 @@ function initCheckoutPage() {
       localStorage.setItem('ov_has_paid', 'true');
       localStorage.setItem('ov_member_name', nameVal);
       localStorage.setItem('ov_member_email', emailVal);
+      localStorage.setItem('ov_subscription_plan', currentPlan);
+      localStorage.setItem('ov_is_creator', currentPlan === 'creator' ? 'true' : 'false');
 
       const formData = new FormData(checkoutForm);
       formData.set('action', 'checkout');
       formData.set('paymentMethod', 'card');
+      formData.set('subscription_plan', currentPlan);
+      formData.set('plan', currentPlan);
       formData.set('checkoutName', nameVal);
       formData.set('checkoutEmail', emailVal);
       formData.set('cardHolder', holderVal);
@@ -2338,10 +2470,14 @@ function initCheckoutPage() {
       localStorage.setItem('ov_has_paid', 'true');
       localStorage.setItem('ov_member_name', nameVal);
       localStorage.setItem('ov_member_email', emailVal);
+      localStorage.setItem('ov_subscription_plan', currentPlan);
+      localStorage.setItem('ov_is_creator', currentPlan === 'creator' ? 'true' : 'false');
 
       const formData = new FormData(checkoutForm);
       formData.set('action', 'checkout');
       formData.set('paymentMethod', 'mobile_money');
+      formData.set('subscription_plan', currentPlan);
+      formData.set('plan', currentPlan);
       formData.set('checkoutName', nameVal);
       formData.set('checkoutEmail', emailVal);
       if (passVal) formData.set('checkoutPassword', passVal);
@@ -2403,6 +2539,109 @@ function initCheckoutPage() {
     const defaultOrderNum = 'ORD-' + new Date().getFullYear() + '-' + Math.floor(100 + Math.random() * 900);
     window.location.href = `checkout-success.php?order=${encodeURIComponent(defaultOrderNum)}`;
   });
+
+  // Initialisation au chargement
+  setSubscriptionPlan(currentPlan);
+}
+
+/* ==========================================================================
+   CARROUSEL VERTICAL DU RÉCAPITULATIF DE COMMANDE (OFFRE + 6 TÉMOIGNAGES EN CAPTURE)
+   ========================================================================== */
+function initCheckoutSummaryCarousel() {
+  const wrapper = document.getElementById('summaryCarouselCard');
+  const track = document.getElementById('summaryCarouselTrack');
+  const viewport = document.getElementById('summaryCarouselViewport');
+  if (!wrapper || !track || !viewport) return;
+
+  const slides = track.querySelectorAll('.summary-slide');
+  const indicators = document.querySelectorAll('.carousel-indicators .indicator-dot');
+  const slideLabel = document.getElementById('carouselSlideLabel');
+  const timerText = document.getElementById('carouselTimerText');
+
+  if (slides.length <= 1) return;
+
+  const labels = [
+    "Offre d'adhésion (9€/mois)",
+    "Témoignage 1/6 • Julien B.",
+    "Témoignage 2/6 • Sophie M.",
+    "Témoignage 3/6 • Thomas R.",
+    "Témoignage 4/6 • Clara D.",
+    "Témoignage 5/6 • Marc V.",
+    "Témoignage 6/6 • Élodie P."
+  ];
+
+  let currentIndex = 0;
+  let isPaused = false;
+  const intervalSeconds = 5;
+  let secondsRemaining = intervalSeconds;
+  let tickerInterval = null;
+
+  function updateSlide(index) {
+    currentIndex = (index + slides.length) % slides.length;
+    const slideHeight = viewport.clientHeight || 610;
+    track.style.transform = `translateY(-${currentIndex * slideHeight}px)`;
+
+    indicators.forEach((dot, i) => {
+      dot.classList.toggle('active', i === currentIndex);
+    });
+
+    if (slideLabel && labels[currentIndex]) {
+      slideLabel.textContent = labels[currentIndex];
+    }
+
+    secondsRemaining = intervalSeconds;
+    if (timerText) timerText.textContent = `${secondsRemaining}s`;
+  }
+
+  window.summaryCarouselJump = function(index) {
+    updateSlide(index);
+    secondsRemaining = intervalSeconds;
+  };
+
+  indicators.forEach(dot => {
+    dot.addEventListener('click', (e) => {
+      e.preventDefault();
+      const targetIndex = parseInt(dot.getAttribute('data-slide'), 10);
+      if (!isNaN(targetIndex)) {
+        window.summaryCarouselJump(targetIndex);
+      }
+    });
+  });
+
+  // Boucle de défilement verticale continue toutes les 5 secondes
+  function startTicker() {
+    if (tickerInterval) clearInterval(tickerInterval);
+    tickerInterval = setInterval(() => {
+      if (!isPaused) {
+        secondsRemaining--;
+        if (secondsRemaining <= 0) {
+          updateSlide(currentIndex + 1);
+        } else if (timerText) {
+          timerText.textContent = `${secondsRemaining}s`;
+        }
+      }
+    }, 1000);
+  }
+
+  // Pause au survol de la souris
+  wrapper.addEventListener('mouseenter', () => {
+    isPaused = true;
+    if (timerText) timerText.textContent = '⏸️';
+  });
+
+  wrapper.addEventListener('mouseleave', () => {
+    isPaused = false;
+    if (timerText) timerText.textContent = `${secondsRemaining}s`;
+  });
+
+  // Support du redimensionnement de l'écran
+  window.addEventListener('resize', () => {
+    updateSlide(currentIndex);
+  });
+
+  // Lancement initial
+  updateSlide(0);
+  startTicker();
 }
 
 
@@ -2484,13 +2723,30 @@ function initDashboard() {
             <p class="calendar-card-desc">${escapeHtml(session.desc)}</p>
             <div class="calendar-card-actions" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:0.5rem; margin-top:1rem;">
               <span style="font-size:0.85rem; color:#475569; font-weight:600;">Animé par ${escapeHtml(session.author)} (${escapeHtml(session.role)})</span>
-              <div style="display:flex; gap:0.5rem;">
+              <div style="display:flex; gap:0.5rem; flex-wrap:wrap; align-items:center;">
                 <button type="button" class="btn btn-primary btn-sm btn-join-live-direct">
                   Rejoindre la salle Live
                 </button>
                 <button type="button" class="btn btn-secondary btn-sm" onclick="showToast('📅 Session membre ajoutée à votre agenda !')">
                   📅 Rappel agenda
                 </button>
+                <div class="live-creator-actions" style="display:inline-flex; gap:0.4rem;">
+                  <button type="button" class="btn btn-secondary btn-sm btn-edit-live-trigger"
+                    data-id="${escapeHtml(session.id)}"
+                    data-title="${escapeHtml(session.title)}"
+                    data-date="${escapeHtml(session.dateRaw || '')}"
+                    data-time="${escapeHtml(session.timeRaw || '19h00')}"
+                    data-duration="${escapeHtml(session.duration || '1h00')}"
+                    data-desc="${escapeHtml(session.desc || '')}"
+                    data-room="${escapeHtml(session.roomId || 'KD-LIVE-ROOM')}">
+                    ✏️ Modifier
+                  </button>
+                  <button type="button" class="btn btn-outline-danger btn-sm btn-delete-live-trigger"
+                    data-id="${escapeHtml(session.id)}"
+                    data-title="${escapeHtml(session.title)}">
+                    🗑️ Supprimer
+                  </button>
+                </div>
               </div>
             </div>
           </div>
@@ -5158,6 +5414,171 @@ Résultat,Taux Journalier Moyen (TJM) Conseillé,416.67,Prix minimal à facturer
       }, 600);
     });
   }
+
+  // 13. GESTION DES MODALES DU CALENDRIER (MODIFIER, SUPPRIMER, UPGRADE CRÉATEUR)
+  const editLiveModal = document.getElementById('editLiveModal');
+  const deleteLiveModal = document.getElementById('deleteLiveModal');
+  const upgradeModal = document.getElementById('upgradeToCreatorModal');
+
+  // Éléments du formulaire d'édition
+  const editLiveIdInput = document.getElementById('editLiveId');
+  const editLiveTitleInput = document.getElementById('editLiveTitle');
+  const editLiveDateInput = document.getElementById('editLiveDate');
+  const editLiveTimeInput = document.getElementById('editLiveTime');
+  const editLiveDurationInput = document.getElementById('editLiveDuration');
+  const editLiveDescInput = document.getElementById('editLiveDesc');
+  const editLiveRoomIdInput = document.getElementById('editLiveRoomId');
+  const editLiveForm = document.getElementById('editLiveForm');
+
+  document.addEventListener('click', (e) => {
+    // Bouton Modifier un Live
+    const editBtn = e.target.closest('.btn-edit-live-trigger');
+    if (editBtn && editLiveModal) {
+      e.preventDefault();
+      const liveId = editBtn.getAttribute('data-id') || '';
+      const liveTitle = editBtn.getAttribute('data-title') || '';
+      const liveDate = editBtn.getAttribute('data-date') || '';
+      const liveTime = editBtn.getAttribute('data-time') || '19h00';
+      const liveDuration = editBtn.getAttribute('data-duration') || '1h00';
+      const liveDesc = editBtn.getAttribute('data-desc') || '';
+      const liveRoom = editBtn.getAttribute('data-room') || 'KD-LIVE-ROOM';
+
+      if (editLiveIdInput) editLiveIdInput.value = liveId;
+      if (editLiveTitleInput) editLiveTitleInput.value = liveTitle;
+      if (editLiveDateInput) editLiveDateInput.value = liveDate;
+      if (editLiveTimeInput) editLiveTimeInput.value = liveTime;
+      if (editLiveDurationInput) editLiveDurationInput.value = liveDuration;
+      if (editLiveDescInput) editLiveDescInput.value = liveDesc;
+      if (editLiveRoomIdInput) editLiveRoomIdInput.value = liveRoom;
+
+      editLiveModal.style.display = 'flex';
+      document.body.style.overflow = 'hidden';
+      return;
+    }
+
+    // Bouton Supprimer un Live
+    const deleteBtn = e.target.closest('.btn-delete-live-trigger');
+    if (deleteBtn && deleteLiveModal) {
+      e.preventDefault();
+      const liveId = deleteBtn.getAttribute('data-id') || '';
+      const liveTitle = deleteBtn.getAttribute('data-title') || 'cette session';
+      const deleteLiveIdInput = document.getElementById('deleteLiveId');
+      const deleteTitleDisplay = document.getElementById('deleteLiveTitleDisplay');
+
+      if (deleteLiveIdInput) deleteLiveIdInput.value = liveId;
+      if (deleteTitleDisplay) deleteTitleDisplay.textContent = liveTitle;
+
+      deleteLiveModal.style.display = 'flex';
+      document.body.style.overflow = 'hidden';
+      return;
+    }
+
+    // Bouton Débloquer / Passer Créateur 29€
+    const upgradeBtn = e.target.closest('.btn-upgrade-creator-trigger');
+    if (upgradeBtn && upgradeModal) {
+      e.preventDefault();
+      upgradeModal.style.display = 'flex';
+      document.body.style.overflow = 'hidden';
+      return;
+    }
+  });
+
+  // Fermeture des modales
+  const closeEditBtns = document.querySelectorAll('#closeEditLiveModalBtn, #btnCancelEditLive, #backdropEditLiveModal');
+  closeEditBtns.forEach(btn => {
+    btn.addEventListener('click', () => {
+      if (editLiveModal) editLiveModal.style.display = 'none';
+      document.body.style.overflow = '';
+    });
+  });
+
+  const closeDeleteBtns = document.querySelectorAll('#closeDeleteLiveModalBtn, #btnCancelDeleteLive, #backdropDeleteLiveModal');
+  closeDeleteBtns.forEach(btn => {
+    btn.addEventListener('click', () => {
+      if (deleteLiveModal) deleteLiveModal.style.display = 'none';
+      document.body.style.overflow = '';
+    });
+  });
+
+  const closeUpgradeBtns = document.querySelectorAll('#closeUpgradeModalBtn, #btnCancelUpgrade, #backdropUpgradeModal');
+  closeUpgradeBtns.forEach(btn => {
+    btn.addEventListener('click', () => {
+      if (upgradeModal) upgradeModal.style.display = 'none';
+      document.body.style.overflow = '';
+    });
+  });
+
+  // Gestion formulaire suppression en environnement statique (HTML pur)
+  const deleteLiveForm = document.getElementById('deleteLiveForm');
+  if (deleteLiveForm && !isPhpEnvironment()) {
+    deleteLiveForm.addEventListener('submit', (e) => {
+      e.preventDefault();
+      const idToDelete = document.getElementById('deleteLiveId')?.value;
+      if (idToDelete) {
+        try {
+          const stored = localStorage.getItem('ov_community_custom_lives');
+          let list = stored ? JSON.parse(stored) : [];
+          list = list.filter(item => String(item.id) !== String(idToDelete));
+          localStorage.setItem('ov_community_custom_lives', JSON.stringify(list));
+        } catch (err) {}
+
+        const calCard = document.getElementById(`cal-card-${idToDelete}`);
+        if (calCard) calCard.remove();
+        const dashCard = document.getElementById(`dash-live-${idToDelete}`);
+        if (dashCard) dashCard.remove();
+
+        showToast("🗑️ La session a bien été supprimée.");
+        if (deleteLiveModal) deleteLiveModal.style.display = 'none';
+        document.body.style.overflow = '';
+      }
+    });
+  }
+
+  // Gestion formulaire édition en environnement statique (HTML pur)
+  if (editLiveForm && !isPhpEnvironment()) {
+    editLiveForm.addEventListener('submit', (e) => {
+      e.preventDefault();
+      const idToEdit = editLiveIdInput?.value;
+      const newTitle = editLiveTitleInput?.value.trim();
+      const newDate = editLiveDateInput?.value;
+      const newTime = editLiveTimeInput?.value;
+      const newDuration = editLiveDurationInput?.value;
+      const newDesc = editLiveDescInput?.value.trim();
+
+      if (idToEdit && newTitle) {
+        try {
+          const stored = localStorage.getItem('ov_community_custom_lives');
+          let list = stored ? JSON.parse(stored) : [];
+          list = list.map(item => {
+            if (String(item.id) === String(idToEdit)) {
+              return {
+                ...item,
+                title: newTitle,
+                dateRaw: newDate,
+                timeRaw: newTime,
+                duration: newDuration,
+                desc: newDesc
+              };
+            }
+            return item;
+          });
+          localStorage.setItem('ov_community_custom_lives', JSON.stringify(list));
+        } catch (err) {}
+
+        const calCard = document.getElementById(`cal-card-${idToEdit}`);
+        if (calCard) {
+          const tEl = calCard.querySelector('.calendar-card-title');
+          if (tEl) tEl.textContent = newTitle;
+          const dEl = calCard.querySelector('.calendar-card-desc');
+          if (dEl) dEl.textContent = newDesc;
+        }
+
+        showToast("✏️ La session a été mise à jour avec succès !");
+        if (editLiveModal) editLiveModal.style.display = 'none';
+        document.body.style.overflow = '';
+      }
+    });
+  }
 }
 
 // Fonction utilitaire de protection XSS
@@ -5385,6 +5806,47 @@ function initTestimonialsCarousel() {
    11. MODULE DE CRÉATION DE LIVE & MASTERMIND (CREER-LIVE.HTML)
    ========================================================================== */
 function initCreateLivePage() {
+  // Modale de confirmation pour quitter la création
+  const confirmQuitModal = document.getElementById('confirmQuitLiveModal');
+  const returnTriggers = document.querySelectorAll('#btnHeaderReturn, .btn-return-trigger');
+  const btnStay = document.getElementById('btnStayOnCreatePage');
+  const btnCloseQuitModal = document.getElementById('closeQuitModalBtn');
+  const backdropQuitModal = document.getElementById('backdropQuitModal');
+  const btnConfirmQuit = document.getElementById('btnConfirmQuitToDashboard');
+
+  function openQuitModal() {
+    if (confirmQuitModal) {
+      confirmQuitModal.style.display = 'flex';
+      document.body.style.overflow = 'hidden';
+    }
+  }
+
+  function closeQuitModal() {
+    if (confirmQuitModal) {
+      confirmQuitModal.style.display = 'none';
+      document.body.style.overflow = '';
+    }
+  }
+
+  returnTriggers.forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.preventDefault();
+      openQuitModal();
+    });
+  });
+
+  if (btnStay) btnStay.addEventListener('click', closeQuitModal);
+  if (btnCloseQuitModal) btnCloseQuitModal.addEventListener('click', closeQuitModal);
+  if (backdropQuitModal) backdropQuitModal.addEventListener('click', closeQuitModal);
+
+  if (btnConfirmQuit) {
+    btnConfirmQuit.addEventListener('click', () => {
+      const f = document.getElementById('createLiveForm');
+      if (f) f.reset();
+      window.location.href = getAppUrl('dashboard.html');
+    });
+  }
+
   const form = document.getElementById('createLiveForm');
   if (!form) return;
 

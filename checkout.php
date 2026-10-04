@@ -118,31 +118,38 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     $checkInv->execute([$invoiceNumber]);
                 } while ($checkInv->fetch());
 
+                $plan = trim($_POST['subscription_plan'] ?? $_GET['plan'] ?? 'member');
+                if ($plan !== 'creator') {
+                    $plan = 'member';
+                }
+
                 // =========================================================================
                 // CAS 1 : MOYEN DE PAIEMENT MOBILE MONEY
                 // =========================================================================
                 if ($action === 'init_momo' || $method === 'mobile_money') {
-                    $orderAmount = 9.00;
+                    $orderAmountXof = ($plan === 'creator') ? 19000.00 : 5900.00;
                     $paymentId = 'MOMO-' . strtoupper(bin2hex(random_bytes(6)));
 
                     $stmt = $db->prepare("
                         INSERT INTO orders (
                             order_number, user_id, amount, currency, status,
                             payment_method, billing_name, billing_email, billing_country, invoice_number, 
-                            payment_id
+                            payment_id, plan
                         ) VALUES (
-                            ?, ?, 5900.00, 'XOF', 'paid',
+                            ?, ?, ?, 'XOF', 'paid',
                             'Mobile Money (Wave / MoMo)', ?, ?, 'Afrique', ?, 
-                            ?
+                            ?, ?
                         )
                     ");
                     $stmt->execute([
                         $orderNumber,
                         $userId,
+                        $orderAmountXof,
                         $name,
                         $email,
                         $invoiceNumber,
-                        $paymentId
+                        $paymentId,
+                        $plan
                     ]);
 
                     $expiresAt = date('Y-m-d H:i:s', strtotime('+30 days'));
@@ -152,6 +159,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     $db->prepare("
                         UPDATE users 
                         SET subscription_status = 'active', 
+                            subscription_plan = ?,
                             subscription_started_at = CURRENT_TIMESTAMP,
                             subscription_expires_at = ?,
                             auto_renew = 1,
@@ -159,12 +167,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                             next_billing_date = ?,
                             failed_renewals_count = 0
                         WHERE id = ?
-                    ")->execute([$expiresAt, $todayDate, $nextBillingDate, $userId]);
+                    ")->execute([$plan, $expiresAt, $todayDate, $nextBillingDate, $userId]);
 
                     $_SESSION['user_id'] = $userId;
                     $_SESSION['user_name'] = $name;
                     $_SESSION['user_email'] = $email;
                     $_SESSION['user_role'] = 'member';
+                    $_SESSION['subscription_plan'] = $plan;
                     $_SESSION['pending_order_number'] = $orderNumber;
 
                     $successUrl = 'checkout-success.php?order=' . urlencode($orderNumber) . '&mode=momo';
@@ -256,26 +265,29 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     }
 
                     $paymentId = 'CARD-' . strtoupper(bin2hex(random_bytes(6)));
+                    $orderAmountEur = ($plan === 'creator') ? 29.00 : 9.00;
 
                     $stmt = $db->prepare("
                         INSERT INTO orders (
                             order_number, user_id, amount, currency, status,
                             payment_method, billing_name, billing_email, billing_country, invoice_number, 
-                            payment_id
+                            payment_id, plan
                         ) VALUES (
-                            ?, ?, 9.00, 'EUR', 'paid',
+                            ?, ?, ?, 'EUR', 'paid',
                             ?, ?, ?, 'France', ?, 
-                            ?
+                            ?, ?
                         )
                     ");
                     $stmt->execute([
                         $orderNumber,
                         $userId,
+                        $orderAmountEur,
                         'Carte bancaire (' . $cardBrand . ' 3D-Secure)',
                         $cardHolder,
                         $email,
                         $invoiceNumber,
-                        $paymentId
+                        $paymentId,
+                        $plan
                     ]);
 
                     // Activation immédiate de l'abonnement du membre avec enregistrement de la carte pour prélèvements automatiques mensuels
@@ -287,6 +299,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     $stmtUserUpdate = $db->prepare("
                         UPDATE users 
                         SET subscription_status = 'active', 
+                            subscription_plan = ?,
                             subscription_started_at = CURRENT_TIMESTAMP,
                             subscription_expires_at = ?,
                             auto_renew = 1,
@@ -300,6 +313,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         WHERE id = ?
                     ");
                     $stmtUserUpdate->execute([
+                        $plan,
                         $expiresAt,
                         $last4,
                         $cardBrand,
@@ -315,6 +329,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     $_SESSION['user_name'] = $name;
                     $_SESSION['user_email'] = $email;
                     $_SESSION['user_role'] = 'member';
+                    $_SESSION['subscription_plan'] = $plan;
                     $_SESSION['pending_order_number'] = $orderNumber;
 
                     $successUrl = 'checkout-success.php?order=' . urlencode($orderNumber) . '&mode=card';
@@ -346,8 +361,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 }
 }
 
-$pageTitle = "Paiement Sécurisé — One Vision Community (9€/mois)";
-$pageDescription = "Finalisez votre adhésion à One Vision Community pour 9€ par mois. Sans engagement, résiliable en 1 clic. Accès immédiat.";
+$selectedPlan = ($_GET['plan'] ?? $_POST['subscription_plan'] ?? ($currentUser['subscription_plan'] ?? 'member')) === 'creator' ? 'creator' : 'member';
+$pageTitle = ($selectedPlan === 'creator') 
+    ? "Paiement Sécurisé — Formule Créateur Host (29€/mois) — One Vision Community"
+    : "Paiement Sécurisé — Formule Membre (9€/mois) — One Vision Community";
+$pageDescription = ($selectedPlan === 'creator')
+    ? "Activez votre statut Créateur Host pour 29€ par mois. Animez et diffusez vos lives dans le calendrier officiel."
+    : "Finalisez votre adhésion à One Vision Community pour 9€ par mois. Sans engagement, résiliable en 1 clic. Accès immédiat.";
 ?>
 <!DOCTYPE html>
 <html lang="fr" data-theme="light">
@@ -370,7 +390,7 @@ $pageDescription = "Finalisez votre adhésion à One Vision Community pour 9€ 
   <header class="checkout-header">
     <div class="container checkout-header-inner">
       <a href="index.php" class="logo" aria-label="Retour à l'accueil One Vision Community">
-        <div class="logo-icon">OV</div>
+
         <div class="logo-text">
           <span class="logo-brand"><span class="logo-one-script">One</span> Vision</span>
           <span class="logo-sub">Community</span>
@@ -415,13 +435,64 @@ $pageDescription = "Finalisez votre adhésion à One Vision Community pour 9€ 
             </div>
 
             <h1 class="checkout-title" id="checkoutMainTitle">Finaliser votre adhésion</h1>
-            <p class="checkout-subtitle" id="checkoutMainSubtitle">Remplissez vos informations pour activer votre accès instantané à la communauté.</p>
+            <p class="checkout-subtitle" id="checkoutMainSubtitle">Choisissez votre formule et activez votre accès instantané à la communauté.</p>
 
             <form id="checkoutPaymentForm" action="checkout.php" method="POST" novalidate>
               <?= csrf_field() ?>
               
-              <!-- ÉTAPE 1 : IDENTIFIANTS DU COMPTE (PAGE COMPACTE / CAPTURE) -->
+              <!-- ÉTAPE 1 : IDENTIFIANTS DU COMPTE & CHOIX DE LA FORMULE -->
               <div id="checkoutStep1" class="checkout-step-pane">
+                
+                <!-- SÉLECTION DE LA FORMULE D'ADHÉSION -->
+                <div class="form-section-title" style="margin-bottom:0.75rem;">
+                  <span class="section-number">★</span>
+                  <span>Choisissez votre formule</span>
+                </div>
+
+                <input type="hidden" name="subscription_plan" id="subscriptionPlanInput" value="<?= htmlspecialchars($selectedPlan) ?>">
+
+                <div class="checkout-plan-selector-grid" style="display:grid; grid-template-columns:1fr 1fr; gap:0.85rem; margin-bottom:1.5rem;">
+                  <!-- Plan Membre 9€ -->
+                  <div class="plan-card-option <?= ($selectedPlan === 'creator') ? '' : 'selected' ?>" id="planOptionMember" data-plan="member" role="button" tabindex="0" style="border:2px solid <?= ($selectedPlan === 'creator') ? '#e2e8f0' : '#2563eb' ?>; background:<?= ($selectedPlan === 'creator') ? '#ffffff' : '#f0f7ff' ?>; border-radius:14px; padding:1rem; cursor:pointer; position:relative; transition:all 0.2s ease;">
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.4rem;">
+                      <div style="display:flex; align-items:center; gap:0.45rem;">
+                        <input type="radio" name="planRadio" id="radioPlanMember" value="member" <?= ($selectedPlan === 'creator') ? '' : 'checked' ?> style="accent-color:#2563eb; width:17px; height:17px; cursor:pointer;">
+                        <strong style="font-size:0.95rem; color:#0f172a;">Membre</strong>
+                      </div>
+                      <span style="font-size:0.72rem; background:#f1f5f9; color:#475569; padding:2px 7px; border-radius:6px; font-weight:700;">Participant</span>
+                    </div>
+                    <div style="margin-bottom:0.4rem;">
+                      <span style="font-size:1.4rem; font-weight:900; color:#0f172a;">9 €</span>
+                      <span style="font-size:0.78rem; color:#64748b;">/ mois</span>
+                      <div style="font-size:0.75rem; color:#64748b; font-weight:600;">~5 900 FCFA / mois</div>
+                    </div>
+                    <p style="font-size:0.76rem; color:#64748b; line-height:1.4; margin:0;">
+                      Participez à tous les Lives & Masterminds, salons 24/7 et fiches outils.
+                    </p>
+                  </div>
+
+                  <!-- Plan Créateur 29€ -->
+                  <div class="plan-card-option <?= ($selectedPlan === 'creator') ? 'selected' : '' ?>" id="planOptionCreator" data-plan="creator" role="button" tabindex="0" style="border:2px solid <?= ($selectedPlan === 'creator') ? '#e63946' : '#e2e8f0' ?>; background:<?= ($selectedPlan === 'creator') ? '#fff7ed' : '#ffffff' ?>; border-radius:14px; padding:1rem; cursor:pointer; position:relative; transition:all 0.2s ease;">
+                    <div style="position:absolute; top:-9px; right:10px; background:linear-gradient(135deg, #e63946, #f97316); color:#fff; font-size:0.65rem; font-weight:800; padding:2px 7px; border-radius:10px; letter-spacing:0.04em;">
+                      👑 PRO HOST
+                    </div>
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.4rem;">
+                      <div style="display:flex; align-items:center; gap:0.45rem;">
+                        <input type="radio" name="planRadio" id="radioPlanCreator" value="creator" <?= ($selectedPlan === 'creator') ? 'checked' : '' ?> style="accent-color:#e63946; width:17px; height:17px; cursor:pointer;">
+                        <strong style="font-size:0.95rem; color:#0f172a;">Créateur Host</strong>
+                      </div>
+                    </div>
+                    <div style="margin-bottom:0.4rem;">
+                      <span style="font-size:1.4rem; font-weight:900; color:#e63946;">29 €</span>
+                      <span style="font-size:0.78rem; color:#64748b;">/ mois</span>
+                      <div style="font-size:0.75rem; color:#e63946; font-weight:700;">~19 000 FCFA / mois</div>
+                    </div>
+                    <p style="font-size:0.76rem; color:#334155; line-height:1.4; margin:0;">
+                      <strong>Créez & animez vos propres Lives</strong> dans le calendrier officiel + Badge Vérifié.
+                    </p>
+                  </div>
+                </div>
+
                 <div class="form-section-title">
                   <span class="section-number">1</span>
                   <span>Vos identifiants de compte</span>
@@ -662,61 +733,7 @@ $pageDescription = "Finalisez votre adhésion à One Vision Community pour 9€ 
 
         <!-- COLONNE DROITE : RÉCAPITULATIF DE COMMANDE -->
         <div class="checkout-summary-column">
-          <div class="summary-card">
-            
-            <div class="summary-header">
-              <span class="summary-pill">Accès Membre Illimité</span>
-              <h2 class="summary-title">One Vision Community</h2>
-              <p class="summary-desc">L'espace d'entraide, de lives interactifs et de partenariats des entrepreneurs ambitieux.</p>
-            </div>
-
-            <ul class="summary-features-list">
-              <li>
-                <svg viewBox="0 0 24 24" fill="none" stroke="#16a34a" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg>
-                <span><strong>4 Lives & Masterminds</strong> interactifs en visio par mois</span>
-              </li>
-              <li>
-                <svg viewBox="0 0 24 24" fill="none" stroke="#16a34a" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg>
-                <span><strong>Salons d'échanges privés</strong> par thématiques 24h/24 & 7j/7</span>
-              </li>
-              <li>
-                <svg viewBox="0 0 24 24" fill="none" stroke="#16a34a" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg>
-                <span><strong>Replays intégraux HD</strong> et bibliothèque de fiches outils</span>
-              </li>
-              <li>
-                <svg viewBox="0 0 24 24" fill="none" stroke="#16a34a" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg>
-                <span><strong>Réseau qualifié</strong> : +1 200 pairs actifs prêts à collaborer</span>
-              </li>
-            </ul>
-
-            <div class="summary-pricing-box">
-              <div class="pricing-line">
-                <span>Adhésion mensuelle</span>
-                <span class="price-val">9,00 € <small>(~5 900 FCFA)</small></span>
-              </div>
-              <div class="pricing-line">
-                <span>Frais d'activation</span>
-                <span class="price-free">OFFERTS (0 €)</span>
-              </div>
-              <div class="pricing-line total-line">
-                <span>Total à régler aujourd'hui</span>
-                <span class="total-amount">9,00 € <span class="recur-text">/ mois</span></span>
-              </div>
-            </div>
-
-            <div class="summary-testimonial">
-              <div class="testimonial-stars" style="display:flex; gap:3px; color:#f59e0b; margin-bottom:0.55rem;" aria-label="Avis 5 étoiles sur 5"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg></div>
-              <p class="testimonial-quote">« À 9€ par mois, le retour sur investissement est immédiat dès la première session de co-working. Je ne regrette qu'une chose : ne pas avoir rejoint plus tôt ! »</p>
-              <div class="testimonial-author">
-                <img src="./img/avatar-aurore.jpg" alt="Aurore M." class="author-avatar" width="34" height="34">
-                <div>
-                  <div class="author-name">Aurore M.</div>
-                  <div class="author-role">Fondatrice Studio Créatif • Membre One Vision</div>
-                </div>
-              </div>
-            </div>
-
-          </div>
+          <?php require __DIR__ . '/includes/checkout-summary-carousel.php'; ?>
         </div>
 
       </div>

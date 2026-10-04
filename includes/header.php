@@ -47,14 +47,14 @@ if (!headers_sent()) {
   <!-- Stylesheet -->
   <link rel="stylesheet" href="./css/style.css?v=5">
 </head>
-<body class="<?= htmlspecialchars($bodyClass) ?>">
+<body class="<?= htmlspecialchars($bodyClass ?? '') ?>">
 
   <!-- EN-TÊTE & NAVIGATION -->
   <header class="header">
     <div class="container nav-wrapper">
       <!-- Logo de la marque -->
       <a href="index.php" class="logo" aria-label="Accueil One Vision Community">
-        <div class="logo-icon">OV</div>
+
         <div class="logo-text">
           <span class="logo-brand"><span class="logo-one-script">One</span> Vision</span>
           <span class="logo-sub">Community</span>
@@ -63,7 +63,20 @@ if (!headers_sent()) {
 
       <!-- Actions de Navigation dynamiques selon l'état de connexion -->
       <div class="nav-actions">
-        <?php if ($isLoggedIn): ?>
+        <?php if (!empty($isCreateLivePage)): ?>
+          <!-- Mode Création de Live : Bouton Retour + Bouton Profil à droite (sans bouton Créer un live ni Déconnexion) -->
+          <button type="button" class="btn btn-secondary btn-return-trigger" id="btnHeaderReturn" style="font-size:0.88rem; padding:0.5rem 1rem; display:inline-flex; align-items:center; gap:0.5rem;">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+              <line x1="19" y1="12" x2="5" y2="12"></line>
+              <polyline points="12 19 5 12 12 5"></polyline>
+            </svg>
+            <span>Retour</span>
+          </button>
+          <a href="dashboard.php" class="btn btn-outline" id="btnHeaderProfile" style="font-size:0.88rem; padding:0.48rem 0.95rem; border:1px solid var(--border-light, #cbd5e1); border-radius:10px; background:#ffffff; color:var(--color-text, #0f172a); display:inline-flex; align-items:center; gap:0.5rem; font-weight:700;" title="Voir mon profil et mon espace">
+            <img src="<?= htmlspecialchars($currentUser['avatar'] ?? './img/avatar-maxime.jpg') ?>" alt="Avatar" style="width:24px; height:24px; border-radius:50%; object-fit:cover; border:1.5px solid #2563eb;">
+            <span>Profil</span>
+          </a>
+        <?php elseif ($isLoggedIn): ?>
           <a href="creer-live.php" class="btn btn-secondary" style="font-size:0.88rem; padding:0.5rem 1rem;">
             <span>🎙️ Créer un Live</span>
           </a>
@@ -79,7 +92,7 @@ if (!headers_sent()) {
             Se connecter
           </a>
           <a href="checkout.php" class="btn btn-primary">
-            <span>Rejoindre pour 9€/mois</span>
+            <span>Rejoindre le réseau</span>
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
               <line x1="5" y1="12" x2="19" y2="12"></line>
               <polyline points="12 5 19 12 12 19"></polyline>

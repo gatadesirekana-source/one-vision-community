@@ -123,7 +123,8 @@ function check_user_subscription(int $userId): array {
 function process_recurring_charge(array $user): array {
     $db = get_db();
     $userId = (int)$user['id'];
-    $amount = 9.00;
+    $plan = $user['subscription_plan'] ?? 'member';
+    $amount = ($plan === 'creator') ? 29.00 : 9.00;
     $currency = 'EUR';
 
     try {
@@ -134,18 +135,19 @@ function process_recurring_charge(array $user): array {
 
         $brand = !empty($user['card_brand']) ? $user['card_brand'] : 'Carte Bancaire';
         $last4 = !empty($user['card_last4']) ? $user['card_last4'] : '••••';
-        $methodLabel = "Prélèvement mensuel automatique ({$brand} •••• {$last4})";
+        $planLabel = ($plan === 'creator') ? 'Créateur & Host (29€)' : 'Membre Illimité (9€)';
+        $methodLabel = "Prélèvement mensuel automatique {$planLabel} ({$brand} •••• {$last4})";
 
         // Enregistrement de la nouvelle commande payée
         $stmtOrder = $db->prepare("
             INSERT INTO orders (
                 order_number, user_id, amount, currency, status,
                 payment_method, billing_name, billing_email, billing_country, invoice_number,
-                payment_id
+                payment_id, plan
             ) VALUES (
                 ?, ?, ?, ?, 'paid',
                 ?, ?, ?, 'France', ?,
-                ?
+                ?, ?
             )
         ");
         $stmtOrder->execute([
@@ -157,7 +159,8 @@ function process_recurring_charge(array $user): array {
             $user['full_name'],
             $user['email'],
             $invoiceNumber,
-            $paymentId
+            $paymentId,
+            $plan
         ]);
 
         // Prolongation de la période de 30 jours à partir de maintenant ou de l'échéance

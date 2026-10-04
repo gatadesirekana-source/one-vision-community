@@ -18,29 +18,57 @@
 <body class="create-live-body">
 
   <!-- ==========================================================================
-       1. EN-TÊTE DE NAVIGATION ÉPURÉ
+       1. EN-TÊTE DE NAVIGATION ÉPURÉ AVEC BOUTON RETOUR ET PROFIL
        ========================================================================== -->
   <header class="header create-live-header">
     <div class="container nav-wrapper">
       <a href="index.html" class="logo" aria-label="Accueil One Vision Community">
-        <div class="logo-icon">OV</div>
         <div class="logo-text">
           <span class="logo-brand"><span class="logo-one-script">One</span> Vision</span>
           <span class="logo-sub">Community</span>
         </div>
       </a>
 
-      <div class="create-live-nav-actions">
-        <a href="dashboard.html" class="btn btn-secondary btn-sm" id="backToCalendarBtn">
+      <div class="nav-actions" style="display:flex; align-items:center; gap:0.75rem;">
+        <button type="button" class="btn btn-secondary btn-return-trigger" id="btnHeaderReturn" style="font-size:0.88rem; padding:0.5rem 1rem; display:inline-flex; align-items:center; gap:0.5rem;">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
             <line x1="19" y1="12" x2="5" y2="12"></line>
             <polyline points="12 19 5 12 12 5"></polyline>
           </svg>
-          <span>Retour au Dashboard</span>
+          <span>Retour</span>
+        </button>
+        <a href="dashboard.html" class="btn btn-outline" id="btnHeaderProfile" style="font-size:0.88rem; padding:0.48rem 0.95rem; border:1px solid var(--border-light, #cbd5e1); border-radius:10px; background:#ffffff; color:var(--color-text, #0f172a); display:inline-flex; align-items:center; gap:0.5rem; font-weight:700;" title="Voir mon profil et mon espace">
+          <img src="./img/avatar-maxime.jpg" alt="Avatar" id="createLiveAvatarPreview" style="width:24px; height:24px; border-radius:50%; object-fit:cover; border:1.5px solid #2563eb;">
+          <span>Profil</span>
         </a>
       </div>
     </div>
   </header>
+
+  <!-- MODAL DE CONFIRMATION D'ABANDON DE CRÉATION DE LIVE -->
+  <div id="confirmQuitLiveModal" style="display:none; position:fixed; inset:0; z-index:99999; background:rgba(15,23,42,0.65); backdrop-filter:blur(5px); align-items:center; justify-content:center; padding:1.25rem;">
+    <div style="background:#ffffff; border-radius:20px; max-width:440px; width:100%; padding:2rem 1.75rem; box-shadow:0 25px 50px -12px rgba(0,0,0,0.25); text-align:center; border:1px solid #e2e8f0;">
+      <div style="width:60px; height:60px; margin:0 auto 1.15rem; background:#fee2e2; border-radius:50%; display:flex; align-items:center; justify-content:center; color:#dc2626;">
+        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="10"></circle>
+          <line x1="12" y1="8" x2="12" y2="12"></line>
+          <line x1="12" y1="16" x2="12.01" y2="16"></line>
+        </svg>
+      </div>
+      <h3 style="font-size:1.25rem; font-weight:800; color:#0f172a; margin-bottom:0.5rem;">Êtes-vous sûr de quitter ?</h3>
+      <p style="font-size:0.88rem; color:#64748b; line-height:1.55; margin-bottom:1.5rem;">
+        Si vous quittez maintenant, la création de votre live ou mastermind sera annulée et toutes les informations saisies seront effacées.
+      </p>
+      <div style="display:flex; justify-content:center; gap:0.75rem;">
+        <button type="button" class="btn btn-secondary" id="btnStayOnCreatePage" style="padding:0.6rem 1.15rem; font-weight:700;">
+          Rester sur la page
+        </button>
+        <button type="button" class="btn btn-danger" id="btnConfirmQuitToDashboard" style="padding:0.6rem 1.15rem; font-weight:700; background:#dc2626; color:#ffffff; border:none; border-radius:10px; cursor:pointer;">
+          Oui, quitter
+        </button>
+      </div>
+    </div>
+  </div>
 
   <!-- ==========================================================================
        2. CONTENU PRINCIPAL : CRÉATION DU LIVE & APERÇU EN DIRECT

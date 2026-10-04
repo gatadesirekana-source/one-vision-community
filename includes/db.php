@@ -41,6 +41,8 @@ function get_db(): PDO {
         try { $pdo->exec("ALTER TABLE users ADD COLUMN next_billing_date DATE"); } catch (Exception $e) {}
         try { $pdo->exec("ALTER TABLE users ADD COLUMN last_billing_date DATE"); } catch (Exception $e) {}
         try { $pdo->exec("ALTER TABLE users ADD COLUMN failed_renewals_count INTEGER DEFAULT 0"); } catch (Exception $e) {}
+        try { $pdo->exec("ALTER TABLE users ADD COLUMN subscription_plan TEXT DEFAULT 'member'"); } catch (Exception $e) {}
+        try { $pdo->exec("ALTER TABLE orders ADD COLUMN plan TEXT DEFAULT 'member'"); } catch (Exception $e) {}
 
         // Initialiser l'échéance à 30 jours pour les membres actifs existants sans date d'expiration
         try {
@@ -86,6 +88,7 @@ function init_database(PDO $pdo): void {
             next_billing_date DATE,
             last_billing_date DATE,
             failed_renewals_count INTEGER DEFAULT 0,
+            subscription_plan TEXT DEFAULT 'member', -- member (9€), creator (29€)
             created_at DATETIME DEFAULT CURRENT_TIMESTAMP
         );
     ");
@@ -150,6 +153,7 @@ function init_database(PDO $pdo): void {
             momo_country TEXT DEFAULT '',
             payment_id TEXT DEFAULT '',
             checkout_url TEXT DEFAULT '',
+            plan TEXT DEFAULT 'member', -- member (9€), creator (29€)
             created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
             FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
         );

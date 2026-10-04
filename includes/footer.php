@@ -9,7 +9,7 @@
       <div class="footer-grid">
         <div class="footer-brand">
           <a href="index.php" class="logo" aria-label="One Vision Community">
-            <div class="logo-icon">OV</div>
+
             <div class="logo-text">
               <span class="logo-brand"><span class="logo-one-script">One</span> Vision</span>
               <span class="logo-sub">Community</span>
@@ -39,8 +39,8 @@
               <li><a href="dashboard.php" style="font-weight:600; color:var(--color-primary);">Accéder au Dashboard</a></li>
               <li><a href="logout.php">Déconnexion</a></li>
             <?php else: ?>
-              <li><a href="login.php">Espace de connexion</a></li>
-              <li><a href="checkout.php">Rejoindre pour 9€/mois</a></li>
+              <li><a href="login.php" class="open-login-btn">Espace de connexion</a></li>
+              <li><a href="checkout.php">Rejoindre le réseau</a></li>
             <?php endif; ?>
             <li><a href="support.php" style="font-weight:600; color:var(--color-white);">Support & Service Client</a></li>
           </ul>

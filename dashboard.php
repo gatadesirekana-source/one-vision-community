@@ -94,6 +94,72 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
             header('Location: subscription-expired.php');
             exit;
         }
+    } elseif ($_POST['action'] === 'delete_live') {
+        if (!verify_csrf_token($_POST['csrf_token'] ?? null)) {
+            set_flash('error', 'Session de formulaire expirée.');
+        } else {
+            $liveId = (int)($_POST['live_id'] ?? 0);
+            if ($liveId > 0) {
+                $stmt = $db->prepare("SELECT * FROM lives WHERE id = ?");
+                $stmt->execute([$liveId]);
+                $targetLive = $stmt->fetch();
+                if ($targetLive) {
+                    $isAdmin = in_array($currentUser['role'] ?? '', ['admin', 'speaker'], true);
+                    $isAuthor = ($targetLive['user_id'] == $currentUser['id']) || empty($targetLive['user_id']) || (($currentUser['subscription_plan'] ?? '') === 'creator');
+                    if ($isAdmin || $isAuthor) {
+                        $db->prepare("DELETE FROM lives WHERE id = ?")->execute([$liveId]);
+                        set_flash('success', "Le live « " . htmlspecialchars($targetLive['title']) . " » a été supprimé du calendrier.");
+                    } else {
+                        set_flash('error', "Vous n'avez pas l'autorisation de supprimer ce live.");
+                    }
+                }
+            }
+            if (!empty($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest') {
+                header('Content-Type: application/json');
+                echo json_encode(['success' => true]);
+                exit;
+            }
+            header('Location: dashboard.php?tab=tab-calendrier');
+            exit;
+        }
+    } elseif ($_POST['action'] === 'edit_live') {
+        if (!verify_csrf_token($_POST['csrf_token'] ?? null)) {
+            set_flash('error', 'Session de formulaire expirée.');
+        } else {
+            $liveId = (int)($_POST['edit_live_id'] ?? 0);
+            $title = trim($_POST['edit_live_title'] ?? '');
+            $desc = trim($_POST['edit_live_desc'] ?? '');
+            $format = trim($_POST['edit_live_format'] ?? 'Live Thématique');
+            $date = trim($_POST['edit_live_date'] ?? '');
+            $time = trim($_POST['edit_live_time'] ?? '19h00');
+            $duration = trim($_POST['edit_live_duration'] ?? '1h00');
+            $resources = trim($_POST['edit_live_resources'] ?? '');
+
+            if ($liveId > 0 && !empty($title)) {
+                $db->prepare("
+                    UPDATE lives 
+                    SET title = ?, description = ?, format = ?, scheduled_date = ?, scheduled_time = ?, duration = ?, resources = ?
+                    WHERE id = ?
+                ")->execute([$title, $desc, $format, $date, $time, $duration, $resources, $liveId]);
+                set_flash('success', "La session « " . htmlspecialchars($title) . " » a été modifiée avec succès.");
+            }
+            if (!empty($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest') {
+                header('Content-Type: application/json');
+                echo json_encode(['success' => true]);
+                exit;
+            }
+            header('Location: dashboard.php?tab=tab-calendrier');
+            exit;
+        }
+    } elseif ($_POST['action'] === 'upgrade_to_creator') {
+        if (!verify_csrf_token($_POST['csrf_token'] ?? null)) {
+            set_flash('error', 'Session de formulaire expirée.');
+        } else {
+            $db->prepare("UPDATE users SET subscription_plan = 'creator' WHERE id = ?")->execute([$currentUser['id']]);
+            set_flash('success', "Félicitations ! Votre compte est maintenant passé en Formule Créateur (29€/mois). Vous pouvez créer et animer vos propres lives.");
+            header('Location: creer-live.php');
+            exit;
+        }
     }
 }
 
@@ -117,6 +183,18 @@ if (($currentUser['role'] ?? '') === 'admin') {
     $adminTickets = $db->query("SELECT * FROM support_tickets ORDER BY id DESC")->fetchAll();
     $adminOrders = $db->query("SELECT o.*, u.full_name as user_name, u.email as user_email FROM orders o LEFT JOIN users u ON o.user_id = u.id ORDER BY o.id DESC")->fetchAll();
 }
+
+$userPlan = $currentUser['subscription_plan'] ?? 'member';
+$isAdminOrSpeaker = in_array($currentUser['role'] ?? '', ['admin', 'speaker'], true);
+
+if (isset($_GET['toggle_plan'])) {
+    $newPlan = ($_GET['toggle_plan'] === 'creator') ? 'creator' : 'member';
+    $db->prepare("UPDATE users SET subscription_plan = ? WHERE id = ?")->execute([$newPlan, $currentUser['id']]);
+    header('Location: dashboard.php?tab=tab-calendrier');
+    exit;
+}
+
+$isCreator = ($userPlan === 'creator') || $isAdminOrSpeaker;
 ?>
 <!DOCTYPE html>
 <html lang="fr" data-theme="light">
@@ -141,7 +219,7 @@ if (($currentUser['role'] ?? '') === 'admin') {
   <header class="dash-topbar">
     <div class="dash-topbar-left">
       <a href="index.php" class="logo" aria-label="One Vision Community">
-        <div class="logo-icon">OV</div>
+
         <div class="logo-text">
           <span class="logo-brand"><span class="logo-one-script">One</span> Vision</span>
           <span class="logo-sub">Community</span>
@@ -748,14 +826,26 @@ if (($currentUser['role'] ?? '') === 'admin') {
             <p class="dash-desc">Découvrez l'agenda des prochains masterminds, ateliers de co-working et sessions de questions/réponses en direct.</p>
           </div>
           <div class="dash-header-actions">
-            <a href="creer-live.php" class="btn btn-primary btn-create-session-dash" id="btnCreateLiveDashTop" title="Proposer un nouveau live ou mastermind">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-                <circle cx="12" cy="12" r="10"></circle>
-                <line x1="12" y1="8" x2="12" y2="16"></line>
-                <line x1="8" y1="12" x2="16" y2="12"></line>
-              </svg>
-              <span>Créer un Live ou Mastermind</span>
-            </a>
+            <?php if ($isCreator): ?>
+              <a href="creer-live.php" class="btn btn-primary btn-create-session-dash" id="btnCreateLiveDashTop" title="Proposer un nouveau live ou mastermind">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                  <circle cx="12" cy="12" r="10"></circle>
+                  <line x1="12" y1="8" x2="12" y2="16"></line>
+                  <line x1="8" y1="12" x2="16" y2="12"></line>
+                </svg>
+                <span>Créer un Live ou Mastermind</span>
+              </a>
+            <?php else: ?>
+              <button type="button" class="btn btn-primary btn-create-session-dash btn-upgrade-creator-trigger" id="btnCreateLiveDashTop" title="Statut Créateur (29€/mois) requis pour créer un live">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                  <circle cx="12" cy="12" r="10"></circle>
+                  <line x1="12" y1="8" x2="12" y2="16"></line>
+                  <line x1="8" y1="12" x2="16" y2="12"></line>
+                </svg>
+                <span>Créer un Live ou Mastermind</span>
+                <span style="font-size:0.72rem;background:rgba(255,255,255,0.25);padding:0.15rem 0.45rem;border-radius:6px;margin-left:0.35rem;font-weight:700;">29€/m</span>
+              </button>
+            <?php endif; ?>
           </div>
         </div>
 
@@ -785,19 +875,49 @@ if (($currentUser['role'] ?? '') === 'admin') {
                   📎 Ressource offerte : <?= htmlspecialchars($live['resources']) ?>
                 </div>
               <?php endif; ?>
-              <div class="calendar-card-actions">
-                <button type="button" class="btn btn-primary btn-sm btn-join-live-direct">
-                  Rejoindre la salle Live
-                </button>
-                <a href="creer-live.php" class="btn btn-secondary btn-sm" title="Proposer une autre session">
-                  + Programmer un Live
-                </a>
+              <div class="calendar-card-actions" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:0.6rem;">
+                <div style="display:flex; align-items:center; gap:0.5rem; flex-wrap:wrap;">
+                  <button type="button" class="btn btn-primary btn-sm btn-join-live-direct">
+                    Rejoindre la salle Live
+                  </button>
+                  <button type="button" class="btn btn-secondary btn-sm btn-add-google-cal" data-cal-title="<?= htmlspecialchars($live['title']) ?>" data-cal-date="<?= date('Ymd\THis\Z', $liveTimestamp) ?>" data-cal-desc="<?= htmlspecialchars($live['description']) ?>">
+                    📅 Rappel agenda
+                  </button>
+                </div>
+                
+                <?php 
+                  $canManage = $isCreator && (($live['user_id'] == $currentUser['id']) || empty($live['user_id']) || $isAdminOrSpeaker || $userPlan === 'creator');
+                  if ($canManage):
+                ?>
+                <div class="live-creator-actions" style="display:flex; align-items:center; gap:0.45rem;">
+                  <button type="button" class="btn btn-outline btn-sm btn-edit-live-trigger" 
+                    data-id="<?= $live['id'] ?>"
+                    data-title="<?= htmlspecialchars($live['title']) ?>"
+                    data-desc="<?= htmlspecialchars($live['description']) ?>"
+                    data-format="<?= htmlspecialchars($live['format']) ?>"
+                    data-date="<?= htmlspecialchars($live['scheduled_date']) ?>"
+                    data-time="<?= htmlspecialchars($live['scheduled_time']) ?>"
+                    data-duration="<?= htmlspecialchars($live['duration']) ?>"
+                    data-resources="<?= htmlspecialchars($live['resources']) ?>"
+                    style="font-size:0.78rem; padding:0.35rem 0.65rem; border:1px solid #bfdbfe; color:#2563eb; background:#eff6ff;"
+                    title="Modifier ce live">
+                    ✏️ Modifier
+                  </button>
+                  <button type="button" class="btn btn-outline btn-sm btn-delete-live-trigger"
+                    data-id="<?= $live['id'] ?>"
+                    data-title="<?= htmlspecialchars($live['title']) ?>"
+                    style="font-size:0.78rem; padding:0.35rem 0.65rem; border:1px solid #fecaca; color:#dc2626; background:#fef2f2;"
+                    title="Supprimer ce live">
+                    🗑️ Supprimer
+                  </button>
+                </div>
+                <?php endif; ?>
               </div>
             </div>
           </div>
           <?php endforeach; ?>
           
-          <div class="calendar-card">
+          <div class="calendar-card" data-live-id="demo-24">
             <div class="calendar-date-badge">
               <span class="calendar-date-month">JEU</span>
               <span class="calendar-date-day">24</span>
@@ -809,18 +929,44 @@ if (($currentUser['role'] ?? '') === 'admin') {
               </div>
               <h3 class="calendar-card-title">Passer de 0 à 10 clients réguliers sans publicité payante</h3>
               <p class="calendar-card-desc">Analyse complète des leviers organiques d'acquisition B2B, audit en direct des profils volontaires et plan d'action immédiat. Animé par Julien B. (Fondateur SaaS & Coach B2B).</p>
-              <div class="calendar-card-actions">
-                <button type="button" class="btn btn-primary btn-sm btn-join-live-direct">
-                  Rejoindre la salle Live
-                </button>
-                <button type="button" class="btn btn-secondary btn-sm btn-add-google-cal" data-cal-title="Mastermind : Passer de 0 à 10 clients réguliers sans pub" data-cal-date="20260924T183000Z/20260924T200000Z" data-cal-desc="Mastermind Stratégie One Vision avec Julien B. : acquisition B2B organique." data-cal-loc="Espace Live One Vision (dashboard.html)">
-                  📅 Ajouter à mon calendrier
-                </button>
+              <div class="calendar-card-actions" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:0.6rem;">
+                <div style="display:flex; align-items:center; gap:0.5rem; flex-wrap:wrap;">
+                  <button type="button" class="btn btn-primary btn-sm btn-join-live-direct">
+                    Rejoindre la salle Live
+                  </button>
+                  <button type="button" class="btn btn-secondary btn-sm btn-add-google-cal" data-cal-title="Mastermind : Passer de 0 à 10 clients réguliers sans pub" data-cal-date="20260924T183000Z/20260924T200000Z" data-cal-desc="Mastermind Stratégie One Vision avec Julien B. : acquisition B2B organique." data-cal-loc="Espace Live One Vision (dashboard.html)">
+                    📅 Ajouter à mon calendrier
+                  </button>
+                </div>
+                <?php if ($isCreator): ?>
+                <div class="live-creator-actions" style="display:flex; align-items:center; gap:0.45rem;">
+                  <button type="button" class="btn btn-outline btn-sm btn-edit-live-trigger" 
+                    data-id="demo-24"
+                    data-title="Passer de 0 à 10 clients réguliers sans publicité payante"
+                    data-desc="Analyse complète des leviers organiques d'acquisition B2B, audit en direct des profils volontaires et plan d'action immédiat."
+                    data-format="Mastermind Stratégie"
+                    data-date="2026-09-24"
+                    data-time="18h30"
+                    data-duration="1h30"
+                    data-resources="Trame d'audit B2B (.PDF)"
+                    style="font-size:0.78rem; padding:0.35rem 0.65rem; border:1px solid #bfdbfe; color:#2563eb; background:#eff6ff;"
+                    title="Modifier ce live">
+                    ✏️ Modifier
+                  </button>
+                  <button type="button" class="btn btn-outline btn-sm btn-delete-live-trigger"
+                    data-id="demo-24"
+                    data-title="Passer de 0 à 10 clients réguliers sans publicité payante"
+                    style="font-size:0.78rem; padding:0.35rem 0.65rem; border:1px solid #fecaca; color:#dc2626; background:#fef2f2;"
+                    title="Supprimer ce live">
+                    🗑️ Supprimer
+                  </button>
+                </div>
+                <?php endif; ?>
               </div>
             </div>
           </div>
 
-          <div class="calendar-card">
+          <div class="calendar-card" data-live-id="demo-25">
             <div class="calendar-date-badge">
               <span class="calendar-date-month">VEN</span>
               <span class="calendar-date-day">25</span>
@@ -832,18 +978,44 @@ if (($currentUser['role'] ?? '') === 'admin') {
               </div>
               <h3 class="calendar-card-title">Revue en direct de vos pages de vente & tunnels</h3>
               <p class="calendar-card-desc">Session de feedback bienveillante et constructive. 4 membres volontaires présentent leur offre à l'écran pour optimiser le copywriting et la conversion. Animé par Sophie M. (Copywriter).</p>
-              <div class="calendar-card-actions">
-                <button type="button" class="btn btn-primary btn-sm btn-join-live-direct">
-                  Rejoindre la salle Live
-                </button>
-                <button type="button" class="btn btn-secondary btn-sm btn-add-google-cal" data-cal-title="Co-Working : Revue en direct de vos pages de vente & tunnels" data-cal-date="20260925T140000Z/20260925T153000Z" data-cal-desc="Session de feedback bienveillante et constructive animée par Sophie M." data-cal-loc="Espace Live One Vision (dashboard.html)">
-                  📅 Ajouter à mon calendrier
-                </button>
+              <div class="calendar-card-actions" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:0.6rem;">
+                <div style="display:flex; align-items:center; gap:0.5rem; flex-wrap:wrap;">
+                  <button type="button" class="btn btn-primary btn-sm btn-join-live-direct">
+                    Rejoindre la salle Live
+                  </button>
+                  <button type="button" class="btn btn-secondary btn-sm btn-add-google-cal" data-cal-title="Co-Working : Revue en direct de vos pages de vente & tunnels" data-cal-date="20260925T140000Z/20260925T153000Z" data-cal-desc="Session de feedback bienveillante et constructive animée par Sophie M." data-cal-loc="Espace Live One Vision (dashboard.html)">
+                    📅 Ajouter à mon calendrier
+                  </button>
+                </div>
+                <?php if ($isCreator): ?>
+                <div class="live-creator-actions" style="display:flex; align-items:center; gap:0.45rem;">
+                  <button type="button" class="btn btn-outline btn-sm btn-edit-live-trigger" 
+                    data-id="demo-25"
+                    data-title="Revue en direct de vos pages de vente & tunnels"
+                    data-desc="Session de feedback bienveillante et constructive. Optimisation copywriting et conversion."
+                    data-format="Co-Working & Feedback"
+                    data-date="2026-09-25"
+                    data-time="14h00"
+                    data-duration="1h30"
+                    data-resources="Checklist conversion page de vente"
+                    style="font-size:0.78rem; padding:0.35rem 0.65rem; border:1px solid #bfdbfe; color:#2563eb; background:#eff6ff;"
+                    title="Modifier ce live">
+                    ✏️ Modifier
+                  </button>
+                  <button type="button" class="btn btn-outline btn-sm btn-delete-live-trigger"
+                    data-id="demo-25"
+                    data-title="Revue en direct de vos pages de vente & tunnels"
+                    style="font-size:0.78rem; padding:0.35rem 0.65rem; border:1px solid #fecaca; color:#dc2626; background:#fef2f2;"
+                    title="Supprimer ce live">
+                    🗑️ Supprimer
+                  </button>
+                </div>
+                <?php endif; ?>
               </div>
             </div>
           </div>
 
-          <div class="calendar-card">
+          <div class="calendar-card" data-live-id="demo-27">
             <div class="calendar-date-badge">
               <span class="calendar-date-month">DIM</span>
               <span class="calendar-date-day">27</span>
@@ -855,18 +1027,44 @@ if (($currentUser['role'] ?? '') === 'admin') {
               </div>
               <h3 class="calendar-card-title">Bilan sans filtre de la semaine & objectifs du mois</h3>
               <p class="calendar-card-desc">Le rendez-vous chaleureux du dimanche soir pour débloquer les doutes, célébrer les victoires commerciales et planifier une semaine productive. Animé par Thomas R. (Mentor).</p>
-              <div class="calendar-card-actions">
-                <button type="button" class="btn btn-primary btn-sm btn-join-live-direct">
-                  Rejoindre la salle Live
-                </button>
-                <button type="button" class="btn btn-secondary btn-sm btn-add-google-cal" data-cal-title="Mastermind Dimanche : Bilan de la semaine & objectifs du mois" data-cal-date="20260927T200000Z/20260927T211500Z" data-cal-desc="Le rendez-vous chaleureux du dimanche soir One Vision avec Thomas R." data-cal-loc="Espace Live One Vision (dashboard.html)">
-                  📅 Ajouter à mon calendrier
-                </button>
+              <div class="calendar-card-actions" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:0.6rem;">
+                <div style="display:flex; align-items:center; gap:0.5rem; flex-wrap:wrap;">
+                  <button type="button" class="btn btn-primary btn-sm btn-join-live-direct">
+                    Rejoindre la salle Live
+                  </button>
+                  <button type="button" class="btn btn-secondary btn-sm btn-add-google-cal" data-cal-title="Mastermind Dimanche : Bilan de la semaine & objectifs du mois" data-cal-date="20260927T200000Z/20260927T211500Z" data-cal-desc="Le rendez-vous chaleureux du dimanche soir One Vision avec Thomas R." data-cal-loc="Espace Live One Vision (dashboard.html)">
+                    📅 Ajouter à mon calendrier
+                  </button>
+                </div>
+                <?php if ($isCreator): ?>
+                <div class="live-creator-actions" style="display:flex; align-items:center; gap:0.45rem;">
+                  <button type="button" class="btn btn-outline btn-sm btn-edit-live-trigger" 
+                    data-id="demo-27"
+                    data-title="Bilan sans filtre de la semaine & objectifs du mois"
+                    data-desc="Le rendez-vous chaleureux du dimanche soir pour débloquer les doutes, célébrer les victoires et planifier."
+                    data-format="Mastermind Dimanche"
+                    data-date="2026-09-27"
+                    data-time="20h00"
+                    data-duration="1h15"
+                    data-resources="Fiche d'objectifs hebdomadaires (.PDF)"
+                    style="font-size:0.78rem; padding:0.35rem 0.65rem; border:1px solid #bfdbfe; color:#2563eb; background:#eff6ff;"
+                    title="Modifier ce live">
+                    ✏️ Modifier
+                  </button>
+                  <button type="button" class="btn btn-outline btn-sm btn-delete-live-trigger"
+                    data-id="demo-27"
+                    data-title="Bilan sans filtre de la semaine & objectifs du mois"
+                    style="font-size:0.78rem; padding:0.35rem 0.65rem; border:1px solid #fecaca; color:#dc2626; background:#fef2f2;"
+                    title="Supprimer ce live">
+                    🗑️ Supprimer
+                  </button>
+                </div>
+                <?php endif; ?>
               </div>
             </div>
           </div>
 
-          <div class="calendar-card">
+          <div class="calendar-card" data-live-id="demo-29">
             <div class="calendar-date-badge">
               <span class="calendar-date-month">MAR</span>
               <span class="calendar-date-day">29</span>
@@ -878,13 +1076,39 @@ if (($currentUser['role'] ?? '') === 'admin') {
               </div>
               <h3 class="calendar-card-title">Automatiser son back-office avec l'IA et No-Code</h3>
               <p class="calendar-card-desc">Comment déléguer 10h de tâches chronophages chaque semaine grâce à des workflows simples et reproductibles. Animé par Alexandre L. (Expert No-Code).</p>
-              <div class="calendar-card-actions">
-                <button type="button" class="btn btn-primary btn-sm btn-join-live-direct">
-                  Rejoindre la salle Live
-                </button>
-                <button type="button" class="btn btn-secondary btn-sm btn-add-google-cal" data-cal-title="Atelier No-Code : Automatiser son back-office avec l'IA" data-cal-date="20260929T190000Z/20260929T203000Z" data-cal-desc="Conférence No-Code & IA animée par Alexandre L. pour libérer 10h/semaine." data-cal-loc="Espace Live One Vision (dashboard.html)">
-                  📅 Ajouter à mon calendrier
-                </button>
+              <div class="calendar-card-actions" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:0.6rem;">
+                <div style="display:flex; align-items:center; gap:0.5rem; flex-wrap:wrap;">
+                  <button type="button" class="btn btn-primary btn-sm btn-join-live-direct">
+                    Rejoindre la salle Live
+                  </button>
+                  <button type="button" class="btn btn-secondary btn-sm btn-add-google-cal" data-cal-title="Atelier No-Code : Automatiser son back-office avec l'IA" data-cal-date="20260929T190000Z/20260929T203000Z" data-cal-desc="Conférence No-Code & IA animée par Alexandre L. pour libérer 10h/semaine." data-cal-loc="Espace Live One Vision (dashboard.html)">
+                    📅 Ajouter à mon calendrier
+                  </button>
+                </div>
+                <?php if ($isCreator): ?>
+                <div class="live-creator-actions" style="display:flex; align-items:center; gap:0.45rem;">
+                  <button type="button" class="btn btn-outline btn-sm btn-edit-live-trigger" 
+                    data-id="demo-29"
+                    data-title="Automatiser son back-office avec l'IA et No-Code"
+                    data-desc="Comment déléguer 10h de tâches chronophages chaque semaine grâce à des workflows simples et reproductibles."
+                    data-format="Conférence No-Code"
+                    data-date="2026-09-29"
+                    data-time="19h00"
+                    data-duration="1h30"
+                    data-resources="Template Make / Zapier offert"
+                    style="font-size:0.78rem; padding:0.35rem 0.65rem; border:1px solid #bfdbfe; color:#2563eb; background:#eff6ff;"
+                    title="Modifier ce live">
+                    ✏️ Modifier
+                  </button>
+                  <button type="button" class="btn btn-outline btn-sm btn-delete-live-trigger"
+                    data-id="demo-29"
+                    data-title="Automatiser son back-office avec l'IA et No-Code"
+                    style="font-size:0.78rem; padding:0.35rem 0.65rem; border:1px solid #fecaca; color:#dc2626; background:#fef2f2;"
+                    title="Supprimer ce live">
+                    🗑️ Supprimer
+                  </button>
+                </div>
+                <?php endif; ?>
               </div>
             </div>
           </div>
@@ -2235,6 +2459,182 @@ if (($currentUser['role'] ?? '') === 'admin') {
 
       <div class="dash-modal-actions" style="margin-top:0;padding:1rem 1.5rem;background:#f8fafc;border-top:1px solid #e2e8f0;border-radius:0 0 16px 16px;display:flex;justify-content:flex-end;">
         <button type="button" class="btn btn-secondary btn-sm" id="closeResourceDownloadModalFooterBtn">Fermer</button>
+      </div>
+    </div>
+  <!-- ======================================================================
+       MODALE 7 : MODIFICATION D'UN LIVE OU MASTERMIND
+       ====================================================================== -->
+  <div id="editLiveModal" class="dash-modal" style="display:none;" role="dialog" aria-modal="true" aria-labelledby="editLiveModalTitle">
+    <div class="dash-modal-backdrop" id="backdropEditLive"></div>
+    <div class="dash-modal-dialog dash-modal-dialog-md" style="max-width: 620px; background:#fff; border-radius:16px; box-shadow:0 25px 50px -12px rgba(0,0,0,0.25); border:1px solid #e2e8f0; overflow:hidden;">
+      <div class="dash-modal-header" style="padding:1.25rem 1.5rem; background:#f8fafc; border-bottom:1px solid #e2e8f0; display:flex; justify-content:space-between; align-items:center;">
+        <div style="display:flex;align-items:center;gap:0.75rem;">
+          <span style="font-size:1.4rem;line-height:1;">✏️</span>
+          <div>
+            <h3 class="dash-modal-title" id="editLiveModalTitle" style="margin:0;font-size:1.15rem;font-weight:700;color:#0f172a;">Modifier la session Live / Mastermind</h3>
+            <span style="font-size:0.82rem;color:#64748b;">Mettez à jour les informations diffusées dans le calendrier</span>
+          </div>
+        </div>
+        <button type="button" class="dash-modal-close" id="closeEditLiveModalBtn" aria-label="Fermer la boîte de dialogue" style="background:none;border:none;font-size:1.5rem;cursor:pointer;color:#64748b;">&times;</button>
+      </div>
+
+      <form id="editLiveForm" method="POST" action="dashboard.php#tab-calendrier" style="margin:0;">
+        <input type="hidden" name="action" value="edit_live">
+        <input type="hidden" name="live_id" id="editLiveId" value="">
+
+        <div style="padding:1.5rem;display:flex;flex-direction:column;gap:1.15rem;">
+          <div>
+            <label for="editLiveTitle" style="display:block;font-weight:600;font-size:0.88rem;color:#1e293b;margin-bottom:0.35rem;">Titre de la session *</label>
+            <input type="text" id="editLiveTitle" name="title" required style="width:100%;padding:0.65rem 0.85rem;border:1px solid #cbd5e1;border-radius:8px;font-size:0.95rem;background:#fff;color:#0f172a;box-sizing:border-box;">
+          </div>
+
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;">
+            <div>
+              <label for="editLiveFormat" style="display:block;font-weight:600;font-size:0.88rem;color:#1e293b;margin-bottom:0.35rem;">Format *</label>
+              <select id="editLiveFormat" name="format" style="width:100%;padding:0.65rem 0.85rem;border:1px solid #cbd5e1;border-radius:8px;font-size:0.92rem;background:#fff;color:#0f172a;box-sizing:border-box;">
+                <option value="Mastermind Stratégie">🧠 Mastermind Stratégie</option>
+                <option value="Live Session & Q&A">🎙️ Live Session & Q&A</option>
+                <option value="Co-Working & Feedback">🛠️ Co-Working & Feedback</option>
+                <option value="Conférence No-Code">💻 Conférence No-Code / IA</option>
+                <option value="Atelier Pratique">⚡ Atelier Pratique</option>
+              </select>
+            </div>
+            <div>
+              <label for="editLiveDuration" style="display:block;font-weight:600;font-size:0.88rem;color:#1e293b;margin-bottom:0.35rem;">Durée estimée</label>
+              <input type="text" id="editLiveDuration" name="duration" placeholder="ex: 1h30 (90 min)" style="width:100%;padding:0.65rem 0.85rem;border:1px solid #cbd5e1;border-radius:8px;font-size:0.92rem;background:#fff;color:#0f172a;box-sizing:border-box;">
+            </div>
+          </div>
+
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;">
+            <div>
+              <label for="editLiveDate" style="display:block;font-weight:600;font-size:0.88rem;color:#1e293b;margin-bottom:0.35rem;">Date *</label>
+              <input type="date" id="editLiveDate" name="date" required style="width:100%;padding:0.65rem 0.85rem;border:1px solid #cbd5e1;border-radius:8px;font-size:0.92rem;background:#fff;color:#0f172a;box-sizing:border-box;">
+            </div>
+            <div>
+              <label for="editLiveTime" style="display:block;font-weight:600;font-size:0.88rem;color:#1e293b;margin-bottom:0.35rem;">Heure (UTC+1 / Paris) *</label>
+              <input type="time" id="editLiveTime" name="time" required style="width:100%;padding:0.65rem 0.85rem;border:1px solid #cbd5e1;border-radius:8px;font-size:0.92rem;background:#fff;color:#0f172a;box-sizing:border-box;">
+            </div>
+          </div>
+
+          <div>
+            <label for="editLiveDescription" style="display:block;font-weight:600;font-size:0.88rem;color:#1e293b;margin-bottom:0.35rem;">Description & Objectifs</label>
+            <textarea id="editLiveDescription" name="description" rows="3" style="width:100%;padding:0.65rem 0.85rem;border:1px solid #cbd5e1;border-radius:8px;font-size:0.9rem;background:#fff;color:#0f172a;resize:vertical;box-sizing:border-box;" placeholder="Précisez les objectifs et thématiques abordées..."></textarea>
+          </div>
+
+          <div>
+            <label for="editLiveResources" style="display:block;font-weight:600;font-size:0.88rem;color:#1e293b;margin-bottom:0.35rem;">Ressources partagées ou Lien</label>
+            <input type="text" id="editLiveResources" name="resources" placeholder="ex: Notion doc, template Figma, Google Drive..." style="width:100%;padding:0.65rem 0.85rem;border:1px solid #cbd5e1;border-radius:8px;font-size:0.92rem;background:#fff;color:#0f172a;box-sizing:border-box;">
+          </div>
+        </div>
+
+        <div class="dash-modal-actions" style="margin-top:0;padding:1rem 1.5rem;background:#f8fafc;border-top:1px solid #e2e8f0;border-radius:0 0 16px 16px;display:flex;justify-content:flex-end;gap:0.75rem;">
+          <button type="button" class="btn btn-secondary btn-sm" id="btnCancelEditLive">Annuler</button>
+          <button type="submit" class="btn btn-primary btn-sm" id="btnSaveEditLive">💾 Enregistrer les modifications</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ======================================================================
+       MODALE 8 : CONFIRMATION DE SUPPRESSION D'UN LIVE OU MASTERMIND
+       ====================================================================== -->
+  <div id="deleteLiveModal" class="dash-modal" style="display:none;" role="dialog" aria-modal="true" aria-labelledby="deleteLiveModalTitle">
+    <div class="dash-modal-backdrop" id="backdropDeleteLive"></div>
+    <div class="dash-modal-dialog" style="max-width: 480px;text-align:center;padding:2rem;background:#fff;border-radius:16px;box-shadow:0 25px 50px -12px rgba(0,0,0,0.25);border:1px solid #fee2e2;">
+      <div style="width:64px;height:64px;border-radius:50%;background:#fef2f2;color:#ef4444;display:inline-flex;align-items:center;justify-content:center;font-size:2rem;margin-bottom:1rem;border:2px solid #fee2e2;">
+        🗑️
+      </div>
+      <h3 class="dash-modal-title" id="deleteLiveModalTitle" style="font-size:1.25rem;font-weight:800;color:#0f172a;margin-bottom:0.5rem;">
+        Supprimer cette session ?
+      </h3>
+      <p style="font-size:0.9rem;color:#64748b;line-height:1.55;margin-bottom:1.5rem;">
+        Êtes-vous certain de vouloir supprimer cette session <strong id="deleteLiveTitlePreview" style="color:#0f172a;">« »</strong> ?<br>
+        Cette action est irréversible et la session sera retirée du calendrier pour tous les membres.
+      </p>
+
+      <form id="deleteLiveForm" method="POST" action="dashboard.php#tab-calendrier" style="margin:0;">
+        <input type="hidden" name="action" value="delete_live">
+        <input type="hidden" name="live_id" id="deleteLiveId" value="">
+
+        <div style="display:flex;justify-content:center;gap:0.75rem;">
+          <button type="button" class="btn btn-secondary" id="btnCancelDeleteLive" style="padding:0.7rem 1.25rem;">
+            Non, conserver
+          </button>
+          <button type="submit" class="btn" id="btnConfirmDeleteLive" style="background:#ef4444;color:#fff;border:none;padding:0.7rem 1.25rem;border-radius:10px;font-weight:600;cursor:pointer;">
+            Oui, supprimer définitivement
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ======================================================================
+       MODALE 9 : PASSER AU STATUT CRÉATEUR & HOST (29€/MOIS)
+       ====================================================================== -->
+  <div id="upgradeToCreatorModal" class="dash-modal" style="display:none;" role="dialog" aria-modal="true" aria-labelledby="upgradeCreatorModalTitle">
+    <div class="dash-modal-backdrop" id="backdropUpgradeCreator"></div>
+    <div class="dash-modal-dialog" style="max-width: 540px;padding:2rem;background:#fff;border-radius:18px;box-shadow:0 25px 50px -12px rgba(0,0,0,0.25);border:1px solid #e2e8f0;position:relative;">
+      <button type="button" class="dash-modal-close" id="closeUpgradeCreatorModalBtn" aria-label="Fermer" style="position:absolute;top:1rem;right:1rem;background:none;border:none;font-size:1.5rem;color:#94a3b8;cursor:pointer;">&times;</button>
+      
+      <div style="text-align:center;margin-bottom:1.5rem;">
+        <div style="width:68px;height:68px;border-radius:50%;background:linear-gradient(135deg, rgba(230,57,70,0.15), rgba(255,183,3,0.2));color:#e63946;display:inline-flex;align-items:center;justify-content:center;font-size:2.2rem;margin-bottom:1rem;border:2px solid rgba(230,57,70,0.25);">
+          👑
+        </div>
+        <h3 class="dash-modal-title" id="upgradeCreatorModalTitle" style="font-size:1.35rem;font-weight:800;color:#0f172a;margin-bottom:0.4rem;">
+          Passez au Statut Créateur & Host
+        </h3>
+        <p style="font-size:0.92rem;color:#64748b;line-height:1.5;margin:0;">
+          L'abonnement <strong style="color:#0f172a;">Membre (9 € / mois)</strong> permet de participer à toutes les sessions. Pour programmer, animer et diffuser vos propres Lives & Masterminds, activez la formule Créateur.
+        </p>
+      </div>
+
+      <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:14px;padding:1.25rem;margin-bottom:1.5rem;">
+        <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:1rem;border-bottom:1px solid #e2e8f0;padding-bottom:0.75rem;">
+          <div>
+            <span style="font-size:0.75rem;font-weight:700;letter-spacing:0.05em;text-transform:uppercase;color:#e63946;background:#ffebee;padding:0.2rem 0.55rem;border-radius:6px;display:inline-block;margin-bottom:0.25rem;">Formule Pro Host</span>
+            <h4 style="margin:0;font-size:1.15rem;font-weight:800;color:#0f172a;">Créateur & Host Mastermind</h4>
+          </div>
+          <div style="text-align:right;">
+            <span style="font-size:1.6rem;font-weight:900;color:#e63946;">29 €</span>
+            <span style="font-size:0.8rem;color:#64748b;">/ mois</span>
+            <div style="font-size:0.75rem;color:#64748b;font-weight:500;">~19 000 FCFA / mois</div>
+          </div>
+        </div>
+
+        <ul style="list-style:none;padding:0;margin:0;display:flex;flex-direction:column;gap:0.6rem;font-size:0.88rem;color:#334155;">
+          <li style="display:flex;align-items:center;gap:0.6rem;">
+            <span style="color:#10b981;font-weight:bold;">✓</span>
+            <span><strong>Création & animation illimitée</strong> de Lives & Masterminds</span>
+          </li>
+          <li style="display:flex;align-items:center;gap:0.6rem;">
+            <span style="color:#10b981;font-weight:bold;">✓</span>
+            <span><strong>Diffusion officielle</strong> dans le calendrier communautaire</span>
+          </li>
+          <li style="display:flex;align-items:center;gap:0.6rem;">
+            <span style="color:#10b981;font-weight:bold;">✓</span>
+            <span><strong>Modification & suppression</strong> de vos sessions en autonomie</span>
+          </li>
+          <li style="display:flex;align-items:center;gap:0.6rem;">
+            <span style="color:#10b981;font-weight:bold;">✓</span>
+            <span><strong>Badge officiel « Créateur Host »</strong> sur votre profil et salons</span>
+          </li>
+          <li style="display:flex;align-items:center;gap:0.6rem;">
+            <span style="color:#10b981;font-weight:bold;">✓</span>
+            <span>Tous les accès Membre inclus (Replays HD, Salons thématiques, Fiches)</span>
+          </li>
+        </ul>
+      </div>
+
+      <div style="display:flex;flex-direction:column;gap:0.75rem;">
+        <form method="POST" action="dashboard.php" style="margin:0;">
+          <input type="hidden" name="action" value="upgrade_to_creator">
+          <button type="submit" class="btn btn-primary" style="width:100%;padding:0.85rem;font-size:0.95rem;font-weight:700;display:flex;align-items:center;justify-content:center;gap:0.5rem;box-shadow:0 4px 14px rgba(230,57,70,0.35);border:none;cursor:pointer;">
+            ⚡ Activer l'abonnement Créateur (29 € / mois)
+          </button>
+        </form>
+        <button type="button" class="btn btn-secondary" id="btnCancelUpgradeCreator" style="padding:0.7rem;font-size:0.88rem;">
+          Garder mon abonnement Membre (9 € / mois)
+        </button>
       </div>
     </div>
   </div>
