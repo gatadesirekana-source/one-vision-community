@@ -2,8 +2,6 @@
 <html lang="fr" data-theme="light">
 <head>
   <meta charset="UTF-8">
-  <meta http-equiv="refresh" content="0; url=index.html">
-  <script>window.location.replace('index.html');</script>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Paiement Sécurisé — One Vision Community (9€/mois)</title>
   <meta name="description" content="Finalisez votre adhésion à One Vision Community pour 9€ par mois. Sans engagement, résiliable en 1 clic. Accès immédiat aux lives et aux salons d'échanges.">
@@ -88,42 +86,42 @@
 
                 <div class="checkout-plan-selector-grid" style="display:grid; grid-template-columns:1fr 1fr; gap:0.85rem; margin-bottom:1.5rem;">
                   <!-- Plan Membre 9€ -->
-                  <div class="plan-card-option selected" id="planOptionMember" data-plan="member" role="button" tabindex="0" style="border:2px solid #2563eb; background:#f0f7ff; border-radius:14px; padding:1rem; cursor:pointer; position:relative; transition:all 0.2s ease;">
+                  <div class="plan-card-option selected" id="planOptionMember" data-plan="membre" role="button" tabindex="0" style="border:2px solid #2563eb; background:#f0f7ff; border-radius:14px; padding:1rem; cursor:pointer; position:relative; transition:all 0.2s ease;">
                     <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.4rem;">
                       <div style="display:flex; align-items:center; gap:0.45rem;">
-                        <input type="radio" name="planRadio" id="radioPlanMember" value="member" checked style="accent-color:#2563eb; width:17px; height:17px; cursor:pointer;">
+                        <input type="radio" name="planRadio" id="radioPlanMember" value="membre" checked style="accent-color:#2563eb; width:17px; height:17px; cursor:pointer;">
                         <strong style="font-size:0.95rem; color:#0f172a;">Membre</strong>
                       </div>
-                      <span style="font-size:0.72rem; background:#f1f5f9; color:#475569; padding:2px 7px; border-radius:6px; font-weight:700;">Participant</span>
+                      <span style="font-size:0.72rem; background:#f1f5f9; color:#475569; padding:2px 7px; border-radius:6px; font-weight:700;">Standard</span>
                     </div>
                     <div style="margin-bottom:0.4rem;">
-                      <span style="font-size:1.4rem; font-weight:900; color:#0f172a;">9 €</span>
-                      <span style="font-size:0.78rem; color:#64748b;">/ mois</span>
+                      <span class="plan-price-display" id="planMembrePriceText" style="font-size:1.4rem; font-weight:900; color:#0f172a;">9 €</span>
+                      <span class="plan-period-display" id="planMembrePeriodText" style="font-size:0.78rem; color:#64748b;">/ mois</span>
                       <div style="font-size:0.75rem; color:#64748b; font-weight:600;">~5 900 FCFA / mois</div>
                     </div>
                     <p style="font-size:0.76rem; color:#64748b; line-height:1.4; margin:0;">
-                      Participez à tous les Lives & Masterminds, salons 24/7 et fiches outils.
+                      Participez à tous les Lives & Masterminds, salons 24/7 et replays HD.
                     </p>
                   </div>
 
-                  <!-- Plan Créateur 29€ -->
-                  <div class="plan-card-option" id="planOptionCreator" data-plan="creator" role="button" tabindex="0" style="border:2px solid #e2e8f0; background:#ffffff; border-radius:14px; padding:1rem; cursor:pointer; position:relative; transition:all 0.2s ease;">
-                    <div style="position:absolute; top:-9px; right:10px; background:linear-gradient(135deg, #e63946, #f97316); color:#fff; font-size:0.65rem; font-weight:800; padding:2px 7px; border-radius:10px; letter-spacing:0.04em;">
-                      👑 PRO HOST
+                  <!-- Plan Animateur 24€ (Abonnement Plus) -->
+                  <div class="plan-card-option" id="planOptionCreator" data-plan="animateur" role="button" tabindex="0" style="border:2px solid #e2e8f0; background:#ffffff; border-radius:14px; padding:1rem; cursor:pointer; position:relative; transition:all 0.2s ease;">
+                    <div style="position:absolute; top:-9px; right:10px; background:linear-gradient(135deg, #f97316, #ea580c); color:#fff; font-size:0.65rem; font-weight:800; padding:2px 7px; border-radius:10px; letter-spacing:0.04em;">
+                      ⭐ PLUS
                     </div>
                     <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.4rem;">
                       <div style="display:flex; align-items:center; gap:0.45rem;">
-                        <input type="radio" name="planRadio" id="radioPlanCreator" value="creator" style="accent-color:#e63946; width:17px; height:17px; cursor:pointer;">
-                        <strong style="font-size:0.95rem; color:#0f172a;">Créateur Host</strong>
+                        <input type="radio" name="planRadio" id="radioPlanCreator" value="animateur" style="accent-color:#f97316; width:17px; height:17px; cursor:pointer;">
+                        <strong style="font-size:0.95rem; color:#0f172a;">Abonnement Plus</strong>
                       </div>
                     </div>
                     <div style="margin-bottom:0.4rem;">
-                      <span style="font-size:1.4rem; font-weight:900; color:#e63946;">29 €</span>
-                      <span style="font-size:0.78rem; color:#64748b;">/ mois</span>
-                      <div style="font-size:0.75rem; color:#e63946; font-weight:700;">~19 000 FCFA / mois</div>
+                      <span class="plan-price-display" id="planAnimateurPriceText" style="font-size:1.4rem; font-weight:900; color:#f97316;">24 €</span>
+                      <span class="plan-period-display" id="planAnimateurPeriodText" style="font-size:0.78rem; color:#64748b;">/ mois</span>
+                      <div style="font-size:0.75rem; color:#f97316; font-weight:700;">~15 700 FCFA / mois</div>
                     </div>
                     <p style="font-size:0.76rem; color:#334155; line-height:1.4; margin:0;">
-                      <strong>Créez & animez vos propres Lives</strong> dans le calendrier officiel + Badge Vérifié.
+                      <strong>Créez & animez vos Lives</strong> dans le calendrier officiel + Espace Animateur & Badge.
                     </p>
                   </div>
                 </div>
@@ -856,5 +854,89 @@
   </style>
 
   <script src="./js/main.js?v=22"></script>
+  <script>
+    // Synchronisation dynamique du plan & du paiement pour Vercel / Démo
+    document.addEventListener('DOMContentLoaded', () => {
+      const urlParams = new URLSearchParams(window.location.search);
+      let planParam = (urlParams.get('plan') || '').toLowerCase();
+      let billingParam = (urlParams.get('billing') || '').toLowerCase();
+
+      // Normalisation des codes
+      if (planParam === 'creator' || planParam === 'plus') planParam = 'animateur';
+      if (planParam !== 'animateur') planParam = 'membre';
+
+      const isYearly = (billingParam === 'annuel' || billingParam === 'yearly');
+
+      const cardMembre = document.getElementById('planOptionMember');
+      const cardAnimateur = document.getElementById('planOptionCreator');
+      const radioMembre = document.getElementById('radioPlanMember');
+      const radioAnimateur = document.getElementById('radioPlanCreator');
+      const planInput = document.getElementById('subscriptionPlanInput');
+
+      // Mettre à jour les textes des prix selon la périodicité
+      const membrePrice = isYearly ? '89 €' : '9 €';
+      const membrePeriod = isYearly ? '/ an' : '/ mois';
+      const animPrice = isYearly ? '239 €' : '24 €';
+      const animPeriod = isYearly ? '/ an' : '/ mois';
+
+      const memPriceEl = document.getElementById('planMembrePriceText');
+      const memPeriodEl = document.getElementById('planMembrePeriodText');
+      const animPriceEl = document.getElementById('planAnimateurPriceText');
+      const animPeriodEl = document.getElementById('planAnimateurPeriodText');
+
+      if (memPriceEl) memPriceEl.textContent = membrePrice;
+      if (memPeriodEl) memPeriodEl.textContent = membrePeriod;
+      if (animPriceEl) animPriceEl.textContent = animPrice;
+      if (animPeriodEl) animPeriodEl.textContent = animPeriod;
+
+      function selectPlan(target) {
+        if (target === 'animateur') {
+          if (cardMembre) { cardMembre.classList.remove('selected'); cardMembre.style.borderColor = '#e2e8f0'; cardMembre.style.background = '#ffffff'; }
+          if (cardAnimateur) { cardAnimateur.classList.add('selected'); cardAnimateur.style.borderColor = '#f97316'; cardAnimateur.style.background = '#fff7ed'; }
+          if (radioMembre) radioMembre.checked = false;
+          if (radioAnimateur) radioAnimateur.checked = true;
+          if (planInput) planInput.value = 'animateur';
+          localStorage.setItem('ov_pending_plan', 'animateur');
+          localStorage.setItem('ov_is_creator', 'true');
+        } else {
+          if (cardAnimateur) { cardAnimateur.classList.remove('selected'); cardAnimateur.style.borderColor = '#e2e8f0'; cardAnimateur.style.background = '#ffffff'; }
+          if (cardMembre) { cardMembre.classList.add('selected'); cardMembre.style.borderColor = '#2563eb'; cardMembre.style.background = '#f0f7ff'; }
+          if (radioMembre) radioMembre.checked = true;
+          if (radioAnimateur) radioAnimateur.checked = false;
+          if (planInput) planInput.value = 'membre';
+          localStorage.setItem('ov_pending_plan', 'membre');
+          localStorage.setItem('ov_is_creator', 'false');
+        }
+      }
+
+      if (cardMembre) {
+        cardMembre.addEventListener('click', () => selectPlan('membre'));
+      }
+      if (cardAnimateur) {
+        cardAnimateur.addEventListener('click', () => selectPlan('animateur'));
+      }
+
+      // Appliquer le plan passé en paramètre
+      selectPlan(planParam);
+
+      // Traitement automatique lors de la soumission du formulaire
+      const checkoutForm = document.getElementById('checkoutPaymentForm');
+      if (checkoutForm) {
+        checkoutForm.addEventListener('submit', (e) => {
+          const selected = (radioAnimateur && radioAnimateur.checked) ? 'animateur' : 'membre';
+          const nameVal = document.getElementById('checkoutName')?.value || 'Alexandre Martin';
+          const emailVal = document.getElementById('checkoutEmail')?.value || 'alexandre@monprojet.fr';
+
+          localStorage.setItem('ov_has_paid', 'true');
+          localStorage.setItem('ov_subscription_plan', selected);
+          localStorage.setItem('ov_subscription_status', 'active');
+          localStorage.setItem('ov_subscription_billing', isYearly ? 'annuel' : 'mensuel');
+          localStorage.setItem('ov_member_name', nameVal);
+          localStorage.setItem('ov_member_email', emailVal);
+          localStorage.setItem('ov_is_creator', selected === 'animateur' ? 'true' : 'false');
+        });
+      }
+    });
+  </script>
 </body>
 </html>

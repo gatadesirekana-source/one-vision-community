@@ -1,0 +1,22 @@
+{
+  "version": 2,
+  "cleanUrls": true,
+  "rewrites": [
+    { "source": "/questionnaire", "destination": "/questionnaire.html" },
+    { "source": "/choisir-abonnement", "destination": "/choisir-abonnement.html" },
+    { "source": "/checkout", "destination": "/checkout.html" },
+    { "source": "/checkout-success", "destination": "/checkout-success.html" },
+    { "source": "/dashboard", "destination": "/dashboard.html" },
+    { "source": "/abonnements", "destination": "/abonnements.html" },
+    { "source": "/espace-animateur", "destination": "/espace-animateur.html" },
+    { "source": "/creer-live", "destination": "/creer-live.html" },
+    { "source": "/subscription-expired", "destination": "/subscription-expired.html" },
+    { "source": "/login", "destination": "/login.html" },
+    { "source": "/register", "destination": "/register.html" },
+    { "source": "/support", "destination": "/support.html" },
+    { "source": "/conditions-generales", "destination": "/conditions-generales.html" },
+    { "source": "/mentions-legales", "destination": "/mentions-legales.html" },
+    { "source": "/politique-confidentialite", "destination": "/politique-confidentialite.html" },
+    { "source": "/gestion-cookies", "destination": "/gestion-cookies.html" }
+  ]
+}

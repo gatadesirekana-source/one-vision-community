@@ -550,7 +550,7 @@ function initCheckoutModal() {
     const hasPaid = localStorage.getItem('ov_has_paid') === 'true';
 
     // 1. Bouton En-tête (Header)
-    const headerBtn = document.querySelector('.header .nav-actions .open-checkout-btn, .header .nav-actions .open-login-btn, .header .nav-actions .open-dashboard-link');
+    const headerBtn = document.querySelector('.header .nav-actions .open-checkout-btn, .header .nav-actions .open-login-btn, .header .nav-actions .open-dashboard-link, .header .nav-actions .open-join-flow-btn');
     if (headerBtn) {
       if (hasPaid) {
         headerBtn.className = 'btn btn-secondary open-dashboard-link';
@@ -562,7 +562,7 @@ function initCheckoutModal() {
           <span>Mon Dashboard</span>
         `;
       } else {
-        headerBtn.className = 'btn btn-primary open-login-btn';
+        headerBtn.className = 'btn btn-primary open-join-flow-btn';
         headerBtn.innerHTML = `
           <span>Rejoindre le réseau</span>
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
@@ -585,7 +585,7 @@ function initCheckoutModal() {
           </svg>
         `;
       } else {
-        heroBtn.className = 'btn btn-primary btn-lg btn-pulse open-login-btn';
+        heroBtn.className = 'btn btn-primary btn-lg btn-pulse open-join-flow-btn';
         heroBtn.innerHTML = `
           <span>Rejoindre le réseau</span>
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
@@ -612,7 +612,7 @@ function initCheckoutModal() {
           </span>
         `;
       } else {
-        pricingBtn.className = 'btn btn-primary open-login-btn';
+        pricingBtn.className = 'btn btn-primary open-join-flow-btn';
         pricingBtn.style.width = '100%';
         pricingBtn.innerHTML = `<span>Rejoindre le réseau</span>`;
       }
@@ -646,6 +646,7 @@ function initCheckoutModal() {
   // Écouteur global pour l'ouverture des pages & modales
   document.addEventListener('click', (e) => {
     const targetDashboard = e.target.closest('.open-dashboard-link');
+    const targetJoinFlow = e.target.closest('.open-join-flow-btn');
     const targetJoin = e.target.closest('.open-checkout-btn');
     const targetLogin = e.target.closest('.open-login-btn');
 
@@ -655,15 +656,26 @@ function initCheckoutModal() {
       return;
     }
 
-    if (targetJoin) {
+    if (targetJoinFlow || targetJoin) {
       e.preventDefault();
-      openModal('join');
+      window.location.href = isPhpEnvironment() ? 'questionnaire.php' : getAppUrl('questionnaire.html');
       return;
     }
 
     if (targetLogin) {
       e.preventDefault();
-      openModal('login');
+      // Si c'est un lien avec une URL spécifique
+      const href = targetLogin.getAttribute('href');
+      if (href && href !== '#' && href !== 'javascript:void(0)') {
+        window.location.href = href;
+        return;
+      }
+      // Si le texte est "Rejoindre"
+      if (targetLogin.textContent && targetLogin.textContent.includes('Rejoindre')) {
+        window.location.href = isPhpEnvironment() ? 'questionnaire.php' : getAppUrl('questionnaire.html');
+        return;
+      }
+      window.location.href = isPhpEnvironment() ? 'login.php' : getAppUrl('login.html');
       return;
     }
   });

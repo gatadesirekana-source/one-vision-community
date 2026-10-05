@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="fr" data-theme="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Connexion — One Vision Community</title>
+  <meta name="description" content="Connectez-vous à votre espace membre One Vision Community. Accédez aux lives, replays et salons d'échanges.">
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎯</text></svg>">
+  
+  <!-- Polices Google -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Great+Vibes&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  
+  <!-- Feuilles de style -->
+  <link rel="stylesheet" href="./css/style.css?v=8">
+</head>
+<body class="checkout-body">
+
+  <header style="padding: 0.85rem 1rem; border-bottom: 1px solid rgba(15, 23, 42, 0.06); background: #ffffff;">
+    <div class="container" style="max-width: 960px; margin: 0 auto; display:flex; justify-content:space-between; align-items:center;">
+      <a href="index.html" class="logo" aria-label="One Vision Community" style="text-decoration:none;">
+        <div class="logo-text">
+          <span class="logo-brand"><span class="logo-one-script">One</span> Vision</span>
+          <span class="logo-sub">Community</span>
+        </div>
+      </a>
+      <a href="questionnaire.html" class="btn btn-primary btn-sm" style="text-decoration:none; font-weight:700;">
+        Rejoindre pour 9€/mois
+      </a>
+    </div>
+  </header>
+
+  <main class="section auth-section" style="min-height: calc(100vh - 160px); display:flex; align-items:center; justify-content:center; padding: 2.5rem 1rem; background:#f8fafc;">
+    <div style="background:#ffffff; border:1px solid #e2e8f0; border-radius:22px; padding:2.5rem 2rem; max-width:440px; width:100%; box-shadow:0 15px 35px rgba(0,0,0,0.06);">
+      
+      <div style="text-align:center; margin-bottom:1.75rem;">
+        <h1 style="font-size:1.6rem; font-weight:800; color:#0f172a; margin:0 0 0.35rem 0;">
+          Espace Membre
+        </h1>
+        <p style="font-size:0.88rem; color:#64748b; margin:0;">
+          Renseignez vos identifiants pour accéder à la communauté.
+        </p>
+      </div>
+
+      <!-- ACCÈS RAPIDE DÉMO / TEST EN 1 CLIC -->
+      <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:14px; padding:0.95rem; margin-bottom:1.5rem;">
+        <div style="font-size:0.75rem; font-weight:800; text-transform:uppercase; color:#475569; letter-spacing:0.04em; margin-bottom:0.6rem; text-align:center;">
+          Accès Rapide Démo & Parcours :
+        </div>
+        <div style="display:flex; flex-direction:column; gap:0.45rem;">
+          <button type="button" class="btn btn-secondary btn-sm" onclick="quickLogin('animateur')" style="font-size:0.82rem; padding:0.45rem 0.6rem; font-weight:700; width:100%; justify-content:flex-start; text-align:left;">
+            🌟 <span><strong>Animateur</strong> (Abonnement Plus • 24€/m)</span>
+          </button>
+          <button type="button" class="btn btn-secondary btn-sm" onclick="quickLogin('membre')" style="font-size:0.82rem; padding:0.45rem 0.6rem; font-weight:700; width:100%; justify-content:flex-start; text-align:left;">
+            💼 <span><strong>Membre Standard</strong> (Actif • 9€/m)</span>
+          </button>
+          <a href="questionnaire.html" class="btn btn-secondary btn-sm" style="font-size:0.82rem; padding:0.45rem 0.6rem; font-weight:700; width:100%; justify-content:flex-start; text-decoration:none; text-align:left; color:#1e293b;">
+            📋 <span><strong>Nouveau Membre</strong> (Passer le Questionnaire)</span>
+          </a>
+          <a href="choisir-abonnement.html" class="btn btn-secondary btn-sm" style="font-size:0.82rem; padding:0.45rem 0.6rem; font-weight:700; width:100%; justify-content:flex-start; text-decoration:none; text-align:left; color:#1e293b;">
+            💳 <span><strong>Choix Abonnement</strong> (Grille 9€ vs 24€)</span>
+          </a>
+          <button type="button" class="btn btn-secondary btn-sm" onclick="quickLogin('expired')" style="font-size:0.82rem; padding:0.45rem 0.6rem; font-weight:700; width:100%; justify-content:flex-start; text-align:left; color:#b91c1c;">
+            ⏳ <span><strong>Compte Expiré</strong> (Aperçu restreint & relance)</span>
+          </button>
+        </div>
+      </div>
+
+      <form id="loginForm" onsubmit="handleLoginSubmit(event)">
+        <div style="margin-bottom:1.15rem;">
+          <label for="loginEmail" style="display:block; font-size:0.86rem; font-weight:700; color:#0f172a; margin-bottom:0.35rem;">Adresse email</label>
+          <input type="email" id="loginEmail" class="form-input" placeholder="ex. alexandre@monprojet.fr" value="alexandre@monprojet.fr" required style="width:100%; padding:0.65rem 0.85rem; border:1px solid #cbd5e1; border-radius:8px; font-size:0.92rem;">
+        </div>
+
+        <div style="margin-bottom:1.5rem;">
+          <label for="loginPassword" style="display:block; font-size:0.86rem; font-weight:700; color:#0f172a; margin-bottom:0.35rem;">Mot de passe</label>
+          <input type="password" id="loginPassword" class="form-input" placeholder="••••••••" value="OneVision2026!" required style="width:100%; padding:0.65rem 0.85rem; border:1px solid #cbd5e1; border-radius:8px; font-size:0.92rem;">
+        </div>
+
+        <button type="submit" class="btn btn-primary" style="width:100%; padding:0.8rem; font-weight:700; border-radius:10px; font-size:0.95rem; justify-content:center; display:flex;">
+          Se connecter
+        </button>
+      </form>
+
+      <div style="text-align:center; margin-top:1.5rem; font-size:0.86rem; color:#64748b;">
+        Nouveau sur One Vision ?
+        <a href="questionnaire.html" style="color:#2563eb; font-weight:700; text-decoration:none; margin-left:0.25rem;">
+          Rejoindre le réseau (Questionnaire) →
+        </a>
+      </div>
+
+    </div>
+  </main>
+
+  <script>
+    function quickLogin(role) {
+      if (role === 'expired') {
+        localStorage.setItem('ov_has_paid', 'false');
+        localStorage.setItem('ov_subscription_status', 'expired');
+        localStorage.setItem('ov_subscription_plan', 'none');
+        localStorage.setItem('ov_member_name', 'Membre Expiré');
+        localStorage.setItem('ov_member_email', 'expire@monprojet.fr');
+        window.location.href = 'dashboard.html';
+        return;
+      }
+
+      localStorage.setItem('ov_has_paid', 'true');
+      localStorage.setItem('ov_subscription_status', 'active');
+      localStorage.setItem('ov_subscription_plan', role);
+      localStorage.setItem('ov_is_creator', role === 'animateur' ? 'true' : 'false');
+      localStorage.setItem('ov_member_name', role === 'animateur' ? 'Cyril D.' : 'Alexandre Martin');
+      localStorage.setItem('ov_member_email', role === 'animateur' ? 'cyril@onevision.academy' : 'alexandre@monprojet.fr');
+      window.location.href = 'dashboard.html';
+    }
+
+    function handleLoginSubmit(e) {
+      e.preventDefault();
+      const email = document.getElementById('loginEmail').value;
+      const name = email.split('@')[0].replace('.', ' ');
+
+      // Si l'utilisateur n'a pas encore fait le questionnaire
+      const hasDoneQuestionnaire = localStorage.getItem('ov_has_completed_questionnaire') === 'true';
+      const hasPaid = localStorage.getItem('ov_has_paid') === 'true';
+
+      localStorage.setItem('ov_member_name', name.charAt(0).toUpperCase() + name.slice(1));
+      localStorage.setItem('ov_member_email', email);
+
+      if (!hasDoneQuestionnaire) {
+        window.location.href = 'questionnaire.html';
+        return;
+      }
+
+      if (!hasPaid) {
+        window.location.href = 'choisir-abonnement.html';
+        return;
+      }
+
+      localStorage.setItem('ov_subscription_status', 'active');
+      if (!localStorage.getItem('ov_subscription_plan')) {
+        localStorage.setItem('ov_subscription_plan', 'membre');
+      }
+      window.location.href = 'dashboard.html';
+    }
+  </script>
+</body>
+</html>

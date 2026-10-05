@@ -101,7 +101,7 @@
           <img src="./img/avatar-maxime.jpg" alt="Photo profil" class="dash-user-avatar" id="dashAvatar">
           <div class="dash-user-meta">
             <span class="dash-user-name" id="dashUserName">Katahana Désiré</span>
-            <span class="dash-user-badge">Membre Actif • 9€/mois</span>
+            <span class="dash-user-badge" id="dashUserBadge">Membre Actif • 9€/mois</span>
           </div>
           <svg class="dropdown-chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
             <polyline points="6 9 12 15 18 9"></polyline>
@@ -112,7 +112,7 @@
         <div class="dash-user-dropdown-menu" id="dashUserDropdownMenu" style="display:none;">
           <div class="user-dropdown-header">
             <strong id="dropdownUserTitle">Katahana Désiré</strong>
-            <span class="badge-role-admin">👑 Administrateur</span>
+            <span class="badge-role-admin" id="dropdownRoleBadge">💼 Membre One Vision</span>
             <span class="user-dropdown-email" id="dropdownUserEmail">membre@onevision.community</span>
           </div>
           <div class="user-dropdown-divider"></div>
@@ -127,13 +127,20 @@
             <span>Mon Dashboard</span>
           </button>
 
-          <button type="button" class="user-dropdown-item" id="menuItemAbonnement">
+          <a href="abonnements.html" class="user-dropdown-item" id="menuItemAbonnement" style="text-decoration:none;">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <circle cx="12" cy="12" r="3"></circle>
               <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
             </svg>
             <span>Mon Abonnement</span>
-          </button>
+          </a>
+
+          <a href="espace-animateur.html" class="user-dropdown-item" id="menuItemEspaceAnimateur" style="display:none; text-decoration:none; color:#ea580c; font-weight:700;">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"></path>
+            </svg>
+            <span>Espace Animateur</span>
+          </a>
 
           <button type="button" class="user-dropdown-item" id="menuItemParams">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -225,6 +232,32 @@
           <span>Membres & Réseau</span>
           <span class="nav-counter" style="white-space:nowrap;padding:0.2rem 0.5rem;font-size:0.75rem;">1 240</span>
         </button>
+
+        <a href="espace-animateur.html" class="dash-nav-item" id="navItemEspaceAnimateur" style="display:none; text-decoration:none; border-left:3px solid #f97316;">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#ea580c" stroke-width="2">
+            <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"></path>
+          </svg>
+          <span style="color:#ea580c;font-weight:700;">Espace Animateur</span>
+          <span class="nav-counter" style="background:#fff7ed;color:#ea580c;font-weight:800;">Plus</span>
+        </a>
+
+        <a href="abonnements.html" class="dash-nav-item" id="navItemAbonnement" style="text-decoration:none;">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="3"></circle>
+            <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+          </svg>
+          <span>Mon Abonnement</span>
+        </a>
+
+        <a href="questionnaire.html" class="dash-nav-item" id="navItemQuestionnaire" style="text-decoration:none;" title="Voir ou refaire le questionnaire d'onboarding">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+            <polyline points="14 2 14 8 20 8"></polyline>
+            <polyline points="9 15 11 17 15 13"></polyline>
+          </svg>
+          <span>Mon Questionnaire</span>
+          <span class="nav-counter" style="background:#e0e7ff;color:#3730a3;font-weight:700;">13 Q</span>
+        </a>
       </nav>
 
       <!-- Bouton Contact WhatsApp Direct (en bas de la sidebar) -->
@@ -245,6 +278,30 @@
 
     <!-- ZONE PRINCIPALE DE CONTENU -->
     <main class="dash-main">
+
+      <!-- BANNIÈRE ALERTE ABONNEMENT EXPIRÉ (VISIBLE SI EXPIRED OU NON-ABONNÉ) -->
+      <div id="subExpiredBanner" style="display:none; background: linear-gradient(135deg, #fff1f2 0%, #ffe4e6 100%); border: 1px solid #fecdd3; border-radius: 14px; padding: 1rem 1.25rem; margin-bottom: 1.5rem; box-shadow: 0 4px 15px rgba(225, 29, 72, 0.08);">
+        <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:1rem;">
+          <div style="display:flex; align-items:center; gap:0.75rem;">
+            <div style="width:38px; height:38px; border-radius:50%; background:#fee2e2; display:flex; align-items:center; justify-content:center; flex-shrink:0;">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#e11d48" stroke-width="2.2">
+                <circle cx="12" cy="12" r="10"></circle>
+                <line x1="12" y1="8" x2="12" y2="12"></line>
+                <line x1="12" y1="16" x2="12.01" y2="16"></line>
+              </svg>
+            </div>
+            <div>
+              <div style="font-weight:800; color:#9f1239; font-size:0.95rem;">Abonnement suspendu ou non actif</div>
+              <div style="color:#881337; font-size:0.84rem;">Vous êtes actuellement en mode aperçu limité. Réactivez votre adhésion pour débloquer l'accès complet aux lives et salons.</div>
+            </div>
+          </div>
+          <div style="display:flex; gap:0.5rem; align-items:center;">
+            <a href="choisir-abonnement.html" class="btn btn-primary btn-sm" style="background:#e11d48; border-color:#e11d48; text-decoration:none; font-weight:700;">
+              Réactiver mon abonnement (dès 9€) →
+            </a>
+          </div>
+        </div>
+      </div>
       
       <!-- ======================================================================
            ONGLET 1 : LIVES & MASTERMINDS (VUE PAR DÉFAUT)
@@ -2295,6 +2352,122 @@
     </div>
   </div>
 
+  <!-- BARRE FLOTTANTE DE TEST / DÉMONSTRATION DES 3 ÉTATS D'ABONNEMENT -->
+  <div id="demoStateSwitcherBar" style="position:fixed; bottom:18px; right:18px; z-index:99999; background:rgba(15, 23, 42, 0.95); backdrop-filter:blur(10px); border:1px solid rgba(255,255,255,0.15); border-radius:50px; padding:6px 12px; display:flex; align-items:center; gap:8px; box-shadow:0 12px 32px rgba(0,0,0,0.35);">
+    <span style="color:#94a3b8; font-size:0.75rem; font-weight:800; text-transform:uppercase; letter-spacing:0.05em; padding-left:4px; padding-right:2px;">
+      Mode Démo :
+    </span>
+    <button type="button" class="demo-switch-btn" id="btnDemoPlus" onclick="setDashboardPlanMode('animateur')" style="background:#f97316; color:#ffffff; border:none; padding:5px 12px; border-radius:20px; font-size:0.78rem; font-weight:700; cursor:pointer; transition:all 0.2s ease;">
+      🌟 Plus (24€)
+    </button>
+    <button type="button" class="demo-switch-btn" id="btnDemoMembre" onclick="setDashboardPlanMode('membre')" style="background:rgba(255,255,255,0.12); color:#ffffff; border:none; padding:5px 12px; border-radius:20px; font-size:0.78rem; font-weight:700; cursor:pointer; transition:all 0.2s ease;">
+      💼 Membre (9€)
+    </button>
+    <button type="button" class="demo-switch-btn" id="btnDemoExpired" onclick="setDashboardPlanMode('expired')" style="background:rgba(255,255,255,0.12); color:#ffffff; border:none; padding:5px 12px; border-radius:20px; font-size:0.78rem; font-weight:700; cursor:pointer; transition:all 0.2s ease;">
+      ⏳ Expiré
+    </button>
+    <a href="questionnaire.html" title="Refaire ou voir le questionnaire" style="background:rgba(255,255,255,0.12); color:#ffffff; text-decoration:none; padding:5px 11px; border-radius:20px; font-size:0.78rem; font-weight:700; display:inline-flex; align-items:center; gap:4px;">
+      📋 Questionnaire
+    </a>
+  </div>
+
   <script src="./js/main.js?v=4"></script>
+  <script>
+    function setDashboardPlanMode(mode) {
+      const badge = document.getElementById('dashUserBadge');
+      const roleBadge = document.getElementById('dropdownRoleBadge');
+      const navAnimateur = document.getElementById('navItemEspaceAnimateur');
+      const menuAnimateur = document.getElementById('menuItemEspaceAnimateur');
+      const expiredBanner = document.getElementById('subExpiredBanner');
+
+      const bPlus = document.getElementById('btnDemoPlus');
+      const bMembre = document.getElementById('btnDemoMembre');
+      const bExpired = document.getElementById('btnDemoExpired');
+      [bPlus, bMembre, bExpired].forEach(b => {
+        if (b) {
+          b.style.background = 'rgba(255,255,255,0.12)';
+          b.style.color = '#ffffff';
+        }
+      });
+
+      if (mode === 'animateur') {
+        localStorage.setItem('ov_has_paid', 'true');
+        localStorage.setItem('ov_subscription_status', 'active');
+        localStorage.setItem('ov_subscription_plan', 'animateur');
+        localStorage.setItem('ov_is_creator', 'true');
+
+        if (badge) {
+          badge.textContent = '🌟 Abonnement Plus • 24€/mois';
+          badge.style.background = '#ffedd5';
+          badge.style.color = '#c2410c';
+        }
+        if (roleBadge) {
+          roleBadge.textContent = '🌟 Animateur One Vision';
+          roleBadge.style.background = '#ffedd5';
+          roleBadge.style.color = '#c2410c';
+        }
+        if (navAnimateur) navAnimateur.style.display = 'flex';
+        if (menuAnimateur) menuAnimateur.style.display = 'flex';
+        if (expiredBanner) expiredBanner.style.display = 'none';
+        if (bPlus) {
+          bPlus.style.background = '#f97316';
+        }
+      } else if (mode === 'membre') {
+        localStorage.setItem('ov_has_paid', 'true');
+        localStorage.setItem('ov_subscription_status', 'active');
+        localStorage.setItem('ov_subscription_plan', 'membre');
+        localStorage.setItem('ov_is_creator', 'false');
+
+        if (badge) {
+          badge.textContent = '💼 Membre Actif • 9€/mois';
+          badge.style.background = '#f1f5f9';
+          badge.style.color = '#334155';
+        }
+        if (roleBadge) {
+          roleBadge.textContent = '💼 Membre One Vision';
+          roleBadge.style.background = '#f1f5f9';
+          roleBadge.style.color = '#334155';
+        }
+        if (navAnimateur) navAnimateur.style.display = 'none';
+        if (menuAnimateur) menuAnimateur.style.display = 'none';
+        if (expiredBanner) expiredBanner.style.display = 'none';
+        if (bMembre) {
+          bMembre.style.background = '#2563eb';
+        }
+      } else if (mode === 'expired') {
+        localStorage.setItem('ov_has_paid', 'false');
+        localStorage.setItem('ov_subscription_status', 'expired');
+
+        if (badge) {
+          badge.textContent = '⚠️ Abonnement Expiré';
+          badge.style.background = '#fee2e2';
+          badge.style.color = '#991b1b';
+        }
+        if (roleBadge) {
+          roleBadge.textContent = '⏳ Non-abonné / Expiré';
+          roleBadge.style.background = '#fee2e2';
+          roleBadge.style.color = '#991b1b';
+        }
+        if (navAnimateur) navAnimateur.style.display = 'none';
+        if (menuAnimateur) menuAnimateur.style.display = 'none';
+        if (expiredBanner) expiredBanner.style.display = 'block';
+        if (bExpired) {
+          bExpired.style.background = '#dc2626';
+        }
+      }
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+      const status = localStorage.getItem('ov_subscription_status') || 'active';
+      const plan = localStorage.getItem('ov_subscription_plan') || 'membre';
+      if (status === 'expired' || status === 'inactive') {
+        setDashboardPlanMode('expired');
+      } else if (plan === 'animateur' || localStorage.getItem('ov_is_creator') === 'true') {
+        setDashboardPlanMode('animateur');
+      } else {
+        setDashboardPlanMode('membre');
+      }
+    });
+  </script>
 </body>
 </html>

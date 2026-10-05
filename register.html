@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="fr" data-theme="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Inscription — One Vision Community</title>
+  <meta name="description" content="Rejoignez One Vision Community pour 9€/mois. Accédez aux lives, salons et replays.">
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎯</text></svg>">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Great+Vibes&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="./css/style.css?v=8">
+</head>
+<body class="checkout-body">
+
+  <header style="padding: 0.85rem 1rem; border-bottom: 1px solid rgba(15, 23, 42, 0.06); background: #ffffff;">
+    <div class="container" style="max-width: 960px; margin: 0 auto; display:flex; justify-content:space-between; align-items:center;">
+      <a href="index.html" class="logo" aria-label="One Vision Community" style="text-decoration:none;">
+        <div class="logo-text">
+          <span class="logo-brand"><span class="logo-one-script">One</span> Vision</span>
+          <span class="logo-sub">Community</span>
+        </div>
+      </a>
+      <a href="login.html" class="btn btn-secondary btn-sm" style="text-decoration:none; font-weight:700;">
+        Déjà membre ? Se connecter
+      </a>
+    </div>
+  </header>
+
+  <main class="section auth-section" style="min-height: calc(100vh - 160px); display:flex; align-items:center; justify-content:center; padding: 2.5rem 1rem; background:#f8fafc;">
+    <div style="background:#ffffff; border:1px solid #e2e8f0; border-radius:22px; padding:2.5rem 2rem; max-width:440px; width:100%; box-shadow:0 15px 35px rgba(0,0,0,0.06);">
+      
+      <div style="text-align:center; margin-bottom:1.75rem;">
+        <h1 style="font-size:1.6rem; font-weight:800; color:#0f172a; margin:0 0 0.35rem 0;">
+          Rejoindre le réseau
+        </h1>
+        <p style="font-size:0.88rem; color:#64748b; margin:0;">
+          Créez votre compte pour démarrer le questionnaire d'accueil.
+        </p>
+      </div>
+
+      <form id="registerForm" onsubmit="handleRegisterSubmit(event)">
+        <div style="margin-bottom:1.15rem;">
+          <label for="regName" style="display:block; font-size:0.86rem; font-weight:700; color:#0f172a; margin-bottom:0.35rem;">Nom complet</label>
+          <input type="text" id="regName" class="form-input" placeholder="ex. Alexandre Martin" required style="width:100%; padding:0.65rem 0.85rem; border:1px solid #cbd5e1; border-radius:8px; font-size:0.92rem;">
+        </div>
+
+        <div style="margin-bottom:1.15rem;">
+          <label for="regEmail" style="display:block; font-size:0.86rem; font-weight:700; color:#0f172a; margin-bottom:0.35rem;">Adresse email</label>
+          <input type="email" id="regEmail" class="form-input" placeholder="ex. alexandre@monprojet.fr" required style="width:100%; padding:0.65rem 0.85rem; border:1px solid #cbd5e1; border-radius:8px; font-size:0.92rem;">
+        </div>
+
+        <div style="margin-bottom:1.5rem;">
+          <label for="regPassword" style="display:block; font-size:0.86rem; font-weight:700; color:#0f172a; margin-bottom:0.35rem;">Mot de passe</label>
+          <input type="password" id="regPassword" class="form-input" placeholder="Au moins 6 caractères" required minlength="6" style="width:100%; padding:0.65rem 0.85rem; border:1px solid #cbd5e1; border-radius:8px; font-size:0.92rem;">
+        </div>
+
+        <button type="submit" class="btn btn-primary" style="width:100%; padding:0.8rem; font-weight:700; border-radius:10px; font-size:0.95rem; justify-content:center; display:flex;">
+          Continuer vers le questionnaire →
+        </button>
+      </form>
+
+      <div style="text-align:center; margin-top:1.5rem; font-size:0.86rem; color:#64748b;">
+        Déjà inscrit ?
+        <a href="login.html" style="color:#2563eb; font-weight:700; text-decoration:none; margin-left:0.25rem;">
+          Se connecter
+        </a>
+      </div>
+
+    </div>
+  </main>
+
+  <script>
+    function handleRegisterSubmit(e) {
+      e.preventDefault();
+      const name = document.getElementById('regName').value.trim();
+      const email = document.getElementById('regEmail').value.trim();
+
+      localStorage.setItem('ov_member_name', name);
+      localStorage.setItem('ov_member_email', email);
+      window.location.href = 'questionnaire.html?view=welcome';
+    }
+  </script>
+</body>
+</html>

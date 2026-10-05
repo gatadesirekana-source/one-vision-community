@@ -9,9 +9,37 @@ require_once __DIR__ . '/includes/auth.php';
 require_once __DIR__ . '/includes/flash.php';
 
 // Si déjà connecté, rediriger directement vers le dashboard
-if (is_logged_in()) {
+if (is_logged_in() && !isset($_GET['demo'])) {
     header('Location: dashboard.php');
     exit;
+}
+
+// Démo / Test rapide en 1 clic pour inspecter tous les états en local
+if (isset($_GET['demo'])) {
+    $db = get_db();
+    $demo = $_GET['demo'];
+    if ($demo === 'animateur') {
+        $stmt = $db->query("SELECT * FROM users WHERE role = 'animateur' OR role = 'proprietaire' LIMIT 1");
+        $u = $stmt->fetch();
+    } elseif ($demo === 'expired') {
+        $stmt = $db->query("SELECT * FROM users WHERE subscription_status = 'expired' LIMIT 1");
+        $u = $stmt->fetch();
+    } else { // membre standard
+        $stmt = $db->query("SELECT * FROM users WHERE (role = 'membre' OR role = 'member') AND subscription_status = 'active' LIMIT 1");
+        $u = $stmt->fetch();
+    }
+    if ($u) {
+        $_SESSION['user_id'] = $u['id'];
+        $_SESSION['user_name'] = $u['full_name'];
+        $_SESSION['user_email'] = $u['email'];
+        $_SESSION['user_role'] = $u['role'];
+        if ($demo === 'expired') {
+            header('Location: subscription-expired.php');
+            exit;
+        }
+        header('Location: dashboard.php');
+        exit;
+    }
 }
 
 $error = '';
@@ -144,6 +172,30 @@ require_once __DIR__ . '/includes/header.php';
     <div class="auth-tabs" role="tablist">
       <a href="login.php" class="auth-tab-btn active" role="tab" style="text-decoration:none; text-align:center;">Connexion</a>
       <a href="register.php" class="auth-tab-btn" role="tab" style="text-decoration:none; text-align:center;">Inscription</a>
+    </div>
+
+    <!-- ACCÈS RAPIDE DÉMO / TEST EN 1 CLIC (PHP) -->
+    <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:14px; padding:0.95rem; margin-bottom:1.25rem;">
+      <div style="font-size:0.75rem; font-weight:800; text-transform:uppercase; color:#475569; letter-spacing:0.04em; margin-bottom:0.6rem; text-align:center;">
+        Accès Rapide Démo & Parcours :
+      </div>
+      <div style="display:flex; flex-direction:column; gap:0.45rem;">
+        <a href="login.php?demo=animateur" class="btn btn-secondary btn-sm" style="font-size:0.82rem; padding:0.45rem 0.6rem; font-weight:700; width:100%; justify-content:flex-start; text-decoration:none; text-align:left; color:#c2410c; background:#fff7ed; border-color:#fed7aa;">
+          🌟 <span><strong>Animateur</strong> (Abonnement Plus • 24€/m)</span>
+        </a>
+        <a href="login.php?demo=membre" class="btn btn-secondary btn-sm" style="font-size:0.82rem; padding:0.45rem 0.6rem; font-weight:700; width:100%; justify-content:flex-start; text-decoration:none; text-align:left; color:#1e293b;">
+          💼 <span><strong>Membre Standard</strong> (Actif • 9€/m)</span>
+        </a>
+        <a href="questionnaire.php" class="btn btn-secondary btn-sm" style="font-size:0.82rem; padding:0.45rem 0.6rem; font-weight:700; width:100%; justify-content:flex-start; text-decoration:none; text-align:left; color:#1e293b;">
+          📋 <span><strong>Nouveau Membre</strong> (Passer le Questionnaire)</span>
+        </a>
+        <a href="choisir-abonnement.php" class="btn btn-secondary btn-sm" style="font-size:0.82rem; padding:0.45rem 0.6rem; font-weight:700; width:100%; justify-content:flex-start; text-decoration:none; text-align:left; color:#1e293b;">
+          💳 <span><strong>Choix Abonnement</strong> (Grille 9€ vs 24€)</span>
+        </a>
+        <a href="login.php?demo=expired" class="btn btn-secondary btn-sm" style="font-size:0.82rem; padding:0.45rem 0.6rem; font-weight:700; width:100%; justify-content:flex-start; text-decoration:none; text-align:left; color:#b91c1c; background:#fef2f2; border-color:#fecaca;">
+          ⏳ <span><strong>Compte Expiré</strong> (Aperçu restreint & relance)</span>
+        </a>
+      </div>
     </div>
 
     <!-- Bouton Google / Gmail -->

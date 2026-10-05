@@ -1,0 +1,685 @@
+<!DOCTYPE html>
+<html lang="fr" data-theme="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Questionnaire d'accueil — One Vision Community</title>
+  <meta name="description" content="Répondez à quelques questions pour personnaliser votre expérience dans la communauté One Vision.">
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎯</text></svg>">
+  
+  <!-- Polices Google -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Great+Vibes&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  
+  <!-- Feuilles de style -->
+  <link rel="stylesheet" href="./css/style.css?v=8">
+</head>
+<body class="onboarding-page-body">
+
+  <!-- EN-TÊTE ÉPURÉ DE LA MARQUE -->
+  <header style="padding: 0.6rem 1rem; border-bottom: 1px solid rgba(15, 23, 42, 0.06); background: #ffffff;">
+    <div class="container" style="max-width: 900px; margin: 0 auto; display:flex; justify-content:center; align-items:center;">
+      <a href="index.html" class="logo" aria-label="One Vision Community" style="text-decoration:none;">
+        <div class="logo-text" style="transform: scale(0.9); transform-origin: center;">
+          <span class="logo-brand"><span class="logo-one-script">One</span> Vision</span>
+          <span class="logo-sub">Community</span>
+        </div>
+      </a>
+    </div>
+  </header>
+
+  <!-- CONTENU PRINCIPAL DU QUESTIONNAIRE -->
+  <main class="onboarding-main-wrapper">
+
+    <!-- VUE 1 : ÉCRAN D'ACCUEIL DU QUESTIONNAIRE (BIENVENUE) -->
+    <div class="onboarding-card" id="viewWelcome" style="display:none;">
+      <div class="onboarding-splash-box">
+        <div class="onboarding-welcome-avatar-wrapper">
+          <img src="img/welcome-photo.jpg" alt="One Vision Community" class="onboarding-welcome-avatar" onerror="this.src='img/avatar-cyril.jpg'">
+        </div>
+        <h1 class="onboarding-splash-title">
+          Bienvenue chez One Vision Community
+        </h1>
+        <p class="onboarding-splash-desc">
+          Ici, chacun avance mieux entouré. Répondez à quelques questions rapides, juste des cases à cocher (environ 2 minutes), pour que nous puissions vous accueillir comme il se doit et vous connecter aux bonnes personnes.
+        </p>
+        <button type="button" class="onboarding-splash-btn" id="btnStartQuestionnaire">
+          <span>Commencer le questionnaire</span>
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+            <line x1="5" y1="12" x2="19" y2="12"></line>
+            <polyline points="12 5 19 12 12 19"></polyline>
+          </svg>
+        </button>
+      </div>
+    </div>
+
+    <!-- VUE 2 : ÉCRAN MINEUR BIENVEILLANT (RÉSERVÉ AUX MAJEURS) -->
+    <div class="onboarding-card" id="viewMinor" style="display:none;">
+      <div class="onboarding-splash-box">
+        <div class="onboarding-welcome-avatar-wrapper">
+          <img src="img/welcome-photo.jpg" alt="One Vision Community" class="onboarding-welcome-avatar" onerror="this.src='img/avatar-cyril.jpg'">
+        </div>
+        <h1 class="onboarding-splash-title" style="color:#0f172a;">
+          Merci de votre intérêt pour One Vision
+        </h1>
+        <p class="onboarding-splash-desc">
+          One Vision Community est une communauté d'entraide et d'entrepreneuriat réservée aux personnes majeures (+18 ans). Nous vous remercions chaleureusement pour votre démarche et vous souhaitons plein de succès dans vos études et vos futurs projets. Nous serons ravis de vous accueillir dès votre majorité !
+        </p>
+        <div style="display:flex; flex-direction:column; gap:0.75rem; align-items:center;">
+          <a href="index.html" class="onboarding-splash-btn" style="background:#0f172a; text-decoration:none;">
+            <span>Retourner à l'accueil</span>
+          </a>
+        </div>
+      </div>
+    </div>
+
+    <!-- VUE 3 : ÉCRAN DE REMERCIEMENT FINAL (COMPLÉTION) -->
+    <div class="onboarding-card" id="viewCompletion" style="display:none; box-shadow: 0 25px 60px -15px rgba(37, 99, 235, 0.15);">
+      <div class="onboarding-splash-box">
+        <div class="onboarding-welcome-avatar-wrapper">
+          <img src="img/welcome-photo.jpg" alt="One Vision Community" class="onboarding-welcome-avatar" onerror="this.src='img/avatar-cyril.jpg'">
+        </div>
+        <h1 class="onboarding-splash-title">
+          Merci, votre place vous attend !
+        </h1>
+        <p class="onboarding-splash-desc">
+          Grâce à vos réponses, nous savons mieux ce que vous cherchez. Il ne reste qu'une étape pour rejoindre la communauté et commencer à avancer avec nous.
+        </p>
+        <a href="choisir-abonnement.html" class="onboarding-splash-btn" id="btnGoToAbonnement" style="background:linear-gradient(135deg, #0f172a 0%, #1e293b 100%); text-decoration:none;">
+          <span>Choisir mon abonnement</span>
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+            <line x1="5" y1="12" x2="19" y2="12"></line>
+            <polyline points="12 5 19 12 12 19"></polyline>
+          </svg>
+        </a>
+      </div>
+    </div>
+
+    <!-- VUE 4 : QUESTIONNAIRE INTERACTIF (UNE QUESTION PAR ÉCRAN) -->
+    <div class="onboarding-card" id="viewQuestion" style="display:none;">
+      
+      <!-- En-tête : Progression et Étape courante -->
+      <div class="onboarding-header">
+        <div class="onboarding-step-badge" id="stepBadge">
+          <span>Étape 1 sur 5 : Faisons connaissance</span>
+        </div>
+
+        <!-- Barre de progression fluide -->
+        <div class="onboarding-progress-track">
+          <div class="onboarding-progress-fill" id="progressFill" style="width: 8%;"></div>
+        </div>
+
+        <div class="onboarding-meta-row">
+          <span id="metaQuestionIndex">Question 1 sur 13</span>
+          <span id="metaProgressPct">8% complété</span>
+        </div>
+      </div>
+
+      <!-- Question courante -->
+      <form id="onboardingForm" onsubmit="return false;">
+        <h2 class="onboarding-question-title" id="questionTitle">
+          Chargement de la question...
+        </h2>
+
+        <div class="onboarding-question-helper" id="questionHelper">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"></circle><circle cx="12" cy="12" r="3"></circle></svg>
+          <span id="helperText">Une seule réponse possible</span>
+        </div>
+
+        <!-- Liste des options interactives -->
+        <div class="onboarding-options-list" id="optionsContainer">
+          <!-- Injecté dynamiquement par JavaScript -->
+        </div>
+
+        <!-- Section Spécifique Q13 : Consentement Marketing RGPD -->
+        <div class="onboarding-consent-card" id="q13ConsentCard" style="display:none; margin-top:1.15rem;">
+          <input type="checkbox" id="marketingConsent" class="onboarding-consent-checkbox" value="1">
+          <label for="marketingConsent" class="onboarding-consent-label">
+            <strong>J'accepte de recevoir par email des informations et des offres de One Vision. Je peux me désabonner à tout moment.</strong>
+            <span class="onboarding-consent-notice">
+              Vos réponses servent uniquement à personnaliser votre expérience au sein de One Vision.
+            </span>
+          </label>
+        </div>
+
+        <!-- Message d'erreur dynamique -->
+        <div id="onboardingError" style="display:none; background:#fef2f2; border:1px solid #fecaca; color:#991b1b; padding:0.75rem 1rem; border-radius:12px; margin-top:1rem; margin-bottom:1rem; font-size:0.88rem; align-items:center; gap:0.5rem;">
+          <span>⚠️</span>
+          <span class="err-text">Veuillez sélectionner au moins une réponse pour continuer.</span>
+        </div>
+
+        <!-- Barre de navigation inférieure -->
+        <div class="onboarding-nav-bar" style="margin-top:1.25rem;">
+          <button type="button" class="onboarding-nav-btn onboarding-btn-back" id="btnBack">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+              <polyline points="15 18 9 12 15 6"></polyline>
+            </svg>
+            <span>Retour</span>
+          </button>
+
+          <button type="button" class="onboarding-nav-btn onboarding-btn-next" id="btnNext" disabled>
+            <span id="btnNextLabel">Suivant</span>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+              <line x1="5" y1="12" x2="19" y2="12"></line>
+              <polyline points="12 5 19 12 12 19"></polyline>
+            </svg>
+          </button>
+        </div>
+      </form>
+
+    </div>
+
+  </main>
+
+  <!-- LOGIQUE CLIENT-SIDE INTERACTIVE TYPEFORM -->
+  <script>
+    // 1. Définition des Étapes et des Questions
+    const STEPS = {
+      1: { number: 1, total: 5, title: "Faisons connaissance" },
+      2: { number: 2, total: 5, title: "Ce qui vous anime" },
+      3: { number: 3, total: 5, title: "Vos ambitions" },
+      4: { number: 4, total: 5, title: "Votre place dans la communauté" },
+      5: { number: 5, total: 5, title: "Pour bien vous accueillir" }
+    };
+
+    const QUESTIONS = [
+      // Étape 1 : Faisons connaissance
+      {
+        id: 'q1',
+        step: 1,
+        type: 'unique',
+        question: "Quelle est votre tranche d'âge ?",
+        helper: "Une seule réponse possible",
+        options: [
+          "18-24 ans",
+          "25-34 ans",
+          "35-44 ans",
+          "45-54 ans",
+          "55 ans et plus",
+          "Moins de 18 ans"
+        ],
+        minorTrigger: "Moins de 18 ans"
+      },
+      {
+        id: 'q2',
+        step: 1,
+        type: 'unique',
+        question: "Où en êtes-vous aujourd'hui ?",
+        helper: "Une seule réponse possible",
+        options: [
+          "J'ai une idée et je cherche à la concrétiser",
+          "Je me lance en ce moment",
+          "J'ai déjà une activité et je veux la faire grandir",
+          "Je veux développer mes compétences et ma carrière",
+          "Je cherche ma voie"
+        ]
+      },
+      {
+        id: 'q3',
+        step: 1,
+        type: 'multiple',
+        question: "Dans quels domaines évoluez-vous ?",
+        helper: "Plusieurs réponses possibles",
+        options: [
+          "Commerce et vente",
+          "Conseil, coaching, services",
+          "Digital et technologie",
+          "Agriculture et agro-alimentaire",
+          "Éducation et formation",
+          "Créativité et communication",
+          "Autre"
+        ]
+      },
+
+      // Étape 2 : Ce qui vous anime
+      {
+        id: 'q4',
+        step: 2,
+        type: 'multiple',
+        question: "Qu'est-ce qui vous a poussé à rejoindre une communauté comme la nôtre ?",
+        helper: "Plusieurs réponses possibles",
+        options: [
+          "Apprendre auprès de personnes qui ont de l'expérience",
+          "Rencontrer des gens qui me ressemblent et me comprennent",
+          "Ne plus avancer seul",
+          "Faire connaître mes compétences",
+          "Trouver des partenaires pour mes projets",
+          "Rester motivé et régulier"
+        ]
+      },
+      {
+        id: 'q5',
+        step: 2,
+        type: 'unique',
+        question: "Qu'aimeriez-vous ressentir en faisant partie de One Vision ?",
+        helper: "Une seule réponse possible",
+        options: [
+          "Entouré et soutenu",
+          "Inspiré chaque jour",
+          "Fier de mes progrès",
+          "Utile aux autres"
+        ]
+      },
+
+      // Étape 3 : Vos ambitions
+      {
+        id: 'q6',
+        step: 3,
+        type: 'multiple',
+        question: "Où voulez-vous être dans 6 mois ?",
+        helper: "Plusieurs réponses possibles",
+        options: [
+          "Avoir lancé mon projet",
+          "Avoir de nouveaux clients",
+          "Avoir un réseau solide autour de moi",
+          "Avoir gagné en confiance et en visibilité",
+          "Maîtriser de nouvelles compétences",
+          "Être reconnu pour mon expertise"
+        ]
+      },
+      {
+        id: 'q7',
+        step: 3,
+        type: 'multiple',
+        question: "Qu'est-ce qui pourrait le mieux vous aider à y arriver ?",
+        helper: "Plusieurs réponses possibles",
+        options: [
+          "Des conseils d'experts",
+          "Des échanges avec d'autres entrepreneurs",
+          "Un groupe qui me motive",
+          "Des retours sur mes idées",
+          "Des occasions de me faire connaître"
+        ]
+      },
+
+      // Étape 4 : Votre place dans la communauté
+      {
+        id: 'q8',
+        step: 4,
+        type: 'multiple',
+        question: "Comment aimeriez-vous participer ?",
+        helper: "Plusieurs réponses possibles",
+        options: [
+          "Apprendre en suivant les lives des experts",
+          "Échanger et poser mes questions au quotidien",
+          "Rejoindre des masterminds pour avancer en groupe",
+          "Me connecter à d'autres membres pour collaborer",
+          "Partager mon expérience avec les autres",
+          "Animer mes propres lives ou masterminds et mettre mon expertise en avant"
+        ],
+        animateurTrigger: "Animer mes propres lives ou masterminds et mettre mon expertise en avant"
+      },
+      {
+        id: 'q9',
+        step: 4,
+        type: 'multiple',
+        question: "Qu'aimeriez-vous partager avec la communauté un jour ?",
+        helper: "Plusieurs réponses possibles",
+        options: [
+          "Mon parcours",
+          "Mes compétences",
+          "Mes réussites et mes erreurs",
+          "Mes conseils",
+          "Je veux d'abord apprendre, je verrai ensuite"
+        ]
+      },
+
+      // Étape 5 : Pour bien vous accueillir
+      {
+        id: 'q10',
+        step: 5,
+        type: 'multiple',
+        question: "Quels sujets souhaitez-vous voir dans nos lives et masterminds ?",
+        helper: "Plusieurs réponses possibles",
+        options: [
+          "Lancer et structurer son projet",
+          "Trouver des clients et vendre",
+          "Gérer ses finances",
+          "Développer son mindset",
+          "Construire son réseau",
+          "Utiliser les outils digitaux",
+          "Leadership et prise de parole"
+        ]
+      },
+      {
+        id: 'q11',
+        step: 5,
+        type: 'multiple',
+        question: "Comment préférez-vous apprendre ?",
+        helper: "Plusieurs réponses possibles",
+        options: [
+          "Lives en direct",
+          "Replays à mon rythme",
+          "Échanges écrits",
+          "Petits groupes (masterminds)",
+          "Parcours avec certification"
+        ]
+      },
+      {
+        id: 'q12',
+        step: 5,
+        type: 'unique',
+        question: "Comment avez-vous connu One Vision ?",
+        helper: "Une seule réponse possible",
+        options: [
+          "Réseaux sociaux",
+          "Recommandation d'un proche",
+          "Un live ou un événement",
+          "Recherche sur internet",
+          "Autre"
+        ]
+      },
+      {
+        id: 'q13',
+        step: 5,
+        type: 'unique',
+        question: "Voulez-vous être prévenu des prochains lives ?",
+        helper: "Une seule réponse possible",
+        options: [
+          "Oui, par email",
+          "Oui, par WhatsApp",
+          "Pas pour l'instant"
+        ]
+      }
+    ];
+
+    const TOTAL_QUESTIONS = QUESTIONS.length; // 13
+
+    // État courant
+    let currentIndex = 0; // 0-indexed (0 = Q1)
+    let userAnswers = {};
+    let isSubmitting = false;
+
+    // Charger les réponses existantes si disponibles
+    try {
+      const stored = localStorage.getItem('ov_onboarding_responses');
+      if (stored) {
+        userAnswers = JSON.parse(stored) || {};
+      }
+    } catch (e) {
+      userAnswers = {};
+    }
+
+    // Éléments du DOM
+    const viewWelcome = document.getElementById('viewWelcome');
+    const viewMinor = document.getElementById('viewMinor');
+    const viewCompletion = document.getElementById('viewCompletion');
+    const viewQuestion = document.getElementById('viewQuestion');
+
+    const stepBadge = document.getElementById('stepBadge');
+    const progressFill = document.getElementById('progressFill');
+    const metaQuestionIndex = document.getElementById('metaQuestionIndex');
+    const metaProgressPct = document.getElementById('metaProgressPct');
+    const questionTitle = document.getElementById('questionTitle');
+    const questionHelper = document.getElementById('questionHelper');
+    const helperText = document.getElementById('helperText');
+    const optionsContainer = document.getElementById('optionsContainer');
+    const q13ConsentCard = document.getElementById('q13ConsentCard');
+    const errorBox = document.getElementById('onboardingError');
+    const btnBack = document.getElementById('btnBack');
+    const btnNext = document.getElementById('btnNext');
+    const btnNextLabel = document.getElementById('btnNextLabel');
+    const btnStartQuestionnaire = document.getElementById('btnStartQuestionnaire');
+
+    function hideAllViews() {
+      viewWelcome.style.display = 'none';
+      viewMinor.style.display = 'none';
+      viewCompletion.style.display = 'none';
+      viewQuestion.style.display = 'none';
+    }
+
+    function showWelcomeView() {
+      hideAllViews();
+      viewWelcome.style.display = 'block';
+    }
+
+    function showMinorView() {
+      hideAllViews();
+      viewMinor.style.display = 'block';
+      localStorage.setItem('ov_is_minor', 'true');
+    }
+
+    function showCompletionView() {
+      hideAllViews();
+      viewCompletion.style.display = 'block';
+      localStorage.setItem('ov_onboarding_completed', 'true');
+      localStorage.setItem('ov_has_completed_questionnaire', 'true');
+    }
+
+    function renderCurrentQuestion() {
+      hideAllViews();
+      viewQuestion.style.display = 'block';
+
+      const q = QUESTIONS[currentIndex];
+      const step = STEPS[q.step];
+      const qNum = currentIndex + 1;
+      const progressPct = Math.round((qNum / TOTAL_QUESTIONS) * 100);
+
+      // Metadonnées
+      stepBadge.innerHTML = `<span>Étape ${step.number} sur ${step.total} : ${step.title}</span>`;
+      progressFill.style.width = `${progressPct}%`;
+      metaQuestionIndex.textContent = `Question ${qNum} sur ${TOTAL_QUESTIONS}`;
+      metaProgressPct.textContent = `${progressPct}% complété`;
+
+      // Titre & Helper
+      questionTitle.textContent = q.question;
+      helperText.textContent = q.helper;
+
+      if (q.type === 'unique') {
+        questionHelper.innerHTML = `
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"></circle><circle cx="12" cy="12" r="3"></circle></svg>
+          <span>Une seule réponse possible</span>
+        `;
+      } else {
+        questionHelper.innerHTML = `
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg>
+          <span><strong>Plusieurs réponses possibles</strong></span>
+        `;
+      }
+
+      // Q13 Consentement
+      if (q.id === 'q13') {
+        q13ConsentCard.style.display = 'block';
+      } else {
+        q13ConsentCard.style.display = 'none';
+      }
+
+      // Bouton Précédent
+      if (currentIndex === 0) {
+        btnBack.style.visibility = 'hidden';
+      } else {
+        btnBack.style.visibility = 'visible';
+      }
+
+      // Bouton Suivant / Terminer
+      if (currentIndex === TOTAL_QUESTIONS - 1) {
+        btnNextLabel.textContent = "Terminer";
+      } else {
+        btnNextLabel.textContent = "Suivant";
+      }
+
+      // Options
+      optionsContainer.innerHTML = '';
+      const currentSelected = userAnswers[q.id] || [];
+
+      q.options.forEach((opt) => {
+        const isSelected = currentSelected.includes(opt);
+        const card = document.createElement('button');
+        card.type = 'button';
+        card.className = `onboarding-option-card ${isSelected ? 'selected' : ''}`;
+        card.setAttribute('data-value', opt);
+        card.setAttribute('role', q.type === 'unique' ? 'radio' : 'checkbox');
+        card.setAttribute('aria-checked', isSelected ? 'true' : 'false');
+
+        if (q.type === 'unique') {
+          card.innerHTML = `
+            <span class="onboarding-indicator-circle"></span>
+            <span class="onboarding-option-text">${opt}</span>
+          `;
+        } else {
+          card.innerHTML = `
+            <span class="onboarding-indicator-square">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
+                <polyline points="20 6 9 17 4 12"></polyline>
+              </svg>
+            </span>
+            <span class="onboarding-option-text">${opt}</span>
+          `;
+        }
+
+        card.addEventListener('click', () => handleOptionClick(opt, card));
+        optionsContainer.appendChild(card);
+      });
+
+      updateNextButtonState();
+      errorBox.style.display = 'none';
+    }
+
+    function updateNextButtonState() {
+      const q = QUESTIONS[currentIndex];
+      const selected = userAnswers[q.id] || [];
+      btnNext.disabled = (selected.length === 0);
+    }
+
+    function handleOptionClick(opt, card) {
+      if (isSubmitting) return;
+
+      const q = QUESTIONS[currentIndex];
+
+      if (q.type === 'unique') {
+        // Détection immédiate du cas mineur sur Q1
+        if (q.minorTrigger && opt === q.minorTrigger) {
+          userAnswers[q.id] = [opt];
+          showMinorView();
+          return;
+        }
+
+        userAnswers[q.id] = [opt];
+
+        // Mettre à jour l'affichage
+        const allCards = optionsContainer.querySelectorAll('.onboarding-option-card');
+        allCards.forEach(c => {
+          c.classList.remove('selected');
+          c.setAttribute('aria-checked', 'false');
+        });
+        card.classList.add('selected');
+        card.setAttribute('aria-checked', 'true');
+        updateNextButtonState();
+        saveProgress();
+
+        // Avancement automatique sauf sur la dernière question
+        if (currentIndex < TOTAL_QUESTIONS - 1) {
+          isSubmitting = true;
+          setTimeout(() => {
+            isSubmitting = false;
+            advanceQuestion();
+          }, 380);
+        }
+
+      } else {
+        // Choix multiple
+        let selected = userAnswers[q.id] || [];
+        const idx = selected.indexOf(opt);
+
+        if (idx === -1) {
+          selected.push(opt);
+          card.classList.add('selected');
+          card.setAttribute('aria-checked', 'true');
+        } else {
+          selected.splice(idx, 1);
+          card.classList.remove('selected');
+          card.setAttribute('aria-checked', 'false');
+        }
+
+        userAnswers[q.id] = selected;
+
+        // Détection intention Animateur sur Q8
+        if (q.animateurTrigger) {
+          if (selected.includes(q.animateurTrigger)) {
+            localStorage.setItem('ov_user_wants_to_animate', 'true');
+          } else {
+            localStorage.removeItem('ov_user_wants_to_animate');
+          }
+        }
+
+        updateNextButtonState();
+        saveProgress();
+      }
+    }
+
+    function saveProgress() {
+      try {
+        localStorage.setItem('ov_onboarding_responses', JSON.stringify(userAnswers));
+      } catch (e) {}
+    }
+
+    function advanceQuestion() {
+      const q = QUESTIONS[currentIndex];
+      const selected = userAnswers[q.id] || [];
+
+      if (selected.length === 0) {
+        errorBox.style.display = 'flex';
+        return;
+      }
+
+      if (currentIndex < TOTAL_QUESTIONS - 1) {
+        currentIndex++;
+        renderCurrentQuestion();
+      } else {
+        // Fin du questionnaire !
+        saveProgress();
+        showCompletionView();
+      }
+    }
+
+    function goBackQuestion() {
+      if (currentIndex > 0) {
+        currentIndex--;
+        renderCurrentQuestion();
+      }
+    }
+
+    // Écouteurs d'événements
+    btnStartQuestionnaire.addEventListener('click', () => {
+      currentIndex = 0;
+      renderCurrentQuestion();
+    });
+
+    btnNext.addEventListener('click', () => {
+      advanceQuestion();
+    });
+
+    btnBack.addEventListener('click', () => {
+      goBackQuestion();
+    });
+
+    // Initialisation au chargement selon l'URL
+    const urlParams = new URLSearchParams(window.location.search);
+    const viewParam = urlParams.get('view');
+    const qParam = parseInt(urlParams.get('q'), 10);
+
+    if (viewParam === 'minor') {
+      showMinorView();
+    } else if (viewParam === 'merci' || viewParam === 'completion') {
+      showCompletionView();
+    } else if (viewParam === 'welcome' || (!qParam && Object.keys(userAnswers).length === 0)) {
+      showWelcomeView();
+    } else if (qParam && qParam >= 1 && qParam <= TOTAL_QUESTIONS) {
+      currentIndex = qParam - 1;
+      renderCurrentQuestion();
+    } else {
+      // Reprendre là où l'utilisateur en était
+      const answeredCount = Object.keys(userAnswers).length;
+      if (answeredCount > 0 && answeredCount < TOTAL_QUESTIONS) {
+        currentIndex = answeredCount;
+        renderCurrentQuestion();
+      } else if (answeredCount >= TOTAL_QUESTIONS) {
+        showCompletionView();
+      } else {
+        showWelcomeView();
+      }
+    }
+  </script>
+</body>
+</html>

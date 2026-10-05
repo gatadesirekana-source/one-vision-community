@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="fr" data-theme="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Mon Abonnement & Facturation — One Vision Community</title>
+  <meta name="description" content="Gérez votre formule d'adhésion, vos options de renouvellement et téléchargez vos factures One Vision Community.">
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>💳</text></svg>">
+  
+  <!-- Polices Google -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Great+Vibes&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  
+  <!-- Feuilles de style -->
+  <link rel="stylesheet" href="./css/style.css?v=8">
+</head>
+<body class="dashboard-body">
+
+  <!-- TOPBAR -->
+  <header class="dash-topbar">
+    <div class="dash-topbar-left">
+      <a href="index.html" class="logo" aria-label="One Vision Community">
+        <div class="logo-text">
+          <span class="logo-brand"><span class="logo-one-script">One</span> Vision</span>
+          <span class="logo-sub">Community</span>
+        </div>
+      </a>
+    </div>
+
+    <div class="dash-topbar-right">
+      <a href="dashboard.html" class="btn btn-secondary btn-sm" style="text-decoration:none; font-weight:700;">
+        ← Revenir à mon Dashboard
+      </a>
+    </div>
+  </header>
+
+  <main class="section sub-manage-section" style="min-height: calc(100vh - 120px); padding: 2.5rem 1rem; background: #f8fafc;">
+    <div class="container" style="max-width: 960px; margin: 0 auto;">
+
+      <!-- En-tête -->
+      <div style="margin-bottom: 2rem;">
+        <h1 style="font-size: 1.85rem; font-weight: 800; color: #0f172a; margin: 0 0 0.35rem 0;">
+          Gestion de mon abonnement
+        </h1>
+        <p style="font-size: 0.95rem; color: #64748b; margin: 0;">
+          Consultez votre formule active, modifiez vos options ou téléchargez vos reçus et factures officielles.
+        </p>
+      </div>
+
+      <!-- 1. CARTE RÉCAPITULATIF DE L'ABONNEMENT COURANT -->
+      <div style="background:#ffffff; border:1px solid #e2e8f0; border-radius:18px; padding:1.75rem 2rem; margin-bottom:2.25rem; box-shadow:0 8px 25px rgba(0,0,0,0.04);">
+        <div style="display:flex; justify-content:space-between; align-items:flex-start; flex-wrap:wrap; gap:1.25rem; border-bottom:1px solid #f1f5f9; padding-bottom:1.5rem; margin-bottom:1.5rem;">
+          <div>
+            <span style="font-size:0.75rem; font-weight:800; text-transform:uppercase; letter-spacing:0.05em; background:#dcfce7; color:#15803d; padding:0.25rem 0.65rem; border-radius:6px; display:inline-block; margin-bottom:0.5rem;">
+              ● Abonnement Actif
+            </span>
+            <h2 id="currentPlanTitle" style="font-size:1.5rem; font-weight:800; color:#0f172a; margin:0 0 0.25rem 0;">
+              Formule Membre Standard
+            </h2>
+            <p style="color:#64748b; font-size:0.88rem; margin:0;">
+              Prochain prélèvement automatique le <strong>5 Novembre 2026</strong>.
+            </p>
+          </div>
+
+          <div style="text-align:right;">
+            <div id="currentPlanPrice" style="font-size:2.2rem; font-weight:900; color:#0f172a; letter-spacing:-0.03em;">
+              9,00 €
+            </div>
+            <span style="font-size:0.85rem; color:#64748b; font-weight:600;">/ mois TTC</span>
+          </div>
+        </div>
+
+        <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(200px, 1fr)); gap:1.25rem; font-size:0.88rem; margin-bottom:1.5rem;">
+          <div>
+            <span style="color:#64748b; font-size:0.78rem; text-transform:uppercase; font-weight:700;">Date de souscription</span>
+            <div style="font-weight:700; color:#0f172a; margin-top:2px;">5 Octobre 2026</div>
+          </div>
+          <div>
+            <span style="color:#64748b; font-size:0.78rem; text-transform:uppercase; font-weight:700;">Renouvellement</span>
+            <div style="font-weight:700; color:#15803d; margin-top:2px;">Automatique (Résiliable 1 clic)</div>
+          </div>
+          <div>
+            <span style="color:#64748b; font-size:0.78rem; text-transform:uppercase; font-weight:700;">Mode de paiement</span>
+            <div style="font-weight:700; color:#0f172a; margin-top:2px;">💳 Visa terminant par 4242</div>
+          </div>
+        </div>
+
+        <div style="display:flex; justify-content:flex-end; gap:0.75rem; flex-wrap:wrap; border-top:1px solid #f1f5f9; padding-top:1.25rem;">
+          <a href="choisir-abonnement.html" class="btn btn-secondary btn-sm" style="font-weight:700; text-decoration:none;">
+            Changer de formule d'abonnement
+          </a>
+          <button type="button" class="btn btn-sm" onclick="alert('Votre demande de résiliation a été prise en compte. Vos accès restent valides jusqu\'au 5 Novembre 2026.');" style="background:#fee2e2; color:#dc2626; border:1px solid #fecaca; font-weight:700; border-radius:8px; padding:0.45rem 0.9rem; cursor:pointer;">
+            Résilier mon abonnement
+          </button>
+        </div>
+      </div>
+
+      <!-- 2. HISTORIQUE DES FACTURES -->
+      <div style="background:#ffffff; border:1px solid #e2e8f0; border-radius:18px; padding:2rem; box-shadow:0 8px 25px rgba(0,0,0,0.04);">
+        <h2 style="font-size:1.35rem; font-weight:800; color:#0f172a; margin:0 0 1.25rem 0;">
+          Historique de facturation
+        </h2>
+
+        <div style="overflow-x:auto;">
+          <table style="width:100%; border-collapse:collapse; font-size:0.88rem; text-align:left;">
+            <thead>
+              <tr style="border-bottom:1px solid #e2e8f0; color:#64748b; font-size:0.78rem; text-transform:uppercase;">
+                <th style="padding:0.75rem 0.5rem;">Date</th>
+                <th style="padding:0.75rem 0.5rem;">Description</th>
+                <th style="padding:0.75rem 0.5rem;">Montant</th>
+                <th style="padding:0.75rem 0.5rem;">Statut</th>
+                <th style="padding:0.75rem 0.5rem; text-align:right;">Facture</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr style="border-bottom:1px solid #f1f5f9;">
+                <td style="padding:0.85rem 0.5rem; font-weight:600; color:#0f172a;">05/10/2026</td>
+                <td style="padding:0.85rem 0.5rem; color:#334155;">Adhésion One Vision Community — Mensuel</td>
+                <td style="padding:0.85rem 0.5rem; font-weight:700; color:#0f172a;">9,00 €</td>
+                <td style="padding:0.85rem 0.5rem;"><span style="background:#dcfce7; color:#15803d; font-size:0.72rem; font-weight:700; padding:2px 7px; border-radius:6px;">Payée</span></td>
+                <td style="padding:0.85rem 0.5rem; text-align:right;"><a href="facture-modele.html" target="_blank" style="color:#2563eb; font-weight:700; text-decoration:none;">📄 Télécharger PDF</a></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+    </div>
+  </main>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      const plan = localStorage.getItem('ov_subscription_plan') || 'membre';
+      const titleEl = document.getElementById('currentPlanTitle');
+      const priceEl = document.getElementById('currentPlanPrice');
+
+      if (plan === 'animateur') {
+        if (titleEl) titleEl.textContent = "Formule Animateur & Expert (Abonnement Plus)";
+        if (priceEl) priceEl.textContent = "24,00 €";
+      } else {
+        if (titleEl) titleEl.textContent = "Formule Membre Standard";
+        if (priceEl) priceEl.textContent = "9,00 €";
+      }
+    });
+  </script>
+</body>
+</html>

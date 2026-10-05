@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="fr" data-theme="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Espace Animateur — One Vision Community</title>
+  <meta name="description" content="Votre espace dédié pour créer, gérer et suivre vos sessions Live et Masterminds sur One Vision Community.">
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🌟</text></svg>">
+  
+  <!-- Polices Google -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Great+Vibes&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  
+  <!-- Feuilles de style -->
+  <link rel="stylesheet" href="./css/style.css?v=8">
+</head>
+<body class="dashboard-body">
+
+  <!-- TOPBAR -->
+  <header class="dash-topbar">
+    <div class="dash-topbar-left">
+      <a href="index.html" class="logo" aria-label="One Vision Community">
+        <div class="logo-text">
+          <span class="logo-brand"><span class="logo-one-script">One</span> Vision</span>
+          <span class="logo-sub">Community</span>
+        </div>
+      </a>
+      <span style="background:#fff7ed; color:#ea580c; border:1px solid #fdba74; font-size:0.75rem; font-weight:800; padding:3px 8px; border-radius:12px; margin-left:1rem;">
+        🌟 Espace Animateur & Expert
+      </span>
+    </div>
+
+    <div class="dash-topbar-right">
+      <a href="dashboard.html" class="btn btn-secondary btn-sm" style="text-decoration:none; font-weight:700;">
+        ← Revenir au Dashboard
+      </a>
+      <a href="creer-live.html" class="btn btn-primary btn-sm" style="background:linear-gradient(135deg, #f97316, #ea580c); text-decoration:none; font-weight:700;">
+        + Créer un Live
+      </a>
+    </div>
+  </header>
+
+  <main class="section host-section" style="min-height: calc(100vh - 120px); padding: 2.5rem 1rem; background: #f8fafc;">
+    <div class="container" style="max-width: 1040px; margin: 0 auto;">
+
+      <!-- En-tête Espace Animateur avec badge officiel -->
+      <div style="background: linear-gradient(135deg, #0f172a, #1e293b); color: #ffffff; border-radius: 20px; padding: 2.25rem 2rem; margin-bottom: 2rem; box-shadow: 0 15px 35px rgba(15,23,42,0.15); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1.5rem;">
+        <div style="display:flex; align-items:center; gap:1.25rem;">
+          <img src="./img/avatar-maxime.jpg" alt="Avatar" id="hostAvatar" style="width:72px; height:72px; border-radius:50%; object-fit:cover; border:3px solid #f97316;">
+          <div>
+            <div style="display:flex; align-items:center; gap:0.6rem; flex-wrap:wrap; margin-bottom:0.35rem;">
+              <h1 style="font-size: 1.65rem; font-weight: 800; color: #ffffff; margin: 0;">
+                Espace Animateur
+              </h1>
+              <span style="background:linear-gradient(135deg, #f97316, #ea580c); color:#ffffff; font-size:0.75rem; font-weight:800; text-transform:uppercase; letter-spacing:0.06em; padding:0.25rem 0.75rem; border-radius:20px; display:inline-flex; align-items:center; gap:0.35rem;">
+                <span>🏅</span> Animateur certifié One Vision
+              </span>
+            </div>
+            <p style="color: #94a3b8; font-size: 0.95rem; margin: 0;">
+              Bonjour <strong id="hostName">Alexandre Martin</strong>. Programmez vos interventions et partagez votre savoir-faire auprès de la communauté.
+            </p>
+          </div>
+        </div>
+
+        <div style="display:flex; gap:0.75rem; flex-wrap:wrap;">
+          <a href="creer-live.html" class="btn btn-primary" style="background:linear-gradient(135deg, #f97316, #ea580c); font-weight:700; padding:0.75rem 1.4rem; border-radius:12px; display:inline-flex; align-items:center; gap:0.5rem; box-shadow:0 4px 15px rgba(249,115,22,0.35); text-decoration:none; color:#ffffff;">
+            <span>🎙️ Programmer un Live</span>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+          </a>
+        </div>
+      </div>
+
+      <!-- 1. STATISTIQUES DES LIVES -->
+      <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(210px, 1fr)); gap:1.25rem; margin-bottom:2.25rem;">
+        <div style="background:#ffffff; border:1px solid #e2e8f0; border-radius:16px; padding:1.25rem 1.5rem; box-shadow:0 4px 15px rgba(0,0,0,0.03);">
+          <div style="font-size:0.82rem; font-weight:700; text-transform:uppercase; color:#64748b; letter-spacing:0.04em;">Sessions programmées</div>
+          <div style="font-size:1.85rem; font-weight:900; color:#0f172a; margin-top:0.35rem;">4</div>
+          <span style="font-size:0.78rem; color:#10b981; font-weight:600;">3 sessions au calendrier public</span>
+        </div>
+
+        <div style="background:#ffffff; border:1px solid #e2e8f0; border-radius:16px; padding:1.25rem 1.5rem; box-shadow:0 4px 15px rgba(0,0,0,0.03);">
+          <div style="font-size:0.82rem; font-weight:700; text-transform:uppercase; color:#64748b; letter-spacing:0.04em;">Audience cumulée</div>
+          <div style="font-size:1.85rem; font-weight:900; color:#f97316; margin-top:0.35rem;">1 420</div>
+          <span style="font-size:0.78rem; color:#64748b;">Participants inscrits & connectés</span>
+        </div>
+
+        <div style="background:#ffffff; border:1px solid #e2e8f0; border-radius:16px; padding:1.25rem 1.5rem; box-shadow:0 4px 15px rgba(0,0,0,0.03);">
+          <div style="font-size:0.82rem; font-weight:700; text-transform:uppercase; color:#64748b; letter-spacing:0.04em;">Statut Certification</div>
+          <div style="font-size:1.45rem; font-weight:800; color:#10b981; margin-top:0.5rem; display:flex; align-items:center; gap:0.4rem;">
+            <span>✓</span> Validée
+          </div>
+          <span style="font-size:0.78rem; color:#64748b;">Badge affiché sur votre profil</span>
+        </div>
+
+        <div style="background:#ffffff; border:1px solid #e2e8f0; border-radius:16px; padding:1.25rem 1.5rem; box-shadow:0 4px 15px rgba(0,0,0,0.03);">
+          <div style="font-size:0.82rem; font-weight:700; text-transform:uppercase; color:#64748b; letter-spacing:0.04em;">Brouillons / En attente</div>
+          <div style="font-size:1.85rem; font-weight:900; color:#64748b; margin-top:0.35rem;">1</div>
+          <span style="font-size:0.78rem; color:#64748b;">Session modifiable</span>
+        </div>
+      </div>
+
+      <!-- 2. MES SESSIONS LIVE & MASTERMINDS -->
+      <div style="background:#ffffff; border:1px solid #e2e8f0; border-radius:18px; padding:2rem; margin-bottom:2.5rem; box-shadow:0 8px 25px rgba(0,0,0,0.04);">
+        <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:1rem; margin-bottom:1.5rem; border-bottom:1px solid #f1f5f9; padding-bottom:1rem;">
+          <div>
+            <h2 style="font-size:1.35rem; font-weight:800; color:#0f172a; margin:0 0 0.25rem 0;">
+              Mes sessions programmées
+            </h2>
+            <p style="color:#64748b; font-size:0.88rem; margin:0;">
+              Gérez vos lives, modifiez vos dates et suivez le statut de publication.
+            </p>
+          </div>
+          <a href="creer-live.html" class="btn btn-secondary btn-sm" style="font-weight:700; text-decoration:none;">
+            + Nouveau live
+          </a>
+        </div>
+
+        <div style="display:flex; flex-direction:column; gap:1rem;">
+          <!-- Live 1 -->
+          <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:14px; padding:1.25rem 1.5rem; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:1rem;">
+            <div style="flex:1; min-width:260px;">
+              <div style="display:flex; align-items:center; gap:0.6rem; flex-wrap:wrap; margin-bottom:0.4rem;">
+                <span style="font-size:0.75rem; font-weight:800; background:#e0f2fe; color:#0369a1; padding:0.2rem 0.55rem; border-radius:6px; text-transform:uppercase;">
+                  Mastermind Stratégie
+                </span>
+                <span style="font-size:0.75rem; font-weight:700; background:#dcfce7; color:#15803d; padding:0.2rem 0.55rem; border-radius:6px;">
+                  ● En ligne
+                </span>
+                <span style="font-size:0.82rem; color:#64748b;">
+                  📅 Jeudi 24 Octobre à 18h30 (1h30)
+                </span>
+              </div>
+              <h3 style="font-size:1.1rem; font-weight:800; color:#0f172a; margin:0 0 0.35rem 0;">
+                Passer de 0 à 10 clients réguliers sans publicité payante
+              </h3>
+              <p style="font-size:0.88rem; color:#475569; margin:0; line-height:1.4;">
+                Analyse complète des leviers organiques d'acquisition B2B, audit en direct des profils volontaires et plan d'action immédiat.
+              </p>
+              <div style="font-size:0.8rem; color:#64748b; margin-top:0.4rem;">
+                👥 <strong>142</strong> inscrits confirmés
+              </div>
+            </div>
+            <div style="display:flex; align-items:center; gap:0.5rem; flex-wrap:wrap;">
+              <a href="creer-live.html?id=1" class="btn btn-secondary btn-sm" style="font-size:0.82rem; padding:0.4rem 0.85rem; text-decoration:none;">
+                ✏️ Modifier
+              </a>
+            </div>
+          </div>
+
+          <!-- Live 2 -->
+          <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:14px; padding:1.25rem 1.5rem; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:1rem;">
+            <div style="flex:1; min-width:260px;">
+              <div style="display:flex; align-items:center; gap:0.6rem; flex-wrap:wrap; margin-bottom:0.4rem;">
+                <span style="font-size:0.75rem; font-weight:800; background:#fef3c7; color:#b45309; padding:0.2rem 0.55rem; border-radius:6px; text-transform:uppercase;">
+                  Atelier Pratique
+                </span>
+                <span style="font-size:0.75rem; font-weight:700; background:#fef3c7; color:#b45309; padding:0.2rem 0.55rem; border-radius:6px;">
+                  ✏️ Brouillon
+                </span>
+                <span style="font-size:0.82rem; color:#64748b;">
+                  📅 Mardi 29 Octobre à 19h00 (1h00)
+                </span>
+              </div>
+              <h3 style="font-size:1.1rem; font-weight:800; color:#0f172a; margin:0 0 0.35rem 0;">
+                Atelier No-Code : Automatiser ses relances clients avec Make & Notion
+              </h3>
+              <p style="font-size:0.88rem; color:#475569; margin:0; line-height:1.4;">
+                Démonstration concrète pas-à-pas pour connecter son CRM à son outil de facturation.
+              </p>
+            </div>
+            <div style="display:flex; align-items:center; gap:0.5rem; flex-wrap:wrap;">
+              <button type="button" class="btn btn-secondary btn-sm" onclick="alert('Session publiée au calendrier !')" style="background:#10b981; color:#fff; border:none; font-weight:700;">
+                Publier
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 3. PAGE D'EXPERT CERTIFIÉ -->
+      <div style="background:#ffffff; border:1px solid #e2e8f0; border-radius:18px; padding:2rem; box-shadow:0 8px 25px rgba(0,0,0,0.04);">
+        <h2 style="font-size:1.35rem; font-weight:800; color:#0f172a; margin:0 0 0.35rem 0;">
+          Votre profil d'expert public
+        </h2>
+        <p style="color:#64748b; font-size:0.88rem; margin:0 0 1.5rem 0;">
+          Ces informations sont affichées sur vos fiches de live et auprès des membres de One Vision.
+        </p>
+
+        <form id="expertProfileForm" onsubmit="alert('Profil expert enregistré avec succès !'); return false;">
+          <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(280px, 1fr)); gap:1.25rem; margin-bottom:1.25rem;">
+            <div>
+              <label style="display:block; font-size:0.86rem; font-weight:700; color:#0f172a; margin-bottom:0.4rem;">Titre professionnel / Rôle</label>
+              <input type="text" class="form-input" id="expertJobTitle" value="Coach Business & Mentor Vente" style="width:100%; padding:0.65rem 0.85rem; border:1px solid #cbd5e1; border-radius:8px;">
+            </div>
+            <div>
+              <label style="display:block; font-size:0.86rem; font-weight:700; color:#0f172a; margin-bottom:0.4rem;">Entreprise / Projet</label>
+              <input type="text" class="form-input" id="expertCompany" value="One Vision Academy" style="width:100%; padding:0.65rem 0.85rem; border:1px solid #cbd5e1; border-radius:8px;">
+            </div>
+          </div>
+
+          <div style="margin-bottom:1.25rem;">
+            <label style="display:block; font-size:0.86rem; font-weight:700; color:#0f172a; margin-bottom:0.4rem;">Biographie & Présentation</label>
+            <textarea class="form-input" id="expertBio" rows="3" style="width:100%; padding:0.65rem 0.85rem; border:1px solid #cbd5e1; border-radius:8px;">J'accompagne les créateurs et entrepreneurs à structurer leur offre, fixer leurs tarifs avec confiance et signer des contrats réguliers.</textarea>
+          </div>
+
+          <div style="margin-bottom:1.5rem;">
+            <label style="display:block; font-size:0.86rem; font-weight:700; color:#0f172a; margin-bottom:0.4rem;">Domaines d'expertise clés</label>
+            <input type="text" class="form-input" id="expertSkills" value="Closing, Tarification, Stratégie Commerciale, Mindset" style="width:100%; padding:0.65rem 0.85rem; border:1px solid #cbd5e1; border-radius:8px;">
+          </div>
+
+          <button type="submit" class="btn btn-primary" style="background:#0f172a; font-weight:700; padding:0.7rem 1.5rem; border-radius:10px;">
+            Enregistrer mon profil d'expert
+          </button>
+        </form>
+      </div>
+
+    </div>
+  </main>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      const name = localStorage.getItem('ov_member_name');
+      if (name) {
+        const el = document.getElementById('hostName');
+        if (el) el.textContent = name;
+      }
+    });
+  </script>
+</body>
+</html>

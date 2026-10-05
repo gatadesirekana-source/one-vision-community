@@ -740,6 +740,16 @@ if ($isAdminUser) {
           <span>Mon Abonnement</span>
         </a>
 
+        <a href="questionnaire.php" class="dash-nav-item" style="text-decoration:none;" title="Voir ou modifier le questionnaire d'onboarding">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+            <polyline points="14 2 14 8 20 8"></polyline>
+            <polyline points="9 15 11 17 15 13"></polyline>
+          </svg>
+          <span>Mon Questionnaire</span>
+          <span class="nav-counter" style="background:#e0e7ff;color:#3730a3;font-weight:700;">13 Q</span>
+        </a>
+
         <?php if ($isAdminUser): ?>
         <div class="dash-nav-section-label" style="margin-top:1.5rem;color:#d97706;font-weight:700;">Administration</div>
         <a href="admin/index.php" class="dash-nav-item" style="text-decoration:none;border-left: 2px solid #f59e0b;">
@@ -2948,6 +2958,78 @@ if ($isAdminUser) {
     </div>
   </div>
 
+  <!-- BARRE FLOTTANTE DE TEST / DÉMONSTRATION DES 3 ÉTATS D'ABONNEMENT -->
+  <div id="demoStateSwitcherBar" style="position:fixed; bottom:18px; right:18px; z-index:99999; background:rgba(15, 23, 42, 0.95); backdrop-filter:blur(10px); border:1px solid rgba(255,255,255,0.15); border-radius:50px; padding:6px 12px; display:flex; align-items:center; gap:8px; box-shadow:0 12px 32px rgba(0,0,0,0.35);">
+    <span style="color:#94a3b8; font-size:0.75rem; font-weight:800; text-transform:uppercase; letter-spacing:0.05em; padding-left:4px; padding-right:2px;">
+      Mode Démo :
+    </span>
+    <button type="button" class="demo-switch-btn" id="btnDemoPlus" onclick="setDashboardPlanMode('animateur')" style="background:#f97316; color:#ffffff; border:none; padding:5px 12px; border-radius:20px; font-size:0.78rem; font-weight:700; cursor:pointer; transition:all 0.2s ease;">
+      🌟 Plus (24€)
+    </button>
+    <button type="button" class="demo-switch-btn" id="btnDemoMembre" onclick="setDashboardPlanMode('membre')" style="background:rgba(255,255,255,0.12); color:#ffffff; border:none; padding:5px 12px; border-radius:20px; font-size:0.78rem; font-weight:700; cursor:pointer; transition:all 0.2s ease;">
+      💼 Membre (9€)
+    </button>
+    <button type="button" class="demo-switch-btn" id="btnDemoExpired" onclick="setDashboardPlanMode('expired')" style="background:rgba(255,255,255,0.12); color:#ffffff; border:none; padding:5px 12px; border-radius:20px; font-size:0.78rem; font-weight:700; cursor:pointer; transition:all 0.2s ease;">
+      ⏳ Expiré
+    </button>
+    <a href="questionnaire.php" title="Refaire ou voir le questionnaire" style="background:rgba(255,255,255,0.12); color:#ffffff; text-decoration:none; padding:5px 11px; border-radius:20px; font-size:0.78rem; font-weight:700; display:inline-flex; align-items:center; gap:4px;">
+      📋 Questionnaire
+    </a>
+  </div>
+
   <script src="./js/main.js?v=4"></script>
+  <script>
+    function setDashboardPlanMode(mode) {
+      const badge = document.querySelector('.dash-user-badge');
+      const roleBadge = document.getElementById('dropdownRoleBadge');
+      const bPlus = document.getElementById('btnDemoPlus');
+      const bMembre = document.getElementById('btnDemoMembre');
+      const bExpired = document.getElementById('btnDemoExpired');
+      [bPlus, bMembre, bExpired].forEach(b => {
+        if (b) {
+          b.style.background = 'rgba(255,255,255,0.12)';
+          b.style.color = '#ffffff';
+        }
+      });
+
+      if (mode === 'animateur') {
+        if (badge) {
+          badge.textContent = '🌟 Abonnement Plus • 24€/mois';
+          badge.style.background = '#ffedd5';
+          badge.style.color = '#c2410c';
+        }
+        if (roleBadge) {
+          roleBadge.textContent = '🌟 Animateur One Vision';
+          roleBadge.style.background = '#ffedd5';
+          roleBadge.style.color = '#c2410c';
+        }
+        if (bPlus) bPlus.style.background = '#f97316';
+      } else if (mode === 'membre') {
+        if (badge) {
+          badge.textContent = '💼 Membre Actif • 9€/mois';
+          badge.style.background = '#f1f5f9';
+          badge.style.color = '#334155';
+        }
+        if (roleBadge) {
+          roleBadge.textContent = '💼 Membre One Vision';
+          roleBadge.style.background = '#f1f5f9';
+          roleBadge.style.color = '#334155';
+        }
+        if (bMembre) bMembre.style.background = '#2563eb';
+      } else if (mode === 'expired') {
+        if (badge) {
+          badge.textContent = '⚠️ Abonnement Expiré';
+          badge.style.background = '#fee2e2';
+          badge.style.color = '#991b1b';
+        }
+        if (roleBadge) {
+          roleBadge.textContent = '⏳ Non-abonné / Expiré';
+          roleBadge.style.background = '#fee2e2';
+          roleBadge.style.color = '#991b1b';
+        }
+        if (bExpired) bExpired.style.background = '#dc2626';
+      }
+    }
+  </script>
 </body>
 </html>

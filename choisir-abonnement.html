@@ -1,0 +1,373 @@
+<!DOCTYPE html>
+<html lang="fr" data-theme="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Choisir mon abonnement — One Vision Community</title>
+  <meta name="description" content="Choisissez votre formule Membre ou Animateur pour accéder à la communauté d'entrepreneurs One Vision.">
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎯</text></svg>">
+  
+  <!-- Polices Google -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Great+Vibes&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  
+  <!-- Feuilles de style -->
+  <link rel="stylesheet" href="./css/style.css?v=8">
+</head>
+<body class="checkout-body">
+
+  <!-- EN-TÊTE ÉPURÉ SANS NAVIGATION DISTRACTIVE -->
+  <header style="padding: 0.85rem 1rem; border-bottom: 1px solid rgba(15, 23, 42, 0.06); background: #ffffff;">
+    <div class="container" style="max-width: 960px; margin: 0 auto; display:flex; justify-content:space-between; align-items:center;">
+      <a href="index.html" class="logo" aria-label="One Vision Community" style="text-decoration:none;">
+        <div class="logo-text">
+          <span class="logo-brand"><span class="logo-one-script">One</span> Vision</span>
+          <span class="logo-sub">Community</span>
+        </div>
+      </a>
+
+      <div style="font-size:0.84rem; color:#64748b; font-weight:600; display:flex; align-items:center; gap:0.4rem;">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#16a34a" stroke-width="2.5"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+        <span>Paiement sécurisé SSL 256-bit</span>
+      </div>
+    </div>
+  </header>
+
+  <main class="section sub-choice-section" style="min-height: calc(100vh - 180px); padding: 2.5rem 1rem; background: #f8fafc;">
+    <div class="container" style="max-width: 960px; margin: 0 auto;">
+
+      <!-- ÉCRAN MINEUR BIENVEILLANT (SI MINEUR DÉTECTÉ) -->
+      <div id="minorNoticeBox" style="display:none; text-align: center; max-width: 520px; margin: 2rem auto; background: #ffffff; border-radius: 20px; padding: 2.5rem 1.75rem; box-shadow: 0 10px 30px rgba(0,0,0,0.06); border: 1px solid #e2e8f0;">
+        <div style="font-size: 3rem; margin-bottom: 1rem;">🌱</div>
+        <h1 style="font-size: 1.6rem; font-weight: 800; color: #0f172a; margin: 0 0 0.75rem 0;">
+          Merci pour votre intérêt !
+        </h1>
+        <p style="font-size: 0.95rem; color: #475569; line-height: 1.6; margin-bottom: 1.5rem;">
+          La communauté <strong>One Vision</strong> est réservée aux adultes (18 ans et plus). Nous ne pouvons pas vous proposer d'abonnement pour le moment.<br><br>
+          Prenez le temps d'apprendre et de mûrir vos projets. Nous serons ravis de vous accueillir dès votre majorité !
+        </p>
+        <a href="index.html" class="btn btn-secondary" style="padding: 0.7rem 1.5rem; font-weight: 700; border-radius: 10px; display: inline-block; text-decoration:none;">
+          Retourner à l'accueil
+        </a>
+      </div>
+
+      <!-- CONTENU NORMAL POUR MAJEURS -->
+      <div id="plansMainContent">
+
+        <!-- Message d'alerte si l'abonnement a expiré -->
+        <div id="expiredAlertBox" style="display:none; background:#fffbeb; border:1px solid #fef3c7; color:#92400e; padding:1.1rem 1.25rem; border-radius:14px; margin-bottom:1.75rem; box-shadow:0 4px 15px rgba(245,158,11,0.08);">
+          <div style="display:flex; align-items:flex-start; gap:0.85rem;">
+            <span style="font-size:1.6rem; line-height:1;">⏳</span>
+            <div>
+              <h2 style="margin:0 0 0.25rem 0; font-size:1.05rem; font-weight:800; color:#b45309;">
+                Votre abonnement a expiré, renouvelez-le pour continuer.
+              </h2>
+              <p style="margin:0; font-size:0.88rem; color:#78350f; line-height:1.45;">
+                Vos accès aux salons et sessions live sont temporairement suspendus. Choisissez une formule ci-dessous pour les réactiver immédiatement sans perte de vos données.
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <!-- En-tête de présentation -->
+        <div style="text-align: center; max-width: 680px; margin: 0 auto 1.75rem auto;">
+          <h1 style="font-size: 2rem; font-weight: 800; color: #0f172a; margin: 0 0 0.5rem 0; letter-spacing: -0.025em;">
+            Choisissez votre formule d'adhésion
+          </h1>
+          <p style="font-size: 0.98rem; color: #64748b; line-height: 1.5; margin: 0;">
+            Rejoignez un collectif d'entrepreneurs ambitieux qui partagent leurs victoires, leurs blocages et leurs stratégies réelles chaque semaine.
+          </p>
+
+          <!-- Sélecteur Mensuel / Annuel -->
+          <div class="period-toggle-wrapper" style="display:inline-flex; align-items:center; background:#ffffff; border:1px solid #cbd5e1; padding:0.28rem; border-radius:50px; margin-top:1.35rem; box-shadow:0 3px 10px rgba(0,0,0,0.03);">
+            <button type="button" class="period-btn active" id="btnPeriodMonthly" onclick="switchPeriod('mensuel')" style="padding:0.5rem 1.25rem; border-radius:40px; font-weight:700; font-size:0.88rem; border:none; cursor:pointer; background:#0f172a; color:#ffffff; transition:all 0.2s;">
+              Mensuel
+            </button>
+            <button type="button" class="period-btn" id="btnPeriodYearly" onclick="switchPeriod('annuel')" style="padding:0.5rem 1.25rem; border-radius:40px; font-weight:700; font-size:0.88rem; border:none; cursor:pointer; background:transparent; color:#64748b; transition:all 0.2s; display:inline-flex; align-items:center; gap:0.45rem;">
+              <span>Annuel</span>
+              <span style="background:#dcfce7; color:#15803d; font-size:0.72rem; font-weight:800; padding:0.18rem 0.5rem; border-radius:16px;">
+                2 mois offerts
+              </span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Grille des formules côte à côte -->
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(290px, 1fr)); gap: 1.75rem; align-items: stretch; margin-bottom: 2.25rem;">
+          
+          <!-- CARTE 1 : FORMULE MEMBRE STANDARD (9€) -->
+          <div class="pricing-card" style="background:#ffffff; border:1px solid #e2e8f0; border-radius:20px; padding:1.85rem 1.75rem; display:flex; flex-direction:column; justify-content:space-between; box-shadow:0 8px 24px rgba(0,0,0,0.04); position:relative; transition:transform 0.2s ease;">
+            <div>
+              <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.75rem;">
+                <span style="font-size:0.75rem; font-weight:800; text-transform:uppercase; letter-spacing:0.05em; color:#2563eb; background:#eff6ff; padding:0.25rem 0.65rem; border-radius:6px;">
+                  Formule Membre Standard
+                </span>
+              </div>
+
+              <h3 style="font-size:1.4rem; font-weight:800; color:#0f172a; margin:0 0 0.35rem 0;">
+                Membre
+              </h3>
+              <p style="font-size:0.88rem; color:#64748b; margin:0 0 1.25rem 0; line-height:1.45; font-weight:500;">
+                Rejoignez la communauté, apprenez et connectez-vous avec d'autres entrepreneurs.
+              </p>
+
+              <!-- Bloc Prix Dynamique Membre -->
+              <div style="margin-bottom:1.25rem; padding-bottom:1.25rem; border-bottom:1px solid #f1f5f9;">
+                <!-- Affichage Mensuel -->
+                <div class="price-box-monthly" id="membrePriceMonthly" style="display:block;">
+                  <span style="font-size:2.4rem; font-weight:900; color:#0f172a; letter-spacing:-0.03em;">
+                    9 €
+                  </span>
+                  <span style="font-size:0.88rem; color:#64748b; font-weight:600;">/ mois</span>
+                  <div style="font-size:0.78rem; color:#94a3b8; margin-top:0.25rem;">Sans engagement de durée • Résiliable en 1 clic</div>
+                </div>
+                <!-- Affichage Annuel -->
+                <div class="price-box-yearly" id="membrePriceYearly" style="display:none;">
+                  <div style="display:flex; align-items:baseline; gap:0.35rem;">
+                    <span style="font-size:2.4rem; font-weight:900; color:#0f172a; letter-spacing:-0.03em;">
+                      89 €
+                    </span>
+                    <span style="font-size:0.88rem; color:#64748b; font-weight:600;">/ an</span>
+                  </div>
+                  <div style="display:flex; align-items:center; gap:0.4rem; margin-top:0.35rem; flex-wrap:wrap;">
+                    <span style="background:#dcfce7; color:#15803d; font-weight:700; font-size:0.74rem; padding:0.18rem 0.45rem; border-radius:6px;">
+                      Économie de 19 € / an
+                    </span>
+                    <span style="font-size:0.78rem; color:#475569; font-weight:600;">
+                      Soit ~7,42 € / mois
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Liste des Avantages Membre -->
+              <div style="margin-bottom:1.75rem;">
+                <div style="font-size:0.78rem; font-weight:800; text-transform:uppercase; letter-spacing:0.04em; color:#475569; margin-bottom:0.75rem;">
+                  Ce qui est inclus :
+                </div>
+                <ul style="list-style:none; padding:0; margin:0; display:flex; flex-direction:column; gap:0.6rem; font-size:0.88rem; color:#334155;">
+                  <li style="display:flex; align-items:flex-start; gap:0.55rem; line-height:1.4;">
+                    <span style="color:#2563eb; font-weight:900; font-size:1rem; line-height:1;">✓</span>
+                    <span>Accès complet à la communauté One Vision</span>
+                  </li>
+                  <li style="display:flex; align-items:flex-start; gap:0.55rem; line-height:1.4;">
+                    <span style="color:#2563eb; font-weight:900; font-size:1rem; line-height:1;">✓</span>
+                    <span>Échanges quotidiens dans les salons thématiques</span>
+                  </li>
+                  <li style="display:flex; align-items:flex-start; gap:0.55rem; line-height:1.4;">
+                    <span style="color:#2563eb; font-weight:900; font-size:1rem; line-height:1;">✓</span>
+                    <span>Participation à tous les lives et masterminds hebdomadaires</span>
+                  </li>
+                  <li style="display:flex; align-items:flex-start; gap:0.55rem; line-height:1.4;">
+                    <span style="color:#2563eb; font-weight:900; font-size:1rem; line-height:1;">✓</span>
+                    <span>Replays illimités en qualité HD 1080p</span>
+                  </li>
+                  <li style="display:flex; align-items:flex-start; gap:0.55rem; line-height:1.4;">
+                    <span style="color:#2563eb; font-weight:900; font-size:1rem; line-height:1;">✓</span>
+                    <span>Profil personnel dans l'annuaire des membres</span>
+                  </li>
+                </ul>
+              </div>
+            </div>
+
+            <a href="checkout.html?plan=membre&billing=mensuel" id="btnChooseMembre" class="btn btn-secondary" style="width:100%; padding:0.85rem 1rem; font-size:0.95rem; font-weight:700; border-radius:10px; border:1.5px solid #cbd5e1; justify-content:center; display:flex; align-items:center; gap:0.45rem; text-decoration:none;">
+              <span>Rejoindre en Formule Membre</span>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"></polyline></svg>
+            </a>
+          </div>
+
+          <!-- CARTE 2 : FORMULE ANIMATEUR & EXPERT (24€ - ABONNEMENT PLUS) -->
+          <div class="pricing-card" style="background:#ffffff; border:2px solid #f97316; border-radius:20px; padding:1.85rem 1.75rem; display:flex; flex-direction:column; justify-content:space-between; box-shadow:0 12px 35px rgba(249,115,22,0.12); position:relative; transition:transform 0.2s ease;">
+            
+            <!-- Badge Recommandé -->
+            <div style="position:absolute; top:-12px; right:20px; background:linear-gradient(135deg, #f97316, #ea580c); color:#ffffff; font-weight:800; font-size:0.72rem; text-transform:uppercase; letter-spacing:0.05em; padding:0.25rem 0.75rem; border-radius:24px; box-shadow:0 3px 10px rgba(249,115,22,0.25);">
+              ⭐ Formule Recommandée (Abonnement Plus)
+            </div>
+
+            <div>
+              <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.75rem;">
+                <span style="font-size:0.75rem; font-weight:800; text-transform:uppercase; letter-spacing:0.05em; color:#ea580c; background:#fff7ed; padding:0.25rem 0.65rem; border-radius:6px;">
+                  Formule Animateur & Expert
+                </span>
+              </div>
+
+              <!-- Recommandation personnalisée si l'utilisateur veut animer -->
+              <div id="animateurPersonalizedBanner" style="display:none; background:#fff7ed; border:1px solid #fdba74; color:#9a3412; padding:0.65rem 0.85rem; border-radius:8px; font-weight:700; font-size:0.86rem; margin-bottom:1rem; align-items:center; gap:0.45rem;">
+                <span>✨</span>
+                <span>Vous voulez partager votre expertise ? Cette formule est faite pour vous.</span>
+              </div>
+
+              <h3 style="font-size:1.4rem; font-weight:800; color:#0f172a; margin:0 0 0.35rem 0;">
+                Animateur
+              </h3>
+              <p style="font-size:0.88rem; color:#64748b; margin:0 0 1.25rem 0; line-height:1.45; font-weight:500;">
+                Partagez votre expertise, animez vos propres lives et vos masterminds dans la communauté.
+              </p>
+
+              <!-- Bloc Prix Dynamique Animateur -->
+              <div style="margin-bottom:1.25rem; padding-bottom:1.25rem; border-bottom:1px solid #f1f5f9;">
+                <!-- Affichage Mensuel -->
+                <div class="price-box-monthly" id="animateurPriceMonthly" style="display:block;">
+                  <span style="font-size:2.4rem; font-weight:900; color:#f97316; letter-spacing:-0.03em;">
+                    24 €
+                  </span>
+                  <span style="font-size:0.88rem; color:#64748b; font-weight:600;">/ mois</span>
+                  <div style="font-size:0.78rem; color:#94a3b8; margin-top:0.25rem;">Sans engagement de durée • Résiliable en 1 clic</div>
+                </div>
+                <!-- Affichage Annuel -->
+                <div class="price-box-yearly" id="animateurPriceYearly" style="display:none;">
+                  <div style="display:flex; align-items:baseline; gap:0.35rem;">
+                    <span style="font-size:2.4rem; font-weight:900; color:#f97316; letter-spacing:-0.03em;">
+                      239 €
+                    </span>
+                    <span style="font-size:0.88rem; color:#64748b; font-weight:600;">/ an</span>
+                  </div>
+                  <div style="display:flex; align-items:center; gap:0.4rem; margin-top:0.35rem; flex-wrap:wrap;">
+                    <span style="background:#dcfce7; color:#15803d; font-weight:700; font-size:0.74rem; padding:0.18rem 0.45rem; border-radius:6px;">
+                      Économie de 49 € / an
+                    </span>
+                    <span style="font-size:0.78rem; color:#475569; font-weight:600;">
+                      Soit ~19,92 € / mois
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Liste des Avantages Animateur -->
+              <div style="margin-bottom:1.75rem;">
+                <div style="font-size:0.78rem; font-weight:800; text-transform:uppercase; letter-spacing:0.04em; color:#ea580c; margin-bottom:0.75rem;">
+                  Tout ce qui est inclus dans Membre, plus :
+                </div>
+                <ul style="list-style:none; padding:0; margin:0; display:flex; flex-direction:column; gap:0.6rem; font-size:0.88rem; color:#334155;">
+                  <li style="display:flex; align-items:flex-start; gap:0.55rem; line-height:1.4;">
+                    <span style="color:#f97316; font-weight:900; font-size:1rem; line-height:1;">✓</span>
+                    <span><strong>Création de lives et de masterminds officiels</strong></span>
+                  </li>
+                  <li style="display:flex; align-items:flex-start; gap:0.55rem; line-height:1.4;">
+                    <span style="color:#f97316; font-weight:900; font-size:1rem; line-height:1;">✓</span>
+                    <span><strong>Espace Animateur dédié</strong> avec tableau de bord</span>
+                  </li>
+                  <li style="display:flex; align-items:flex-start; gap:0.55rem; line-height:1.4;">
+                    <span style="color:#f97316; font-weight:900; font-size:1rem; line-height:1;">✓</span>
+                    <span><strong>Page d'expert certifiée</strong> mise en avant auprès des membres</span>
+                  </li>
+                  <li style="display:flex; align-items:flex-start; gap:0.55rem; line-height:1.4;">
+                    <span style="color:#f97316; font-weight:900; font-size:1rem; line-height:1;">✓</span>
+                    <span><strong>Badge Animateur Vérifié</strong> sur tous vos posts et replays</span>
+                  </li>
+                  <li style="display:flex; align-items:flex-start; gap:0.55rem; line-height:1.4;">
+                    <span style="color:#f97316; font-weight:900; font-size:1rem; line-height:1;">✓</span>
+                    <span><strong>Statistiques d'audience</strong> (participants, vues, interactions)</span>
+                  </li>
+                </ul>
+              </div>
+            </div>
+
+            <a href="checkout.html?plan=animateur&billing=mensuel" id="btnChooseAnimateur" class="btn btn-primary" style="width:100%; padding:0.85rem 1rem; font-size:0.95rem; font-weight:700; border-radius:10px; background:linear-gradient(135deg, #f97316, #ea580c); justify-content:center; display:flex; align-items:center; gap:0.45rem; box-shadow:0 4px 12px rgba(249,115,22,0.25); text-decoration:none; color:#ffffff;">
+              <span>Choisir la Formule Animateur</span>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"></polyline></svg>
+            </a>
+          </div>
+
+        </div>
+
+        <!-- Réassurance & FAQ Rapide -->
+        <div style="background:#ffffff; border:1px solid #e2e8f0; border-radius:16px; padding:1.5rem; text-align:center; max-width:760px; margin:0 auto; display:grid; grid-template-columns:repeat(auto-fit, minmax(200px, 1fr)); gap:1.25rem;">
+          <div>
+            <div style="font-size:1.5rem; margin-bottom:0.25rem;">🔒</div>
+            <strong style="font-size:0.9rem; color:#0f172a; display:block;">Sans engagement</strong>
+            <span style="font-size:0.8rem; color:#64748b;">Résiliation en 1 clic depuis votre espace membre.</span>
+          </div>
+          <div>
+            <div style="font-size:1.5rem; margin-bottom:0.25rem;">⚡</div>
+            <strong style="font-size:0.9rem; color:#0f172a; display:block;">Accès instantané</strong>
+            <span style="font-size:0.8rem; color:#64748b;">Votre compte est activé immédiatement dès validation.</span>
+          </div>
+          <div>
+            <div style="font-size:1.5rem; margin-bottom:0.25rem;">💬</div>
+            <strong style="font-size:0.9rem; color:#0f172a; display:block;">Support direct</strong>
+            <span style="font-size:0.8rem; color:#64748b;">Une équipe disponible 7j/7 pour vous accompagner.</span>
+          </div>
+        </div>
+
+      </div>
+
+    </div>
+  </main>
+
+  <script>
+    let currentPeriod = 'mensuel';
+
+    function switchPeriod(period) {
+      currentPeriod = period;
+
+      const btnMonthly = document.getElementById('btnPeriodMonthly');
+      const btnYearly = document.getElementById('btnPeriodYearly');
+
+      const membrePriceMonthly = document.getElementById('membrePriceMonthly');
+      const membrePriceYearly = document.getElementById('membrePriceYearly');
+
+      const animateurPriceMonthly = document.getElementById('animateurPriceMonthly');
+      const animateurPriceYearly = document.getElementById('animateurPriceYearly');
+
+      const btnMembre = document.getElementById('btnChooseMembre');
+      const btnAnimateur = document.getElementById('btnChooseAnimateur');
+
+      if (period === 'annuel') {
+        btnMonthly.style.background = 'transparent';
+        btnMonthly.style.color = '#64748b';
+        btnYearly.style.background = '#0f172a';
+        btnYearly.style.color = '#ffffff';
+
+        membrePriceMonthly.style.display = 'none';
+        membrePriceYearly.style.display = 'block';
+
+        animateurPriceMonthly.style.display = 'none';
+        animateurPriceYearly.style.display = 'block';
+
+        btnMembre.href = 'checkout.html?plan=membre&billing=annuel';
+        btnAnimateur.href = 'checkout.html?plan=animateur&billing=annuel';
+      } else {
+        btnMonthly.style.background = '#0f172a';
+        btnMonthly.style.color = '#ffffff';
+        btnYearly.style.background = 'transparent';
+        btnYearly.style.color = '#64748b';
+
+        membrePriceMonthly.style.display = 'block';
+        membrePriceYearly.style.display = 'none';
+
+        animateurPriceMonthly.style.display = 'block';
+        animateurPriceYearly.style.display = 'none';
+
+        btnMembre.href = 'checkout.html?plan=membre&billing=mensuel';
+        btnAnimateur.href = 'checkout.html?plan=animateur&billing=mensuel';
+      }
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+      // Détection mineur
+      if (localStorage.getItem('ov_is_minor') === 'true') {
+        document.getElementById('plansMainContent').style.display = 'none';
+        document.getElementById('minorNoticeBox').style.display = 'block';
+        return;
+      }
+
+      // Détection statut expiré
+      const urlParams = new URLSearchParams(window.location.search);
+      const isExpired = urlParams.get('status') === 'expired' || localStorage.getItem('ov_subscription_status') === 'expired';
+      if (isExpired) {
+        const alertBox = document.getElementById('expiredAlertBox');
+        if (alertBox) alertBox.style.display = 'block';
+      }
+
+      // Recommandation si l'utilisateur a choisi d'animer des lives dans Q8
+      const wantsToAnimate = localStorage.getItem('ov_user_wants_to_animate') === 'true';
+      if (wantsToAnimate) {
+        const animBanner = document.getElementById('animateurPersonalizedBanner');
+        if (animBanner) animBanner.style.display = 'flex';
+      }
+    });
+  </script>
+</body>
+</html>
