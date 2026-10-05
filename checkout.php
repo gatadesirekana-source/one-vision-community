@@ -1,19 +1,17 @@
 <?php
 /**
- * ONE VISION COMMUNITY — ADHÉSION & PAIEMENT SÉCURISÉ 9€/MOIS (PHP & SQLITE)
+ * ONE VISION COMMUNITY — PAGE DE CHECKOUT RETIRÉE -> REDIRECTION CONNEXION / ESPACE MEMBRE
  */
 
 require_once __DIR__ . '/includes/config.php';
-require_once __DIR__ . '/includes/db.php';
 require_once __DIR__ . '/includes/auth.php';
-require_once __DIR__ . '/includes/flash.php';
 
-$db = get_db();
-$currentUser = current_user();
-
-$success = false;
-$createdOrder = null;
-$error = '';
+if (is_logged_in()) {
+    header('Location: dashboard.php');
+} else {
+    header('Location: login.php');
+}
+exit;
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $csrfToken = $_POST['csrf_token'] ?? $_SERVER['HTTP_X_CSRF_TOKEN'] ?? null;

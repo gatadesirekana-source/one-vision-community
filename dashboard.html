@@ -1236,9 +1236,6 @@
             </svg>
             <span>Retour</span>
           </button>
-          <div class="account-badge-pill">
-            <span>⚙️ Paramètres & Sécurité</span>
-          </div>
         </div>
 
         <div class="dash-section-header">
@@ -1257,13 +1254,22 @@
             <div class="settings-avatar-flex">
               <div class="settings-avatar-preview-box">
                 <img src="./img/avatar-maxime.jpg" alt="Aperçu Photo" id="settingsAvatarPreview" class="settings-avatar-large">
-                <span class="badge-role-avatar">👑 Admin</span>
+                <span class="badge-role-avatar" style="display:inline-flex; align-items:center; gap:0.35rem;">
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M2 4l3 12h14l3-12-5 7-5-7-5 7-5-7z"></path>
+                  </svg>
+                  <span>Admin</span>
+                </span>
               </div>
               <div class="settings-avatar-controls">
                 <input type="file" id="settingsAvatarInput" accept="image/png, image/jpeg, image/jpg, image/webp" style="display:none;">
                 <div class="settings-avatar-btns">
                   <label for="settingsAvatarInput" class="btn btn-secondary btn-sm" id="btnUploadAvatar" style="cursor:pointer;display:inline-flex;align-items:center;gap:0.4rem;margin:0;">
-                    📷 Changer ma photo
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path>
+                      <circle cx="12" cy="13" r="4"></circle>
+                    </svg>
+                    <span>Changer ma photo</span>
                   </label>
                   <button type="button" class="btn btn-outline-dash btn-sm" id="btnResetAvatar">
                     Réinitialiser
@@ -1294,19 +1300,23 @@
             <div class="settings-fields-grid">
               <div class="form-group">
                 <label for="settingsFullName" class="form-label">Nom complet ou Prénom & Nom *</label>
-                <input type="text" id="settingsFullName" class="form-input" value="Katahana Désiré" required placeholder="Ex: Katahana Désiré">
+                <input type="text" id="settingsFullName" name="settingsFullName" class="form-input" value="Katahana Désiré" required placeholder="Ex: Katahana Désiré">
               </div>
 
               <div class="form-group">
                 <label for="settingsRole" class="form-label">Activité ou Titre professionnel</label>
-                <input type="text" id="settingsRole" class="form-input" value="Entrepreneur & Fondateur" placeholder="Ex: Entrepreneur, Développeur, Coach...">
+                <input type="text" id="settingsRole" name="settingsRole" class="form-input" value="Entrepreneur & Fondateur" placeholder="Ex: Entrepreneur, Développeur, Coach...">
               </div>
 
               <div class="form-group">
                 <label for="settingsPhone" class="form-label">Numéro de téléphone direct *</label>
                 <div class="input-with-icon">
-                  <span class="input-icon">📞</span>
-                  <input type="tel" id="settingsPhone" class="form-input" value="+33 6 84 92 10 33" placeholder="+33 6 12 34 56 78" required>
+                  <span class="input-icon">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path>
+                    </svg>
+                  </span>
+                  <input type="tel" id="settingsPhone" name="settingsPhone" class="form-input" value="+33 6 84 92 10 33" placeholder="+33 6 12 34 56 78" required>
                 </div>
                 <span class="settings-hint">Utile pour être contacté directement par la communauté et l'équipe One Vision.</span>
               </div>
@@ -1327,31 +1337,74 @@
             <div class="settings-fields-grid">
               <div class="form-group">
                 <label for="settingsOldPassword" class="form-label">Mot de passe actuel</label>
-                <input type="password" id="settingsOldPassword" class="form-input" placeholder="••••••••••••">
+                <input type="password" id="settingsOldPassword" name="settingsOldPassword" class="form-input" placeholder="••••••••••••">
               </div>
 
               <div class="form-group">
                 <label for="settingsNewPassword" class="form-label">Nouveau mot de passe</label>
-                <input type="password" id="settingsNewPassword" class="form-input" placeholder="Min. 8 caractères sécurisés">
+                <input type="password" id="settingsNewPassword" name="settingsNewPassword" class="form-input" placeholder="Min. 8 caractères sécurisés">
               </div>
 
               <div class="form-group" style="grid-column: 1 / -1;">
                 <label for="settingsConfirmPassword" class="form-label">Confirmer le nouveau mot de passe</label>
-                <input type="password" id="settingsConfirmPassword" class="form-input" placeholder="Confirmez à l'identique">
+                <input type="password" id="settingsConfirmPassword" name="settingsConfirmPassword" class="form-input" placeholder="Confirmez à l'identique">
               </div>
             </div>
           </div>
 
           <!-- 4. BOUTONS D'ACTION -->
           <div class="settings-form-actions">
-            <button type="submit" class="btn btn-primary" id="btnSaveAccountSettings">
-              💾 Enregistrer les modifications
+            <button type="submit" class="btn btn-primary" id="btnSaveAccountSettings" style="display:inline-flex; align-items:center; gap:0.5rem;">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path>
+                <polyline points="17 21 17 13 7 13 7 21"></polyline>
+                <polyline points="7 3 7 8 15 8"></polyline>
+              </svg>
+              <span>Enregistrer les modifications</span>
             </button>
             <button type="button" class="btn btn-secondary" id="btnCancelAccountSettings">
               Annuler
             </button>
           </div>
         </form>
+
+        <!-- 5. ZONE CRITIQUE : RÉSILIATION ET SUPPRESSION DU COMPTE -->
+        <div class="settings-card danger-zone-card" style="border: 1.5px solid #fecaca; background: #fff5f5; margin-top: 1.75rem; border-radius: 16px; padding: 1.5rem;">
+          <div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 1.5rem; flex-wrap: wrap;">
+            <div style="max-width: 600px;">
+              <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.4rem;">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#dc2626" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;">
+                  <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
+                  <line x1="12" y1="9" x2="12" y2="13"></line>
+                  <line x1="12" y1="17" x2="12.01" y2="17"></line>
+                </svg>
+                <h3 class="settings-card-title" style="color: #991b1b; margin: 0; font-size: 1.15rem; font-weight: 800;">Résilier et supprimer mon compte</h3>
+              </div>
+              <p class="settings-card-desc" style="color: #7f1d1d; margin: 0 0 0.5rem 0; line-height: 1.5; font-size: 0.88rem;">
+                Si vous ne souhaitez plus utiliser One Vision Community, vous pouvez résilier votre adhésion et supprimer définitivement votre compte ainsi que l'ensemble de vos données personnelles de la plateforme.
+              </p>
+              <span style="font-size: 0.8rem; color: #b91c1c; font-weight: 600; display: inline-flex; align-items: center; gap: 0.4rem;">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" style="flex-shrink:0;">
+                  <circle cx="12" cy="12" r="10"></circle>
+                  <line x1="12" y1="8" x2="12" y2="12"></line>
+                  <line x1="12" y1="16" x2="12.01" y2="16"></line>
+                </svg>
+                <span>Cette action est irréversible. Votre accès aux salons d'échanges, masterminds, lives hebdomadaires et replays sera immédiatement interrompu.</span>
+              </span>
+            </div>
+            <div style="align-self: center;">
+              <button type="button" class="btn btn-danger btn-open-delete-account" id="btnOpenDeleteAccountModal" onclick="openDeleteAccountModal()" style="background: #dc2626; color: #ffffff; border: none; padding: 0.75rem 1.35rem; font-weight: 700; border-radius: 10px; cursor: pointer; display: inline-flex; align-items: center; gap: 0.5rem; transition: background 0.2s; box-shadow: 0 4px 12px rgba(220, 38, 38, 0.2); font-size: 0.9rem;">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                  <polyline points="3 6 5 6 21 6"></polyline>
+                  <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                  <line x1="10" y1="11" x2="10" y2="17"></line>
+                  <line x1="14" y1="11" x2="14" y2="17"></line>
+                </svg>
+                <span>Supprimer mon compte</span>
+              </button>
+            </div>
+          </div>
+        </div>
       </section>
 
       <!-- ======================================================================
@@ -2157,6 +2210,91 @@
     </div>
   </div>
 
-  <script src="./js/main.js?v=3"></script>
+  <!-- ======================================================================
+       MODALE 9 : CONFIRMATION DE RÉSILIATION ET SUPPRESSION DU COMPTE MEMBRE
+       ====================================================================== -->
+  <div id="deleteAccountModal" class="dash-modal" style="display:none;" role="dialog" aria-modal="true" aria-labelledby="deleteAccountModalTitle">
+    <div class="dash-modal-backdrop" id="backdropDeleteAccount" onclick="closeDeleteAccountModal()"></div>
+    <div class="dash-modal-dialog" style="max-width: 490px; text-align: center; padding: 2.25rem 2rem; background: #ffffff; border-radius: 18px; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.3); border: 1px solid #fee2e2; position: relative;">
+      
+      <!-- ÉTAPE 1 : CONFIRMATION -->
+      <div id="deleteAccountConfirmView">
+        <div style="width: 64px; height: 64px; border-radius: 50%; background: #fef2f2; color: #dc2626; display: inline-flex; align-items: center; justify-content: center; margin-bottom: 1.2rem; border: 2px solid #fee2e2;">
+          <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#dc2626" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
+            <line x1="12" y1="9" x2="12" y2="13"></line>
+            <line x1="12" y1="17" x2="12.01" y2="17"></line>
+          </svg>
+        </div>
+
+        <h3 class="dash-modal-title" id="deleteAccountModalTitle" style="font-size: 1.35rem; font-weight: 800; color: #0f172a; margin-bottom: 0.6rem; line-height: 1.3;">
+          Est-ce que vous voulez réellement supprimer votre compte ?
+        </h3>
+
+        <p style="font-size: 0.92rem; color: #64748b; line-height: 1.55; margin-bottom: 1.25rem;">
+          Vous êtes sur le point de résilier votre adhésion à <strong>One Vision Community</strong>.<br>
+          Votre profil, vos accès aux salons d'échanges et toutes vos données personnelles seront définitivement supprimés de la plateforme.
+        </p>
+
+        <div style="background: #fff1f2; border: 1px solid #ffe4e6; border-radius: 12px; padding: 0.85rem 1rem; margin-bottom: 1.5rem; text-align: left; font-size: 0.84rem; color: #9f1239; display: flex; align-items: flex-start; gap: 0.6rem;">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#dc2626" stroke-width="2.5" style="flex-shrink: 0; margin-top: 1px;">
+            <circle cx="12" cy="12" r="10"></circle>
+            <line x1="12" y1="8" x2="12" y2="12"></line>
+            <line x1="12" y1="16" x2="12.01" y2="16"></line>
+          </svg>
+          <div>
+            <strong style="color: #991b1b;">Attention :</strong> Cette action est immédiate et irréversible. Aucun retour en arrière n'est possible.
+          </div>
+        </div>
+
+        <form id="deleteAccountConfirmForm" method="POST" action="dashboard.html" style="margin: 0;">
+          <div style="display: flex; flex-direction: column; gap: 0.75rem;">
+            <button type="button" class="btn btn-secondary" id="btnCancelDeleteAccount" onclick="closeDeleteAccountModal()" style="padding: 0.8rem 1.25rem; font-size: 0.92rem; font-weight: 700; width: 100%; border: 1px solid #cbd5e1; border-radius: 10px; cursor: pointer;">
+              Non, je veux rester dans la communauté
+            </button>
+            <button type="submit" class="btn" id="btnConfirmDeleteAccount" style="background: #dc2626; color: #ffffff; border: none; padding: 0.8rem 1.25rem; border-radius: 10px; font-weight: 700; font-size: 0.92rem; cursor: pointer; width: 100%; box-shadow: 0 4px 14px rgba(220, 38, 38, 0.3); display: flex; align-items: center; justify-content: center; gap: 0.5rem;">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                <polyline points="3 6 5 6 21 6"></polyline>
+                <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                <line x1="10" y1="11" x2="10" y2="17"></line>
+                <line x1="14" y1="11" x2="14" y2="17"></line>
+              </svg>
+              <span>Oui, je supprime mon compte</span>
+            </button>
+          </div>
+        </form>
+      </div>
+
+      <!-- ÉTAPE 2 : SUCCÈS APRÈS SUPPRESSION -->
+      <div id="deleteAccountSuccessView" style="display: none;">
+        <div style="width: 68px; height: 68px; border-radius: 50%; background: #ecfdf5; color: #059669; display: inline-flex; align-items: center; justify-content: center; margin-bottom: 1.25rem; border: 2px solid #a7f3d0;">
+          <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#059669" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+            <polyline points="22 4 12 14.01 9 11.01"></polyline>
+          </svg>
+        </div>
+
+        <h3 style="font-size: 1.35rem; font-weight: 800; color: #0f172a; margin-bottom: 0.6rem; line-height: 1.3;">
+          Votre compte a été bien résilié et supprimé
+        </h3>
+
+        <p style="font-size: 0.92rem; color: #64748b; line-height: 1.55; margin-bottom: 1.75rem;">
+          Nous vous remercions pour le parcours partagé au sein de One Vision Community.<br>
+          Votre compte a été résilié et l'ensemble de vos données a été définitivement supprimé.
+        </p>
+
+        <a href="index.html" class="btn btn-primary" id="btnReturnHomeAfterDelete" style="display: inline-flex; align-items: center; justify-content: center; gap: 0.6rem; width: 100%; padding: 0.85rem 1.25rem; font-weight: 700; text-decoration: none; border-radius: 10px;">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+            <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+            <polyline points="9 22 9 12 15 12 15 22"></polyline>
+          </svg>
+          <span>Retourner à l'accueil</span>
+        </a>
+      </div>
+
+    </div>
+  </div>
+
+  <script src="./js/main.js?v=4"></script>
 </body>
 </html>

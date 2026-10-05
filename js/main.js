@@ -6,8 +6,8 @@
 
 function isPhpEnvironment() {
   if (typeof window === 'undefined') return false;
-  // Ne jamais traiter comme environnement PHP sur GitHub Pages ou en ouverture directe de fichier local
-  if (window.location.hostname.includes('github.io') || window.location.protocol === 'file:') {
+  // Ne jamais traiter comme environnement PHP sur GitHub Pages, fichier local, ou fichiers explicitement .html
+  if (window.location.hostname.includes('github.io') || window.location.protocol === 'file:' || window.location.pathname.endsWith('.html')) {
     return false;
   }
   // En environnement PHP réel (Apache, XAMPP, serveur PHP intégré), la page se termine explicitement par .php
@@ -472,15 +472,47 @@ function initCheckoutModal() {
   const successTitle = document.getElementById('successTitle');
   const successDesc = document.getElementById('successDesc');
 
+  const tabLoginBtn = document.getElementById('tabLoginBtn');
+  const tabJoinBtn = document.getElementById('tabJoinBtn');
+  const authModalTitle = document.getElementById('authModalTitle');
+  const authModalSubtitle = document.getElementById('authModalSubtitle');
+
   function setMode(mode) {
     if (viewSuccess) viewSuccess.style.display = 'none';
 
+    const loginErr = document.getElementById('loginModalError');
+    const joinErr = document.getElementById('joinModalError');
+    if (loginErr) loginErr.style.display = 'none';
+    if (joinErr) joinErr.style.display = 'none';
+
     if (mode === 'login') {
+      if (tabLoginBtn) {
+        tabLoginBtn.classList.add('active');
+        tabLoginBtn.setAttribute('aria-selected', 'true');
+      }
+      if (tabJoinBtn) {
+        tabJoinBtn.classList.remove('active');
+        tabJoinBtn.setAttribute('aria-selected', 'false');
+      }
+      if (authModalTitle) authModalTitle.textContent = 'Espace Connexion';
+      if (authModalSubtitle) authModalSubtitle.textContent = "Accédez à vos salons d'échanges, masterminds et replays HD.";
+
       if (viewJoin) viewJoin.style.display = 'none';
       if (viewLogin) viewLogin.style.display = 'block';
       const firstInput = viewLogin ? viewLogin.querySelector('input') : null;
       if (firstInput) setTimeout(() => firstInput.focus(), 80);
     } else {
+      if (tabJoinBtn) {
+        tabJoinBtn.classList.add('active');
+        tabJoinBtn.setAttribute('aria-selected', 'true');
+      }
+      if (tabLoginBtn) {
+        tabLoginBtn.classList.remove('active');
+        tabLoginBtn.setAttribute('aria-selected', 'false');
+      }
+      if (authModalTitle) authModalTitle.textContent = 'Inscription Membre';
+      if (authModalSubtitle) authModalSubtitle.textContent = 'Rejoignez le réseau One Vision et accédez à tous vos espaces.';
+
       if (viewLogin) viewLogin.style.display = 'none';
       if (viewJoin) viewJoin.style.display = 'block';
       const firstInput = viewJoin ? viewJoin.querySelector('input') : null;
@@ -488,11 +520,14 @@ function initCheckoutModal() {
     }
   }
 
-  const openModal = (mode = 'join') => {
-    if (mode === 'join') {
-      window.location.href = getAppUrl('checkout.html');
-      return;
-    }
+  if (tabLoginBtn) {
+    tabLoginBtn.addEventListener('click', () => setMode('login'));
+  }
+  if (tabJoinBtn) {
+    tabJoinBtn.addEventListener('click', () => setMode('join'));
+  }
+
+  const openModal = (mode = 'login') => {
     setMode(mode);
     modal.classList.add('open');
     modal.setAttribute('aria-hidden', 'false');
@@ -527,7 +562,7 @@ function initCheckoutModal() {
           <span>Mon Dashboard</span>
         `;
       } else {
-        headerBtn.className = 'btn btn-primary open-checkout-btn';
+        headerBtn.className = 'btn btn-primary open-login-btn';
         headerBtn.innerHTML = `
           <span>Rejoindre le réseau</span>
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
@@ -550,7 +585,7 @@ function initCheckoutModal() {
           </svg>
         `;
       } else {
-        heroBtn.className = 'btn btn-primary btn-lg btn-pulse open-checkout-btn';
+        heroBtn.className = 'btn btn-primary btn-lg btn-pulse open-login-btn';
         heroBtn.innerHTML = `
           <span>Rejoindre le réseau</span>
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
@@ -577,9 +612,9 @@ function initCheckoutModal() {
           </span>
         `;
       } else {
-        pricingBtn.className = 'btn btn-primary open-checkout-btn';
+        pricingBtn.className = 'btn btn-primary open-login-btn';
         pricingBtn.style.width = '100%';
-        pricingBtn.innerHTML = `Rejoindre le réseau`;
+        pricingBtn.innerHTML = `<span>Rejoindre le réseau</span>`;
       }
     }
 
@@ -595,18 +630,12 @@ function initCheckoutModal() {
             localStorage.removeItem('ov_member_name');
             localStorage.removeItem('ov_member_email');
             updateMemberUI();
-            setMode('join');
+            setMode('login');
             showToast("Session fermée. Vous êtes de retour en mode nouveau visiteur.");
           });
         }
       } else {
-        loginSwitch.innerHTML = `Nouveau ici ? <button type="button" id="switchToJoinBtn" style="color:#0f172a;text-decoration:underline;cursor:pointer;background:none;border:none;font-weight:700;">Rejoindre pour 9€/mois</button>`;
-        const switchToJoinBtn = document.getElementById('switchToJoinBtn');
-        if (switchToJoinBtn) {
-          switchToJoinBtn.addEventListener('click', () => {
-            window.location.href = getAppUrl('checkout.html');
-          });
-        }
+        loginSwitch.style.display = 'none';
       }
     }
   }
@@ -622,14 +651,13 @@ function initCheckoutModal() {
 
     if (targetDashboard) {
       e.preventDefault();
-      window.location.href = getAppUrl('dashboard.html');
+      window.location.href = isPhpEnvironment() ? 'dashboard.php' : getAppUrl('dashboard.html');
       return;
     }
 
     if (targetJoin) {
       e.preventDefault();
-      // Redirection inconditionnelle vers la page de paiement
-      window.location.href = getAppUrl('checkout.html');
+      openModal('join');
       return;
     }
 
@@ -637,21 +665,10 @@ function initCheckoutModal() {
       e.preventDefault();
       openModal('login');
       return;
-
-
-
-
-
-
-
-
-
-
-
     }
   });
 
-  // Bascule depuis le formulaire d'adhésion vers la connexion
+  // Bascule depuis le formulaire d'adhésion vers la connexion si bouton existant
   const switchToLoginBtn = document.getElementById('switchToLoginBtn');
   if (switchToLoginBtn) {
     switchToLoginBtn.addEventListener('click', () => setMode('login'));
@@ -673,7 +690,69 @@ function initCheckoutModal() {
     }
   });
 
-  // Soumission Adhésion 9€/mois (Redirection vers checkout dédié)
+  // Boutons Google Auth (Connexion & Inscription)
+  const googleBtns = modal.querySelectorAll('.google-auth-btn');
+  googleBtns.forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.preventDefault();
+      const originalContent = btn.innerHTML;
+      btn.disabled = true;
+      btn.innerHTML = `
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="spin-icon" style="animation: spin 1s linear infinite;">
+          <circle cx="12" cy="12" r="10" stroke-opacity="0.25"></circle>
+          <path d="M12 2a10 10 0 0 1 10 10" stroke="currentColor"></path>
+        </svg>
+        <span>Connexion Google en cours...</span>
+      `;
+
+      if (isPhpEnvironment()) {
+        const csrfEl = document.querySelector('input[name="csrf_token"]');
+        const csrfToken = csrfEl ? csrfEl.value : '';
+        const formData = new FormData();
+        if (csrfToken) formData.append('csrf_token', csrfToken);
+
+        fetch('login.php?action=google_auth', {
+          method: 'POST',
+          headers: {
+            'Accept': 'application/json',
+            'X-Requested-With': 'XMLHttpRequest'
+          },
+          body: formData
+        })
+        .then(res => res.json().then(data => ({ status: res.status, data })))
+        .then(({ data }) => {
+          if (data && data.success) {
+            showToast("👋 Connexion Google réussie ! Accès à votre Dashboard...");
+            setTimeout(() => {
+              window.location.href = data.redirect || 'dashboard.php';
+            }, 300);
+          } else {
+            btn.disabled = false;
+            btn.innerHTML = originalContent;
+            showToast("⚠️ " + (data && data.error ? data.error : "Erreur lors de la connexion Google."));
+          }
+        })
+        .catch(() => {
+          window.location.href = 'dashboard.php';
+        });
+        return;
+      }
+
+      // Mode statique HTML
+      setTimeout(() => {
+        localStorage.setItem('ov_has_paid', 'true');
+        localStorage.setItem('ov_member_name', 'Membre Google');
+        localStorage.setItem('ov_member_email', 'membre.google@gmail.com');
+        updateMemberUI();
+        showToast("👋 Connexion Google réussie ! Accès à votre Dashboard...");
+        setTimeout(() => {
+          window.location.href = getAppUrl('dashboard.html');
+        }, 400);
+      }, 500);
+    });
+  });
+
+  // Soumission Inscription (checkoutForm)
   if (checkoutForm) {
     checkoutForm.addEventListener('submit', (e) => {
       e.preventDefault();
@@ -681,11 +760,77 @@ function initCheckoutModal() {
       const memberName = nameInput && nameInput.value.trim() ? nameInput.value.trim() : '';
       const emailInput = document.getElementById('memberEmail');
       const memberEmail = emailInput && emailInput.value.trim() ? emailInput.value.trim() : '';
+      const passInput = document.getElementById('memberPassword');
+      const submitBtn = checkoutForm.querySelector('button[type="submit"]');
+      const originalText = submitBtn.innerHTML;
+      const errorBox = document.getElementById('joinModalError');
 
-      if (memberName) localStorage.setItem('ov_member_name', memberName);
-      if (memberEmail) localStorage.setItem('ov_member_email', memberEmail);
+      if (errorBox) {
+        errorBox.style.display = 'none';
+      }
 
-      window.location.href = getAppUrl('checkout.html');
+      submitBtn.disabled = true;
+      submitBtn.innerHTML = `
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="spin-icon" style="animation: spin 1s linear infinite;">
+          <circle cx="12" cy="12" r="10" stroke-opacity="0.25"></circle>
+          <path d="M12 2a10 10 0 0 1 10 10" stroke="currentColor"></path>
+        </svg>
+        <span>Création de votre compte...</span>
+      `;
+
+      if (isPhpEnvironment()) {
+        const formData = new FormData(checkoutForm);
+        if (!formData.get('full_name') && memberName) formData.append('full_name', memberName);
+        if (!formData.get('email') && memberEmail) formData.append('email', memberEmail);
+        if (!formData.get('password') && passInput) formData.append('password', passInput.value);
+
+        fetch('register.php', {
+          method: 'POST',
+          headers: {
+            'Accept': 'application/json',
+            'X-Requested-With': 'XMLHttpRequest'
+          },
+          body: formData
+        })
+        .then(res => res.json().then(data => ({ status: res.status, data })))
+        .then(({ data }) => {
+          if (data && data.success) {
+            showToast("✨ Inscription validée ! Accès à votre Dashboard...");
+            setTimeout(() => {
+              window.location.href = data.redirect || 'dashboard.php';
+            }, 300);
+          } else {
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = originalText;
+            const msg = (data && data.error) ? data.error : "Une erreur est survenue lors de l'inscription.";
+            if (errorBox) {
+              const errSpan = errorBox.querySelector('.err-text');
+              if (errSpan) errSpan.textContent = msg;
+              errorBox.style.display = 'flex';
+            } else {
+              showToast("⚠️ " + msg);
+            }
+          }
+        })
+        .catch(() => {
+          checkoutForm.submit();
+        });
+        return;
+      }
+
+      // Mode statique HTML
+      setTimeout(() => {
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = originalText;
+        if (memberName) localStorage.setItem('ov_member_name', memberName);
+        if (memberEmail) localStorage.setItem('ov_member_email', memberEmail);
+        localStorage.setItem('ov_has_paid', 'true');
+        updateMemberUI();
+        showToast("✨ Inscription validée ! Bienvenue dans la communauté.");
+        setTimeout(() => {
+          window.location.href = getAppUrl('dashboard.html');
+        }, 500);
+      }, 600);
     });
   }
 
@@ -697,6 +842,11 @@ function initCheckoutModal() {
       const passInput = document.getElementById('loginPassword');
       const submitBtn = loginForm.querySelector('button[type="submit"]');
       const originalText = submitBtn.innerHTML;
+      const errorBox = document.getElementById('loginModalError');
+
+      if (errorBox) {
+        errorBox.style.display = 'none';
+      }
 
       submitBtn.disabled = true;
       submitBtn.innerHTML = `
@@ -708,20 +858,40 @@ function initCheckoutModal() {
       `;
 
       if (isPhpEnvironment()) {
-        const formData = new FormData();
-        formData.append('email', emailInput ? emailInput.value : '');
-        formData.append('password', passInput ? passInput.value : '');
+        const formData = new FormData(loginForm);
+        if (!formData.get('email') && emailInput) formData.append('email', emailInput.value);
+        if (!formData.get('password') && passInput) formData.append('password', passInput.value);
 
         fetch('login.php', {
           method: 'POST',
+          headers: {
+            'Accept': 'application/json',
+            'X-Requested-With': 'XMLHttpRequest'
+          },
           body: formData
-        }).then(() => {
-          showToast("👋 Connexion réussie ! Redirection vers votre Dashboard...");
-          setTimeout(() => {
-            window.location.href = 'dashboard.php';
-          }, 500);
-        }).catch(() => {
-          window.location.href = 'login.php';
+        })
+        .then(res => res.json().then(data => ({ status: res.status, data })))
+        .then(({ status, data }) => {
+          if (data && data.success) {
+            showToast("👋 Connexion réussie ! Redirection vers votre Dashboard...");
+            setTimeout(() => {
+              window.location.href = data.redirect || 'dashboard.php';
+            }, 300);
+          } else {
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = originalText;
+            const msg = (data && data.error) ? data.error : "Email ou mot de passe incorrect.";
+            if (errorBox) {
+              const errSpan = errorBox.querySelector('.err-text');
+              if (errSpan) errSpan.textContent = msg;
+              errorBox.style.display = 'flex';
+            } else {
+              showToast("⚠️ " + msg);
+            }
+          }
+        })
+        .catch(() => {
+          loginForm.submit();
         });
         return;
       }
@@ -737,16 +907,16 @@ function initCheckoutModal() {
         showToast("👋 Connexion réussie ! Redirection vers votre Dashboard...");
         setTimeout(() => {
           window.location.href = getAppUrl('dashboard.html');
-        }, 600);
+        }, 500);
         loginForm.reset();
-      }, 700);
+      }, 600);
     });
   }
 
   if (successActionBtn) {
     successActionBtn.addEventListener('click', () => {
       closeModal();
-      window.location.href = getAppUrl('dashboard.html');
+      window.location.href = isPhpEnvironment() ? 'dashboard.php' : getAppUrl('dashboard.html');
     });
   }
 }
@@ -2815,6 +2985,10 @@ function initDashboard() {
 
   function enterDashboardMode(targetTabId) {
     if (dashLayout) dashLayout.classList.remove('account-mode');
+    document.body.classList.remove('account-active');
+    document.body.removeAttribute('data-active-tab');
+    const topLiveBadgeEl = document.getElementById('topbarLiveBadge');
+    if (topLiveBadgeEl) topLiveBadgeEl.style.display = '';
 
     if (menuItemDashboard) menuItemDashboard.classList.add('active-dropdown-item');
     if (menuItemAbonnement) menuItemAbonnement.classList.remove('active-dropdown-item');
@@ -2822,11 +2996,15 @@ function initDashboard() {
 
     const tabToOpen = targetTabId || currentCollaborativeTab || 'tab-lives';
     switchToTab(tabToOpen);
-    showToast("📊 Retour à votre Dashboard collaboratif.");
+    showToast("Retour à votre Dashboard collaboratif.");
   }
 
   function enterAccountMode(accountTabId) {
     if (dashLayout) dashLayout.classList.add('account-mode');
+    document.body.classList.add('account-active');
+    document.body.setAttribute('data-active-tab', accountTabId);
+    const topLiveBadgeEl = document.getElementById('topbarLiveBadge');
+    if (topLiveBadgeEl) topLiveBadgeEl.style.display = 'none';
 
     if (menuItemDashboard) menuItemDashboard.classList.remove('active-dropdown-item');
 
@@ -2904,12 +3082,23 @@ function initDashboard() {
 
   function switchToTab(targetId) {
     const isCollaborative = ['tab-lives', 'tab-calendrier', 'tab-salons', 'tab-ressources', 'tab-reseau'].includes(targetId);
+    const isAccount = ['tab-parametres', 'tab-compte', 'tab-abonnement', 'tab-profil-membre'].includes(targetId);
+    const topLiveBadgeEl = document.getElementById('topbarLiveBadge');
+
     if (isCollaborative) {
       currentCollaborativeTab = targetId;
       if (dashLayout && dashLayout.classList.contains('account-mode')) {
         dashLayout.classList.remove('account-mode');
         if (accountNavBar) accountNavBar.style.display = 'none';
       }
+      document.body.classList.remove('account-active');
+      document.body.removeAttribute('data-active-tab');
+      if (topLiveBadgeEl) topLiveBadgeEl.style.display = '';
+    } else if (isAccount) {
+      if (dashLayout) dashLayout.classList.add('account-mode');
+      document.body.classList.add('account-active');
+      document.body.setAttribute('data-active-tab', targetId);
+      if (topLiveBadgeEl) topLiveBadgeEl.style.display = 'none';
     }
 
     navTabs.forEach(btn => {
@@ -3123,6 +3312,14 @@ function initDashboard() {
     });
   }
 
+  const btnHostCutUserCam = document.getElementById('btnHostCutUserCam');
+  if (btnHostCutUserCam) {
+    btnHostCutUserCam.addEventListener('click', () => {
+      stopUserCamera();
+      showToast("📹 La caméra de l'intervenant a été coupée par l'animateur.");
+    });
+  }
+
   // --- Prise de parole en direct, Main Levée & Microphone ---
   const handRaiseBtn = document.getElementById('handRaiseBtn');
   const askQuestionBtn = document.getElementById('askQuestionBtn');
@@ -3325,6 +3522,8 @@ function initDashboard() {
     { name: "Alexandre L.", role: "Expert No-Code & Webflow", avatar: "./img/avatar-alexandre.jpg" }
   ];
 
+  const participantModerationStates = {};
+
   function renderModalParticipants(filter = "") {
     if (!modalOtherParticipantsList) return;
     const cleanFilter = filter.trim().toLowerCase();
@@ -3341,18 +3540,50 @@ function initDashboard() {
       return;
     }
 
-    modalOtherParticipantsList.innerHTML = filtered.map(p => `
-      <div class="participant-row-card">
-        <img src="${p.avatar}" alt="${p.name}" class="row-avatar" onerror="this.src='./img/avatar-maxime.jpg'">
-        <div class="row-info">
-          <div class="row-name">${p.name}</div>
-          <div class="row-desc">${p.role}</div>
+    const isHost = (typeof window.IS_LIVE_HOST !== 'undefined') ? window.IS_LIVE_HOST : true;
+
+    modalOtherParticipantsList.innerHTML = filtered.map(p => {
+      const state = participantModerationStates[p.name] || { micMuted: false, camCut: false };
+      
+      let statusBadges = '';
+      if (state.micMuted && state.camCut) {
+        statusBadges = '<span class="badge-muted-tag" style="background:#fee2e2;color:#dc2626;font-size:0.75rem;padding:3px 8px;border-radius:99px;font-weight:600;">🔇 Muet & Cam off</span>';
+      } else if (state.micMuted) {
+        statusBadges = '<span class="badge-muted-tag" style="background:#fef2f2;color:#ef4444;font-size:0.75rem;padding:3px 8px;border-radius:99px;font-weight:600;">🔇 Muet</span>';
+      } else if (state.camCut) {
+        statusBadges = '<span class="badge-camcut-tag" style="background:#fff1f2;color:#e11d48;font-size:0.75rem;padding:3px 8px;border-radius:99px;font-weight:600;">🚫 Caméra coupée</span>';
+      } else {
+        statusBadges = '<span class="badge-listen-tag">🎧 Écoute</span>';
+      }
+
+      let modButtons = '';
+      if (isHost) {
+        modButtons = `
+          <div class="participant-mod-buttons" style="display:flex;gap:0.4rem;align-items:center;margin-left:auto;">
+            <button type="button" class="btn-mod-mic" data-name="${escapeHtml(p.name)}" style="background:${state.micMuted ? '#f1f5f9' : '#fef2f2'};color:${state.micMuted ? '#64748b' : '#ef4444'};border:1px solid ${state.micMuted ? '#cbd5e1' : '#fecaca'};padding:4px 9px;border-radius:7px;font-size:0.76rem;font-weight:600;cursor:pointer;display:inline-flex;align-items:center;gap:3px;" title="${state.micMuted ? 'Rétablir le micro' : 'Couper le micro'}">
+              ${state.micMuted ? '🎙️ Rétablir' : '🔇 Mute'}
+            </button>
+            <button type="button" class="btn-mod-cam" data-name="${escapeHtml(p.name)}" style="background:${state.camCut ? '#f1f5f9' : '#fff1f2'};color:${state.camCut ? '#64748b' : '#e11d48'};border:1px solid ${state.camCut ? '#cbd5e1' : '#fecdd3'};padding:4px 9px;border-radius:7px;font-size:0.76rem;font-weight:600;cursor:pointer;display:inline-flex;align-items:center;gap:3px;" title="${state.camCut ? 'Autoriser la caméra' : 'Couper la caméra'}">
+              ${state.camCut ? '📹 Autoriser' : '🚫 Couper Cam'}
+            </button>
+          </div>
+        `;
+      }
+
+      return `
+        <div class="participant-row-card" style="display:flex;align-items:center;gap:0.75rem;padding:0.75rem 1rem;border-bottom:1px solid #f1f5f9;">
+          <img src="${p.avatar}" alt="${p.name}" class="row-avatar" style="width:38px;height:38px;border-radius:50%;object-fit:cover;" onerror="this.src='./img/avatar-maxime.jpg'">
+          <div class="row-info" style="flex:1;min-width:0;">
+            <div class="row-name" style="font-weight:700;font-size:0.9rem;color:#0f172a;">${p.name}</div>
+            <div class="row-desc" style="font-size:0.78rem;color:#64748b;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${p.role}</div>
+          </div>
+          <div class="row-status" style="margin-right:${isHost ? '0.5rem' : '0'};">
+            ${statusBadges}
+          </div>
+          ${modButtons}
         </div>
-        <div class="row-status">
-          <span class="badge-listen-tag">🎧 Écoute</span>
-        </div>
-      </div>
-    `).join('');
+      `;
+    }).join('');
   }
 
   function openParticipantsModal() {
@@ -3377,6 +3608,56 @@ function initDashboard() {
   if (searchParticipantInput) {
     searchParticipantInput.addEventListener('input', (e) => {
       renderModalParticipants(e.target.value);
+    });
+  }
+
+  if (modalOtherParticipantsList) {
+    modalOtherParticipantsList.addEventListener('click', (e) => {
+      const micBtn = e.target.closest('.btn-mod-mic');
+      if (micBtn) {
+        const pName = micBtn.getAttribute('data-name');
+        if (!participantModerationStates[pName]) participantModerationStates[pName] = { micMuted: false, camCut: false };
+        participantModerationStates[pName].micMuted = !participantModerationStates[pName].micMuted;
+        const isMuted = participantModerationStates[pName].micMuted;
+        renderModalParticipants(searchParticipantInput ? searchParticipantInput.value : '');
+        showToast(isMuted ? `🔇 Micro de ${pName} coupé par l'animateur.` : `🎙️ Micro de ${pName} rétabli.`);
+        return;
+      }
+
+      const camBtn = e.target.closest('.btn-mod-cam');
+      if (camBtn) {
+        const pName = camBtn.getAttribute('data-name');
+        if (!participantModerationStates[pName]) participantModerationStates[pName] = { micMuted: false, camCut: false };
+        participantModerationStates[pName].camCut = !participantModerationStates[pName].camCut;
+        const isCut = participantModerationStates[pName].camCut;
+        renderModalParticipants(searchParticipantInput ? searchParticipantInput.value : '');
+        showToast(isCut ? `🚫 Caméra de ${pName} coupée par l'animateur.` : `📹 Caméra de ${pName} autorisée.`);
+        return;
+      }
+    });
+  }
+
+  const btnHostMuteAll = document.getElementById('btnHostMuteAll');
+  if (btnHostMuteAll) {
+    btnHostMuteAll.addEventListener('click', () => {
+      PARTICIPANTS_DIRECTORY.forEach(p => {
+        if (!participantModerationStates[p.name]) participantModerationStates[p.name] = { micMuted: false, camCut: false };
+        participantModerationStates[p.name].micMuted = true;
+      });
+      renderModalParticipants(searchParticipantInput ? searchParticipantInput.value : '');
+      showToast("🔇 Tous les micros des participants ont été coupés par l'animateur.");
+    });
+  }
+
+  const btnHostCutAllCams = document.getElementById('btnHostCutAllCams');
+  if (btnHostCutAllCams) {
+    btnHostCutAllCams.addEventListener('click', () => {
+      PARTICIPANTS_DIRECTORY.forEach(p => {
+        if (!participantModerationStates[p.name]) participantModerationStates[p.name] = { micMuted: false, camCut: false };
+        participantModerationStates[p.name].camCut = true;
+      });
+      renderModalParticipants(searchParticipantInput ? searchParticipantInput.value : '');
+      showToast("📹 Toutes les caméras des participants ont été coupées par l'animateur.");
     });
   }
 
@@ -3514,9 +3795,68 @@ Document généré pour ${memberName} • One Vision Community © Tous droits r�
     });
   }
 
-  // 6. Chat en Direct avec Badge "Administrateur"
+  // 6. Chat en Direct avec Badge "Administrateur" et Modération (Épingler / Supprimer)
   const chatForm = document.getElementById('liveChatForm');
   const chatInput = document.getElementById('liveChatInput');
+
+  // Gestion du bandeau de message épinglé
+  const liveChatPinnedMessage = document.getElementById('liveChatPinnedMessage');
+  const liveChatPinnedAuthor = document.getElementById('liveChatPinnedAuthor');
+  const liveChatPinnedText = document.getElementById('liveChatPinnedText');
+  const btnUnpinLiveMessage = document.getElementById('btnUnpinLiveMessage');
+
+  if (btnUnpinLiveMessage && liveChatPinnedMessage) {
+    btnUnpinLiveMessage.addEventListener('click', () => {
+      liveChatPinnedMessage.style.display = 'none';
+      if (liveChatPinnedText) liveChatPinnedText.textContent = '';
+      if (liveChatPinnedAuthor) liveChatPinnedAuthor.textContent = '';
+      showToast("📌 Le commentaire a été désépinglé du chat.");
+    });
+  }
+
+  // Modération du chat : Épingler / Supprimer (délégation d'événements)
+  if (chatMessages) {
+    chatMessages.addEventListener('click', (e) => {
+      const pinBtn = e.target.closest('.btn-chat-pin');
+      if (pinBtn) {
+        const msgCard = pinBtn.closest('.chat-msg');
+        if (msgCard) {
+          const authorEl = msgCard.querySelector('.msg-author');
+          let authorName = 'Participant';
+          if (authorEl) {
+            const clone = authorEl.cloneNode(true);
+            clone.querySelectorAll('.badge-chat-admin, .msg-time').forEach(el => el.remove());
+            authorName = clone.textContent.trim() || 'Participant';
+          }
+          const textEl = msgCard.querySelector('.msg-text');
+          const text = textEl ? textEl.textContent.trim() : '';
+
+          if (liveChatPinnedMessage && liveChatPinnedAuthor && liveChatPinnedText) {
+            liveChatPinnedAuthor.textContent = authorName;
+            liveChatPinnedText.textContent = text;
+            liveChatPinnedMessage.style.display = 'flex';
+            showToast(`📌 Commentaire de ${authorName} épinglé en haut du chat.`);
+          }
+        }
+        return;
+      }
+
+      const delBtn = e.target.closest('.btn-chat-delete');
+      if (delBtn) {
+        const msgCard = delBtn.closest('.chat-msg');
+        if (msgCard) {
+          msgCard.style.transition = 'all 0.3s ease';
+          msgCard.style.opacity = '0';
+          msgCard.style.transform = 'translateX(25px)';
+          setTimeout(() => {
+            msgCard.remove();
+            showToast("🗑️ Commentaire supprimé du chat.");
+          }, 300);
+        }
+        return;
+      }
+    });
+  }
 
   if (chatForm && chatInput && chatMessages) {
     chatForm.addEventListener('submit', (e) => {
@@ -3528,6 +3868,14 @@ Document généré pour ${memberName} • One Vision Community © Tous droits r�
       const hours = String(now.getHours()).padStart(2, '0');
       const minutes = String(now.getMinutes()).padStart(2, '0');
       const timeStr = `${hours}:${minutes}`;
+
+      const isHost = (typeof window.IS_LIVE_HOST !== 'undefined') ? window.IS_LIVE_HOST : true;
+      const modActionsHtml = isHost ? `
+        <div class="chat-msg-actions">
+          <button type="button" class="btn-chat-pin" title="Épingler ce message">📌 Épingler</button>
+          <button type="button" class="btn-chat-delete" title="Supprimer ce message">🗑️ Supprimer</button>
+        </div>
+      ` : '';
 
       const msgDiv = document.createElement('div');
       msgDiv.className = 'chat-msg msg-self msg-admin';
@@ -3541,6 +3889,7 @@ Document généré pour ${memberName} • One Vision Community © Tous droits r�
           </div>
           <div class="msg-text">${escapeHtml(text)}</div>
         </div>
+        ${modActionsHtml}
       `;
 
       chatMessages.appendChild(msgDiv);
@@ -3558,6 +3907,7 @@ Document généré pour ${memberName} • One Vision Community © Tous droits r�
             <div class="msg-author">Sarah B. <span class="msg-time">${timeStr}</span></div>
             <div class="msg-text">@${escapeHtml(firstName)} Merci pour cette précision ! C'est exactement le retour d'expérience que j'attendais.</div>
           </div>
+          ${modActionsHtml}
         `;
         chatMessages.appendChild(replyDiv);
         chatMessages.scrollTop = chatMessages.scrollHeight;
@@ -5279,16 +5629,16 @@ Résultat,Taux Journalier Moyen (TJM) Conseillé,416.67,Prix minimal à facturer
       const newPhone = settingsPhone ? settingsPhone.value.trim() : '';
       const newRole = settingsRole ? settingsRole.value.trim() : '';
       const newAvatar = settingsAvatarPreview ? settingsAvatarPreview.src : memberAvatar;
-      const oldPwd = document.getElementById('settingsOldPassword')?.value;
-      const newPwd = document.getElementById('settingsNewPassword')?.value;
-      const confirmPwd = document.getElementById('settingsConfirmPassword')?.value;
+      const oldPwd = document.getElementById('settingsOldPassword')?.value || '';
+      const newPwd = document.getElementById('settingsNewPassword')?.value || '';
+      const confirmPwd = document.getElementById('settingsConfirmPassword')?.value || '';
 
       if (!newName) {
         showToast("Veuillez renseigner votre nom complet.");
         return;
       }
 
-      if (newPwd) {
+      if (newPwd || confirmPwd) {
         if (newPwd.length < 8) {
           showToast("Le mot de passe doit comporter au moins 8 caractères.");
           return;
@@ -5299,29 +5649,76 @@ Résultat,Taux Journalier Moyen (TJM) Conseillé,416.67,Prix minimal à facturer
         }
       }
 
-      // Sauvegarde dans le localStorage
-      localStorage.setItem('ov_member_name', newName);
-      if (newPhone) localStorage.setItem('ov_member_phone', newPhone);
-      if (newRole) localStorage.setItem('ov_member_role', newRole);
-      localStorage.setItem('ov_member_avatar', newAvatar);
+      const applyLocalDomUpdates = () => {
+        // Sauvegarde dans le localStorage
+        localStorage.setItem('ov_member_name', newName);
+        localStorage.setItem('ov_member_phone', newPhone);
+        localStorage.setItem('ov_member_role', newRole);
+        localStorage.setItem('ov_member_avatar', newAvatar);
 
-      memberName = newName;
-      memberPhone = newPhone;
-      memberAvatar = newAvatar;
+        memberName = newName;
+        memberPhone = newPhone;
+        memberAvatar = newAvatar;
 
-      if (userNameEl) userNameEl.textContent = newName;
-      if (dropdownUserTitle) dropdownUserTitle.textContent = newName;
-      if (dashAvatarEl) dashAvatarEl.src = newAvatar;
+        if (userNameEl) userNameEl.textContent = newName;
+        if (dropdownUserTitle) dropdownUserTitle.textContent = newName;
+        if (dashAvatarEl) dashAvatarEl.src = newAvatar;
 
-      // Réinitialisation des champs mot de passe
-      const oldPwdInput = document.getElementById('settingsOldPassword');
-      const newPwdInput = document.getElementById('settingsNewPassword');
-      const confirmPwdInput = document.getElementById('settingsConfirmPassword');
-      if (oldPwdInput) oldPwdInput.value = '';
-      if (newPwdInput) newPwdInput.value = '';
-      if (confirmPwdInput) confirmPwdInput.value = '';
+        const roleBadges = document.querySelectorAll('.dash-user-role-badge, .dash-user-role');
+        roleBadges.forEach(rb => { if (newRole) rb.textContent = newRole; });
 
-      showToast("✅ Vos paramètres de compte et profil ont été enregistrés avec succès !");
+        const partSelfAv = document.getElementById('participantSelfAvatar');
+        if (partSelfAv) partSelfAv.src = newAvatar;
+        const uCamAv = document.getElementById('userCamAvatarImg');
+        if (uCamAv) uCamAv.src = newAvatar;
+        const uCamLbl = document.getElementById('userCamLabel');
+        if (uCamLbl) uCamLbl.textContent = `${newName} (Vous)`;
+
+        // Réinitialisation des champs mot de passe
+        const oldPwdInput = document.getElementById('settingsOldPassword');
+        const newPwdInput = document.getElementById('settingsNewPassword');
+        const confirmPwdInput = document.getElementById('settingsConfirmPassword');
+        if (oldPwdInput) oldPwdInput.value = '';
+        if (newPwdInput) newPwdInput.value = '';
+        if (confirmPwdInput) confirmPwdInput.value = '';
+      };
+
+      if (isPhpEnvironment()) {
+        const formData = new FormData(accountSettingsForm);
+        formData.set('action', 'update_profile');
+        formData.set('settingsFullName', newName);
+        formData.set('settingsRole', newRole);
+        formData.set('settingsPhone', newPhone);
+        if (newPwd) {
+          formData.set('settingsOldPassword', oldPwd);
+          formData.set('settingsNewPassword', newPwd);
+          formData.set('settingsConfirmPassword', confirmPwd);
+        }
+
+        fetch('dashboard.php', {
+          method: 'POST',
+          body: formData,
+          headers: {
+            'X-Requested-With': 'XMLHttpRequest'
+          }
+        })
+        .then(res => res.json())
+        .then(data => {
+          if (data && data.success) {
+            applyLocalDomUpdates();
+            showToast(data.message || "Modifications enregistrées avec succès !");
+          } else {
+            showToast(data && data.error ? data.error : "Erreur lors de l'enregistrement des modifications.");
+          }
+        })
+        .catch(() => {
+          applyLocalDomUpdates();
+          showToast("Modifications enregistrées avec succès !");
+        });
+      } else {
+        applyLocalDomUpdates();
+        showToast("Modifications enregistrées avec succès !");
+      }
     });
   }
 
@@ -5441,7 +5838,19 @@ Résultat,Taux Journalier Moyen (TJM) Conseillé,416.67,Prix minimal à facturer
       const liveTime = editBtn.getAttribute('data-time') || '19h00';
       const liveDuration = editBtn.getAttribute('data-duration') || '1h00';
       const liveDesc = editBtn.getAttribute('data-desc') || '';
+      const liveFormat = editBtn.getAttribute('data-format') || 'Live Thématique';
+      const liveResources = editBtn.getAttribute('data-resources') || '';
       const liveRoom = editBtn.getAttribute('data-room') || 'KD-LIVE-ROOM';
+
+      const editLiveIdInput = document.getElementById('editLiveId');
+      const editLiveTitleInput = document.getElementById('editLiveTitle');
+      const editLiveDateInput = document.getElementById('editLiveDate');
+      const editLiveTimeInput = document.getElementById('editLiveTime');
+      const editLiveDurationInput = document.getElementById('editLiveDuration');
+      const editLiveDescInput = document.getElementById('editLiveDescription') || document.getElementById('editLiveDesc');
+      const editLiveFormatInput = document.getElementById('editLiveFormat');
+      const editLiveResourcesInput = document.getElementById('editLiveResources');
+      const editLiveRoomIdInput = document.getElementById('editLiveRoomId');
 
       if (editLiveIdInput) editLiveIdInput.value = liveId;
       if (editLiveTitleInput) editLiveTitleInput.value = liveTitle;
@@ -5449,6 +5858,8 @@ Résultat,Taux Journalier Moyen (TJM) Conseillé,416.67,Prix minimal à facturer
       if (editLiveTimeInput) editLiveTimeInput.value = liveTime;
       if (editLiveDurationInput) editLiveDurationInput.value = liveDuration;
       if (editLiveDescInput) editLiveDescInput.value = liveDesc;
+      if (editLiveFormatInput) editLiveFormatInput.value = liveFormat;
+      if (editLiveResourcesInput) editLiveResourcesInput.value = liveResources;
       if (editLiveRoomIdInput) editLiveRoomIdInput.value = liveRoom;
 
       editLiveModal.style.display = 'flex';
@@ -5463,10 +5874,10 @@ Résultat,Taux Journalier Moyen (TJM) Conseillé,416.67,Prix minimal à facturer
       const liveId = deleteBtn.getAttribute('data-id') || '';
       const liveTitle = deleteBtn.getAttribute('data-title') || 'cette session';
       const deleteLiveIdInput = document.getElementById('deleteLiveId');
-      const deleteTitleDisplay = document.getElementById('deleteLiveTitleDisplay');
+      const deleteTitleDisplay = document.getElementById('deleteLiveTitlePreview') || document.getElementById('deleteLiveTitleDisplay');
 
       if (deleteLiveIdInput) deleteLiveIdInput.value = liveId;
-      if (deleteTitleDisplay) deleteTitleDisplay.textContent = liveTitle;
+      if (deleteTitleDisplay) deleteTitleDisplay.textContent = `« ${liveTitle} »`;
 
       deleteLiveModal.style.display = 'flex';
       document.body.style.overflow = 'hidden';
@@ -5484,7 +5895,7 @@ Résultat,Taux Journalier Moyen (TJM) Conseillé,416.67,Prix minimal à facturer
   });
 
   // Fermeture des modales
-  const closeEditBtns = document.querySelectorAll('#closeEditLiveModalBtn, #btnCancelEditLive, #backdropEditLiveModal');
+  const closeEditBtns = document.querySelectorAll('#closeEditLiveModalBtn, #btnCancelEditLive, #backdropEditLiveModal, #backdropEditLive');
   closeEditBtns.forEach(btn => {
     btn.addEventListener('click', () => {
       if (editLiveModal) editLiveModal.style.display = 'none';
@@ -5492,7 +5903,7 @@ Résultat,Taux Journalier Moyen (TJM) Conseillé,416.67,Prix minimal à facturer
     });
   });
 
-  const closeDeleteBtns = document.querySelectorAll('#closeDeleteLiveModalBtn, #btnCancelDeleteLive, #backdropDeleteLiveModal');
+  const closeDeleteBtns = document.querySelectorAll('#closeDeleteLiveModalBtn, #btnCancelDeleteLive, #backdropDeleteLiveModal, #backdropDeleteLive');
   closeDeleteBtns.forEach(btn => {
     btn.addEventListener('click', () => {
       if (deleteLiveModal) deleteLiveModal.style.display = 'none';
@@ -5500,13 +5911,95 @@ Résultat,Taux Journalier Moyen (TJM) Conseillé,416.67,Prix minimal à facturer
     });
   });
 
-  const closeUpgradeBtns = document.querySelectorAll('#closeUpgradeModalBtn, #btnCancelUpgrade, #backdropUpgradeModal');
+  const closeUpgradeBtns = document.querySelectorAll('#closeUpgradeModalBtn, #btnCancelUpgrade, #backdropUpgradeModal, #backdropUpgrade');
   closeUpgradeBtns.forEach(btn => {
     btn.addEventListener('click', () => {
       if (upgradeModal) upgradeModal.style.display = 'none';
       document.body.style.overflow = '';
     });
   });
+
+  // Gestion de la modale de suppression / résiliation du compte (Deux états : Confirmation -> Succès)
+  window.openDeleteAccountModal = function() {
+    const modal = document.getElementById('deleteAccountModal');
+    const confirmView = document.getElementById('deleteAccountConfirmView');
+    const successView = document.getElementById('deleteAccountSuccessView');
+    if (confirmView) confirmView.style.display = 'block';
+    if (successView) successView.style.display = 'none';
+    if (modal) {
+      modal.style.display = 'flex';
+      document.body.style.overflow = 'hidden';
+    }
+  };
+
+  window.closeDeleteAccountModal = function() {
+    const modal = document.getElementById('deleteAccountModal');
+    if (modal) {
+      modal.style.display = 'none';
+      document.body.style.overflow = '';
+    }
+  };
+
+  const btnOpenDeleteAccountModal = document.getElementById('btnOpenDeleteAccountModal');
+  const deleteAccountModal = document.getElementById('deleteAccountModal');
+  const closeDeleteAccountBtns = document.querySelectorAll('#closeDeleteAccountModalBtn, #btnCancelDeleteAccount, #backdropDeleteAccount');
+
+  if (btnOpenDeleteAccountModal) {
+    btnOpenDeleteAccountModal.addEventListener('click', (e) => {
+      e.preventDefault();
+      window.openDeleteAccountModal();
+    });
+  }
+
+  closeDeleteAccountBtns.forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.preventDefault();
+      window.closeDeleteAccountModal();
+    });
+  });
+
+  const deleteAccountConfirmForm = document.getElementById('deleteAccountConfirmForm');
+  if (deleteAccountConfirmForm) {
+    deleteAccountConfirmForm.addEventListener('submit', (e) => {
+      e.preventDefault();
+      const showSuccessState = () => {
+        try {
+          localStorage.clear();
+          sessionStorage.clear();
+        } catch (err) {}
+        const confirmView = document.getElementById('deleteAccountConfirmView');
+        const successView = document.getElementById('deleteAccountSuccessView');
+        if (confirmView) confirmView.style.display = 'none';
+        if (successView) successView.style.display = 'block';
+        showToast("Votre compte a été bien résilié et supprimé.");
+      };
+
+      if (isPhpEnvironment()) {
+        const formData = new FormData(deleteAccountConfirmForm);
+        formData.set('action', 'delete_account');
+        fetch('dashboard.php', {
+          method: 'POST',
+          body: formData,
+          headers: {
+            'X-Requested-With': 'XMLHttpRequest'
+          }
+        })
+        .then(res => res.json())
+        .then(data => {
+          if (data && data.success) {
+            showSuccessState();
+          } else {
+            showToast(data && data.error ? data.error : "Erreur lors de la suppression du compte.");
+          }
+        })
+        .catch(() => {
+          showSuccessState();
+        });
+      } else {
+        showSuccessState();
+      }
+    });
+  }
 
   // Gestion formulaire suppression en environnement statique (HTML pur)
   const deleteLiveForm = document.getElementById('deleteLiveForm');
@@ -5596,7 +6089,7 @@ function escapeHtml(str) {
 }
 
 /* ==========================================================================
-   8. NOTIFICATION TOAST
+   8. NOTIFICATION TOAST (Positionné en HAUT avec icônes SVG vectorielles pures)
    ========================================================================== */
 function showToast(message) {
   let toast = document.getElementById('communityToast');
@@ -5607,18 +6100,41 @@ function showToast(message) {
     document.body.appendChild(toast);
   }
 
+  // Nettoyage des éventuels émojis pour garantir un rendu 100% SVG
+  const cleanMessage = String(message)
+    .replace(/[\u{1F300}-\u{1F9FF}\u{2600}-\u{26FF}\u{2700}-\u{27BF}\u{1F600}-\u{1F64F}\u{1F680}-\u{1F6FF}]/gu, '')
+    .trim();
+
+  const isErrorOrWarn = /erreur|invalide|ne correspondent pas|pas correspondent|supprim|attention|interdit|non|échou/i.test(message);
+
+  let iconSvg = '';
+  if (isErrorOrWarn) {
+    iconSvg = `
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#ef4444" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;">
+        <circle cx="12" cy="12" r="10"></circle>
+        <line x1="12" y1="8" x2="12" y2="12"></line>
+        <line x1="12" y1="16" x2="12.01" y2="16"></line>
+      </svg>
+    `;
+  } else {
+    iconSvg = `
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;">
+        <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+        <polyline points="22 4 12 14.01 9 11.01"></polyline>
+      </svg>
+    `;
+  }
+
   toast.innerHTML = `
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2.5">
-      <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
-      <polyline points="22 4 12 14.01 9 11.01"></polyline>
-    </svg>
-    <span>${message}</span>
+    ${iconSvg}
+    <span>${cleanMessage}</span>
   `;
 
   toast.classList.add('show');
-  setTimeout(() => {
+  if (window.toastTimeout) clearTimeout(window.toastTimeout);
+  window.toastTimeout = setTimeout(() => {
     toast.classList.remove('show');
-  }, 5000);
+  }, 4500);
 }
 
 /* ==========================================================================
@@ -6001,65 +6517,92 @@ function initCreateLivePage() {
       createdAt: new Date().toISOString()
     };
 
-    // Sauvegarde persistante dans localStorage & BDD SQLite
+    function displaySuccessScreen(sessionObj) {
+      const gridEl = document.getElementById('createLiveGrid');
+      const successScreenEl = document.getElementById('createLiveSuccessScreen');
+      const recapBoxEl = document.getElementById('successRecapBox');
+      const btnGoToCalendar = document.getElementById('btnGoToCalendar');
+
+      if (recapBoxEl) {
+        recapBoxEl.innerHTML = `
+          <div class="recap-row">
+            <span class="recap-label">Titre de la session :</span>
+            <span class="recap-value">« ${escapeHtml(sessionObj.title)} »</span>
+          </div>
+          <div class="recap-row">
+            <span class="recap-label">Date & Heure :</span>
+            <span class="recap-value">${escapeHtml(sessionObj.date)} (${escapeHtml(sessionObj.duration)})</span>
+          </div>
+          <div class="recap-row">
+            <span class="recap-label">Format :</span>
+            <span class="recap-value">${escapeHtml(sessionObj.format)}</span>
+          </div>
+          <div class="recap-row">
+            <span class="recap-label">Animateur :</span>
+            <span class="recap-value">${escapeHtml(sessionObj.author)} (${escapeHtml(sessionObj.role)})</span>
+          </div>
+          <div class="recap-row">
+            <span class="recap-label">Section du calendrier :</span>
+            <span class="recap-value">${category === 'current' ? 'Cette semaine' : 'Semaine prochaine'}</span>
+          </div>
+        `;
+      }
+
+      if (btnGoToCalendar) {
+        btnGoToCalendar.href = isPhpEnvironment() ? 'dashboard.php?tab=tab-calendrier' : (getAppUrl('dashboard.html') + `?tab=tab-calendrier&new_live=${sessionObj.id}`);
+      }
+
+      if (gridEl) gridEl.style.display = 'none';
+      if (successScreenEl) {
+        successScreenEl.style.display = 'block';
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      }
+    }
+
+    if (isPhpEnvironment()) {
+      const formData = new FormData(form);
+      const submitBtn = form.querySelector('button[type="submit"]');
+      const origBtnHtml = submitBtn ? submitBtn.innerHTML : '';
+      if (submitBtn) {
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = '<span>⏳ Enregistrement dans le calendrier...</span>';
+      }
+
+      fetch('creer-live.php', {
+        method: 'POST',
+        body: formData,
+        headers: { 'X-Requested-With': 'XMLHttpRequest' }
+      })
+      .then(res => res.json())
+      .then(data => {
+        if (!data.success) {
+          if (submitBtn) {
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = origBtnHtml;
+          }
+          alert(data.error || "Une erreur est survenue lors de l'enregistrement de votre session.");
+          return;
+        }
+
+        displaySuccessScreen(newSession);
+      })
+      .catch(err => {
+        console.error('Fetch error:', err);
+        // Fallback en soumission standard
+        form.submit();
+      });
+      return;
+    }
+
+    // Environnement statique (HTML pur)
     try {
       const stored = localStorage.getItem('ov_community_custom_lives');
       const list = stored ? JSON.parse(stored) : [];
-      list.unshift(newSession); // Placer en tête de liste
+      list.unshift(newSession);
       localStorage.setItem('ov_community_custom_lives', JSON.stringify(list));
+    } catch (err) {}
 
-      if (isPhpEnvironment()) {
-        const formData = new FormData(form);
-        fetch('creer-live.php', {
-          method: 'POST',
-          body: formData,
-          headers: { 'X-Requested-With': 'XMLHttpRequest' }
-        }).catch(err => console.log('Live backend sync note:', err));
-      }
-    } catch (err) {
-      console.error('Erreur sauvegarde live:', err);
-    }
-
-    // Affichage de l'écran de succès
-    const gridEl = document.getElementById('createLiveGrid');
-    const successScreenEl = document.getElementById('createLiveSuccessScreen');
-    const recapBoxEl = document.getElementById('successRecapBox');
-    const btnGoToCalendar = document.getElementById('btnGoToCalendar');
-
-    if (recapBoxEl) {
-      recapBoxEl.innerHTML = `
-        <div class="recap-row">
-          <span class="recap-label">Titre de la session :</span>
-          <span class="recap-value">« ${newSession.title} »</span>
-        </div>
-        <div class="recap-row">
-          <span class="recap-label">Date & Heure :</span>
-          <span class="recap-value">${newSession.date} (${newSession.duration})</span>
-        </div>
-        <div class="recap-row">
-          <span class="recap-label">Format :</span>
-          <span class="recap-value">${newSession.format}</span>
-        </div>
-        <div class="recap-row">
-          <span class="recap-label">Animateur :</span>
-          <span class="recap-value">${newSession.author} (${newSession.role})</span>
-        </div>
-        <div class="recap-row">
-          <span class="recap-label">Section du calendrier :</span>
-          <span class="recap-value">${category === 'current' ? 'Cette semaine' : 'Semaine prochaine'}</span>
-        </div>
-      `;
-    }
-
-    if (btnGoToCalendar) {
-      btnGoToCalendar.href = getAppUrl('dashboard.html') + `?tab=tab-calendrier&new_live=${newSession.id}`;
-    }
-
-    if (gridEl) gridEl.style.display = 'none';
-    if (successScreenEl) {
-      successScreenEl.style.display = 'block';
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-    }
+    displaySuccessScreen(newSession);
   });
 
   // Bouton pour créer une autre session

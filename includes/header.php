@@ -6,6 +6,7 @@
 require_once __DIR__ . '/config.php';
 require_once __DIR__ . '/auth.php';
 require_once __DIR__ . '/flash.php';
+require_once __DIR__ . '/permissions.php';
 
 $currentUser = current_user();
 $isLoggedIn = is_logged_in();
@@ -63,8 +64,10 @@ if (!headers_sent()) {
 
       <!-- Actions de Navigation dynamiques selon l'état de connexion -->
       <div class="nav-actions">
-        <?php if (!empty($isCreateLivePage)): ?>
-          <!-- Mode Création de Live : Bouton Retour + Bouton Profil à droite (sans bouton Créer un live ni Déconnexion) -->
+        <?php if (!empty($hideHeaderNav)): ?>
+          <!-- Navigation masquée -->
+        <?php elseif (!empty($isCreateLivePage)): ?>
+          <!-- Mode Création de Live : Bouton Retour + Bouton Profil à droite -->
           <button type="button" class="btn btn-secondary btn-return-trigger" id="btnHeaderReturn" style="font-size:0.88rem; padding:0.5rem 1rem; display:inline-flex; align-items:center; gap:0.5rem;">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
               <line x1="19" y1="12" x2="5" y2="12"></line>
@@ -77,22 +80,52 @@ if (!headers_sent()) {
             <span>Profil</span>
           </a>
         <?php elseif ($isLoggedIn): ?>
-          <a href="creer-live.php" class="btn btn-secondary" style="font-size:0.88rem; padding:0.5rem 1rem;">
-            <span>🎙️ Créer un Live</span>
-          </a>
-          <a href="dashboard.php" class="btn btn-secondary open-dashboard-link" style="font-size:0.88rem; padding:0.5rem 1rem; display:inline-flex; align-items:center; gap:0.5rem;">
-            <img src="<?= htmlspecialchars($currentUser['avatar'] ?? './img/avatar-maxime.jpg') ?>" alt="Avatar" style="width:24px; height:24px; border-radius:50%; object-fit:cover;">
-            <span>Mon Espace (<?= htmlspecialchars(explode(' ', $currentUser['full_name'])[0]) ?>)</span>
-          </a>
-          <a href="logout.php?token=<?= urlencode(csrf_token()) ?>" class="btn btn-outline" style="font-size:0.85rem; padding:0.48rem 0.85rem; border:1px solid var(--color-border); border-radius:8px; color:var(--color-text-muted);" title="Se déconnecter">
-            Déconnexion
-          </a>
+          <?php if (empty($isAbonnementsPage) && empty($hideHeaderNav)): ?>
+            <?php if (is_admin_user($currentUser)): ?>
+              <a href="admin/index.php" class="btn btn-secondary" style="font-size:0.85rem; padding:0.48rem 0.85rem; background:#fef3c7; color:#b45309; border:1px solid #fde68a; font-weight:700; display:inline-flex; align-items:center; gap:0.4rem;">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M2 4l3 12h14l3-12-6 7-4-7-4 7-6-7zm3 16h14"></path>
+                </svg>
+                <span>Administration</span>
+              </a>
+            <?php endif; ?>
+
+            <?php if (is_animateur_user($currentUser)): ?>
+              <a href="espace-animateur.php" class="btn btn-secondary" style="font-size:0.85rem; padding:0.48rem 0.85rem; background:#fff7ed; color:#ea580c; border:1px solid #fed7aa; font-weight:700; display:inline-flex; align-items:center; gap:0.4rem;">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3z"></path>
+                  <path d="M19 10v2a7 7 0 0 1-14 0v-2"></path>
+                  <line x1="12" y1="19" x2="12" y2="23"></line>
+                  <line x1="8" y1="23" x2="16" y2="23"></line>
+                </svg>
+                <span>Espace Animateur</span>
+              </a>
+            <?php endif; ?>
+
+            <a href="abonnements.php" class="btn btn-secondary" style="font-size:0.85rem; padding:0.48rem 0.85rem; display:inline-flex; align-items:center; gap:0.4rem;">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M6 3h12l4 6-10 13L2 9z"></path>
+                <path d="M11 3L8 9l4 13 4-13-3-6"></path>
+                <path d="M2 9h20"></path>
+              </svg>
+              <span>Abonnements</span>
+            </a>
+
+            <a href="dashboard.php" class="btn btn-secondary open-dashboard-link" style="font-size:0.88rem; padding:0.5rem 1rem; display:inline-flex; align-items:center; gap:0.5rem;">
+              <img src="<?= htmlspecialchars($currentUser['avatar'] ?? './img/avatar-maxime.jpg') ?>" alt="Avatar" style="width:24px; height:24px; border-radius:50%; object-fit:cover;">
+              <span>Mon Espace (<?= htmlspecialchars(explode(' ', $currentUser['full_name'])[0]) ?>)</span>
+            </a>
+
+            <a href="logout.php?token=<?= urlencode(csrf_token()) ?>" class="btn btn-outline" style="font-size:0.85rem; padding:0.48rem 0.85rem; border:1px solid var(--color-border); border-radius:8px; color:var(--color-text-muted);" title="Se déconnecter">
+              Déconnexion
+            </a>
+          <?php endif; ?>
         <?php else: ?>
           <a href="login.php" class="btn btn-secondary" style="font-size:0.88rem; padding:0.55rem 1rem;">
             Se connecter
           </a>
-          <a href="checkout.php" class="btn btn-primary">
-            <span>Rejoindre le réseau</span>
+          <a href="choisir-abonnement.php" class="btn btn-primary">
+            <span>Choisir un abonnement</span>
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
               <line x1="5" y1="12" x2="19" y2="12"></line>
               <polyline points="12 5 19 12 12 19"></polyline>

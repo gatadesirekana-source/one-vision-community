@@ -104,8 +104,23 @@ function login_user(string $email, string $password): array {
         return ['success' => false, 'error' => 'Identifiants invalides. Vérifiez votre email et mot de passe.'];
     }
 
+    // Vérification du statut du compte (suspension)
+    if (($user['statut'] ?? 'actif') === 'suspendu') {
+        record_failed_attempt($ip);
+        return ['success' => false, 'error' => "Votre compte a été suspendu par l'administration. Veuillez contacter le support."];
+    }
+
     // Réinitialisation du compteur de tentatives en cas de succès
     reset_attempts($ip);
+
+    // Vérifier en temps réel l'expiration des abonnements
+    require_once __DIR__ . '/subscriptions.php';
+    check_user_subscription((int)$user['id']);
+
+    // Recharger les données fraîches de l'utilisateur après éventuelle expiration
+    $stmtRefresh = $db->prepare("SELECT * FROM users WHERE id = ?");
+    $stmtRefresh->execute([$user['id']]);
+    $user = $stmtRefresh->fetch();
 
     // Régénération de l'ID de session pour prévenir la fixation de session
     if (!headers_sent()) {
@@ -132,8 +147,8 @@ function register_user(string $fullName, string $email, string $password, array 
         return ['success' => false, 'error' => 'Adresse email invalide.'];
     }
 
-    if (strlen($password) < 8 || !preg_match('#[0-9]#', $password) || !preg_match('#[a-zA-Z]#', $password)) {
-        return ['success' => false, 'error' => 'Le mot de passe doit comporter au moins 8 caractères, incluant au moins une lettre et un chiffre.'];
+    if (strlen($password) < 6) {
+        return ['success' => false, 'error' => 'Le mot de passe doit comporter au moins 6 caractères.'];
     }
 
     // Vérifier si l'email existe déjà
@@ -148,16 +163,22 @@ function register_user(string $fullName, string $email, string $password, array 
     $jobTitle = trim($extra['job_title'] ?? 'Entrepreneur & Membre One Vision');
     $bio = trim($extra['bio'] ?? '');
     $skills = trim($extra['skills'] ?? '');
+    $phone = trim($extra['phone'] ?? '');
     $avatar = $extra['avatar'] ?? './img/avatar-maxime.jpg';
 
     $subscriptionStatus = $extra['subscription_status'] ?? 'pending';
+    $role = $extra['role'] ?? 'membre';
 
     $stmt = $db->prepare("
-        INSERT INTO users (full_name, email, password, avatar, company, job_title, bio, skills, role, subscription_status)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'member', ?)
+        INSERT INTO users (full_name, email, password, phone, avatar, company, job_title, bio, skills, role, statut, subscription_status)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'actif', ?)
     ");
-    $stmt->execute([$fullName, $email, $passwordHash, $avatar, $company, $jobTitle, $bio, $skills, $subscriptionStatus]);
-    $newId = $db->lastInsertId();
+    $stmt->execute([$fullName, $email, $passwordHash, $phone, $avatar, $company, $jobTitle, $bio, $skills, $role, $subscriptionStatus]);
+    $newId = (int)$db->lastInsertId();
+
+    // Initialiser systématiquement le profil d'accueil onboarding
+    require_once __DIR__ . '/onboarding.php';
+    ensure_user_onboarding_profile($newId);
 
     // Auto login
     if (!headers_sent()) {
@@ -166,9 +187,80 @@ function register_user(string $fullName, string $email, string $password, array 
     $_SESSION['user_id'] = $newId;
     $_SESSION['user_name'] = $fullName;
     $_SESSION['user_email'] = $email;
-    $_SESSION['user_role'] = 'member';
+    $_SESSION['user_role'] = 'membre';
 
     return ['success' => true, 'user_id' => $newId];
+}
+
+/**
+ * Supprime définitivement le compte d'un utilisateur et résilie son adhésion.
+ * Nettoie toutes les données associées en base SQLite.
+ */
+function delete_user_account(int $userId): array {
+    $db = get_db();
+
+    // 1. Vérification de l'utilisateur
+    $stmt = $db->prepare("SELECT id, role, email, avatar FROM users WHERE id = ?");
+    $stmt->execute([$userId]);
+    $user = $stmt->fetch();
+
+    if (!$user) {
+        return ['success' => false, 'error' => "Compte introuvable."];
+    }
+
+    // Protection stricte : Le propriétaire principal ne peut pas supprimer son compte
+    if ($user['role'] === 'proprietaire') {
+        return ['success' => false, 'error' => "Le compte propriétaire principal ne peut pas être supprimé."];
+    }
+
+    try {
+        $db->beginTransaction();
+
+        // Nettoyage des réponses et profils d'onboarding
+        try {
+            $db->prepare("DELETE FROM reponses_questionnaire WHERE user_id = ?")->execute([$userId]);
+        } catch (Exception $e) {}
+        try {
+            $db->prepare("DELETE FROM profils_onboarding WHERE user_id = ?")->execute([$userId]);
+        } catch (Exception $e) {}
+
+        // Nettoyage des abonnements et paiements
+        try {
+            $db->prepare("DELETE FROM subscriptions WHERE user_id = ?")->execute([$userId]);
+        } catch (Exception $e) {}
+        try {
+            $db->prepare("DELETE FROM payments WHERE user_id = ?")->execute([$userId]);
+        } catch (Exception $e) {}
+        try {
+            $db->prepare("DELETE FROM orders WHERE user_id = ?")->execute([$userId]);
+        } catch (Exception $e) {}
+
+        // Nettoyage des permissions utilisateur
+        try {
+            $db->prepare("DELETE FROM user_permissions WHERE user_id = ?")->execute([$userId]);
+        } catch (Exception $e) {}
+
+        // Dissocier les messages et les lives créés
+        try {
+            $db->prepare("UPDATE lives SET user_id = NULL WHERE user_id = ?")->execute([$userId]);
+        } catch (Exception $e) {}
+        try {
+            $db->prepare("DELETE FROM messages WHERE user_id = ?")->execute([$userId]);
+        } catch (Exception $e) {}
+
+        // Supprimer l'utilisateur de la table users
+        $stmtDelete = $db->prepare("DELETE FROM users WHERE id = ?");
+        $stmtDelete->execute([$userId]);
+
+        $db->commit();
+
+        return ['success' => true];
+    } catch (Exception $e) {
+        if ($db->inTransaction()) {
+            $db->rollBack();
+        }
+        return ['success' => false, 'error' => "Erreur lors de la suppression du compte : " . $e->getMessage()];
+    }
 }
 
 function logout_user(): void {

@@ -8,9 +8,10 @@ require_once __DIR__ . '/includes/db.php';
 require_once __DIR__ . '/includes/auth.php';
 require_once __DIR__ . '/includes/flash.php';
 require_once __DIR__ . '/includes/subscriptions.php';
+require_once __DIR__ . '/includes/permissions.php';
 
 // Contrôle d'accès strict : seuls les membres payés et à jour accèdent au dashboard
-require_active_subscription('subscription-expired.php');
+require_active_subscription('choisir-abonnement.php');
 
 $db = get_db();
 $currentUser = current_user();
@@ -26,16 +27,27 @@ if (!headers_sent()) {
 // Traitement POST : Actions membre (Profil, Prélèvement mensuel, Simulation d'échéance)
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
     if ($_POST['action'] === 'update_profile') {
+        $isAjax = (!empty($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest');
         if (!verify_csrf_token($_POST['csrf_token'] ?? null)) {
+            if ($isAjax) {
+                header('Content-Type: application/json');
+                echo json_encode(['success' => false, 'error' => 'Session expirée. Veuillez actualiser et réessayer.']);
+                exit;
+            }
             set_flash('error', 'Session de formulaire expirée. Veuillez actualiser et réessayer.');
-        } else {
+            header('Location: dashboard.php?tab=tab-parametres');
+            exit;
+        }
+
         $fullName = trim($_POST['settingsFullName'] ?? '');
         $role = trim($_POST['settingsRole'] ?? '');
+        $phone = trim($_POST['settingsPhone'] ?? '');
         $avatar = trim($_POST['settingsAvatar'] ?? ($currentUser['avatar'] ?? './img/avatar-maxime.jpg'));
         $newPwd = $_POST['settingsNewPassword'] ?? '';
+        $confirmPwd = $_POST['settingsConfirmPassword'] ?? '';
         $oldPwd = $_POST['settingsOldPassword'] ?? '';
 
-        // Validation stricte de l'avatar (presets autorisés ou data:image format sécurisé)
+        // Validation de l'avatar
         $allowedAvatars = [
             './img/avatar-maxime.jpg', './img/avatar-florian.jpg',
             './img/avatar-cyril.jpg',  './img/avatar-aurore.jpg',
@@ -51,28 +63,87 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
             }
         }
 
-        if (!empty($fullName)) {
-            if (!empty($newPwd)) {
-                if (strlen($newPwd) < 8 || !preg_match('#[0-9]#', $newPwd) || !preg_match('#[a-zA-Z]#', $newPwd)) {
-                    set_flash('error', 'Le nouveau mot de passe doit comporter au moins 8 caractères et combiner lettres et chiffres.');
-                } elseif (password_verify($oldPwd, $currentUser['password'])) {
-                    $hash = password_hash($newPwd, PASSWORD_DEFAULT);
-                    $stmt = $db->prepare("UPDATE users SET full_name = ?, job_title = ?, avatar = ?, password = ? WHERE id = ?");
-                    $stmt->execute([$fullName, $role, $avatar, $hash, $currentUser['id']]);
-                    set_flash('success', 'Votre profil et votre mot de passe ont été mis à jour avec succès.');
-                } else {
-                    set_flash('error', 'Le mot de passe actuel saisi est incorrect.');
-                }
-            } else {
-                $stmt = $db->prepare("UPDATE users SET full_name = ?, job_title = ?, avatar = ? WHERE id = ?");
-                $stmt->execute([$fullName, $role, $avatar, $currentUser['id']]);
-                set_flash('success', 'Votre profil a été mis à jour avec succès.');
+        if (empty($fullName)) {
+            $err = 'Veuillez renseigner votre nom complet.';
+            if ($isAjax) {
+                header('Content-Type: application/json');
+                echo json_encode(['success' => false, 'error' => $err]);
+                exit;
             }
-            $currentUser = current_user();
-            $_SESSION['user_name'] = $currentUser['full_name'];
+            set_flash('error', $err);
+            header('Location: dashboard.php?tab=tab-parametres');
+            exit;
         }
-    }
-} elseif ($_POST['action'] === 'trigger_recurring_charge') {
+
+        if (!empty($newPwd)) {
+            if ($newPwd !== $confirmPwd) {
+                $err = 'Les deux nouveaux mots de passe ne correspondent pas.';
+                if ($isAjax) {
+                    header('Content-Type: application/json');
+                    echo json_encode(['success' => false, 'error' => $err]);
+                    exit;
+                }
+                set_flash('error', $err);
+                header('Location: dashboard.php?tab=tab-parametres');
+                exit;
+            }
+
+            if (strlen($newPwd) < 6) {
+                $err = 'Le mot de passe doit comporter au moins 6 caractères.';
+                if ($isAjax) {
+                    header('Content-Type: application/json');
+                    echo json_encode(['success' => false, 'error' => $err]);
+                    exit;
+                }
+                set_flash('error', $err);
+                header('Location: dashboard.php?tab=tab-parametres');
+                exit;
+            }
+
+            if (!empty($currentUser['password']) && !password_verify($oldPwd, $currentUser['password'])) {
+                $err = 'Le mot de passe actuel saisi est incorrect.';
+                if ($isAjax) {
+                    header('Content-Type: application/json');
+                    echo json_encode(['success' => false, 'error' => $err]);
+                    exit;
+                }
+                set_flash('error', $err);
+                header('Location: dashboard.php?tab=tab-parametres');
+                exit;
+            }
+
+            $hash = password_hash($newPwd, PASSWORD_DEFAULT);
+            $stmt = $db->prepare("UPDATE users SET full_name = ?, job_title = ?, phone = ?, avatar = ?, password = ? WHERE id = ?");
+            $stmt->execute([$fullName, $role, $phone, $avatar, $hash, $currentUser['id']]);
+            $msg = 'Votre profil et votre mot de passe ont été mis à jour avec succès.';
+        } else {
+            $stmt = $db->prepare("UPDATE users SET full_name = ?, job_title = ?, phone = ?, avatar = ? WHERE id = ?");
+            $stmt->execute([$fullName, $role, $phone, $avatar, $currentUser['id']]);
+            $msg = 'Vos paramètres de compte ont été enregistrés avec succès.';
+        }
+
+        $currentUser = current_user();
+        $_SESSION['user_name'] = $currentUser['full_name'];
+
+        if ($isAjax) {
+            header('Content-Type: application/json');
+            echo json_encode([
+                'success' => true,
+                'message' => $msg,
+                'user' => [
+                    'full_name' => $fullName,
+                    'job_title' => $role,
+                    'phone' => $phone,
+                    'avatar' => $avatar
+                ]
+            ]);
+            exit;
+        }
+
+        set_flash('success', $msg);
+        header('Location: dashboard.php?tab=tab-parametres');
+        exit;
+    } elseif ($_POST['action'] === 'trigger_recurring_charge') {
         if (!verify_csrf_token($_POST['csrf_token'] ?? null)) {
             set_flash('error', 'Session de formulaire expirée.');
         } else {
@@ -94,23 +165,71 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
             header('Location: subscription-expired.php');
             exit;
         }
+    } elseif ($_POST['action'] === 'delete_account') {
+        $isAjax = (!empty($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest');
+        if (!verify_csrf_token($_POST['csrf_token'] ?? null)) {
+            if ($isAjax) {
+                header('Content-Type: application/json');
+                echo json_encode(['success' => false, 'error' => 'Session de formulaire expirée.']);
+                exit;
+            }
+            set_flash('error', 'Session de formulaire expirée. Veuillez actualiser et réessayer.');
+            header('Location: dashboard.php');
+            exit;
+        }
+
+        $userId = (int)$currentUser['id'];
+
+        if ($currentUser['role'] === 'proprietaire') {
+            if ($isAjax) {
+                header('Content-Type: application/json');
+                echo json_encode(['success' => false, 'error' => 'Le compte propriétaire principal ne peut pas être supprimé.']);
+                exit;
+            }
+            set_flash('error', 'Le compte propriétaire principal ne peut pas être supprimé.');
+            header('Location: dashboard.php');
+            exit;
+        }
+
+        require_once __DIR__ . '/includes/auth.php';
+        $res = delete_user_account($userId);
+
+        if ($res['success']) {
+            logout_user();
+            if ($isAjax) {
+                header('Content-Type: application/json');
+                echo json_encode(['success' => true, 'message' => 'Votre compte a été bien résilié, votre compte a été bien supprimé.']);
+                exit;
+            }
+            set_flash('info', 'Votre compte et toutes vos données ont été définitivement résiliés et supprimés. Nous vous souhaitons une excellente continuation.');
+            header('Location: index.php');
+            exit;
+        } else {
+            if ($isAjax) {
+                header('Content-Type: application/json');
+                echo json_encode(['success' => false, 'error' => $res['error'] ?? 'Une erreur est survenue lors de la suppression de votre compte.']);
+                exit;
+            }
+            set_flash('error', $res['error'] ?? 'Une erreur est survenue lors de la suppression de votre compte.');
+            header('Location: dashboard.php');
+            exit;
+        }
     } elseif ($_POST['action'] === 'delete_live') {
         if (!verify_csrf_token($_POST['csrf_token'] ?? null)) {
             set_flash('error', 'Session de formulaire expirée.');
         } else {
-            $liveId = (int)($_POST['live_id'] ?? 0);
+            $liveId = (int)($_POST['live_id'] ?? $_POST['delete_live_id'] ?? 0);
             if ($liveId > 0) {
                 $stmt = $db->prepare("SELECT * FROM lives WHERE id = ?");
                 $stmt->execute([$liveId]);
                 $targetLive = $stmt->fetch();
                 if ($targetLive) {
-                    $isAdmin = in_array($currentUser['role'] ?? '', ['admin', 'speaker'], true);
-                    $isAuthor = ($targetLive['user_id'] == $currentUser['id']) || empty($targetLive['user_id']) || (($currentUser['subscription_plan'] ?? '') === 'creator');
-                    if ($isAdmin || $isAuthor) {
+                    $canDelete = ($targetLive['user_id'] == $currentUser['id']) || is_owner($currentUser) || is_admin_user($currentUser) || user_has_permission($currentUser, 'gerer_lives');
+                    if ($canDelete) {
                         $db->prepare("DELETE FROM lives WHERE id = ?")->execute([$liveId]);
-                        set_flash('success', "Le live « " . htmlspecialchars($targetLive['title']) . " » a été supprimé du calendrier.");
+                        set_flash('success', "Le live « " . htmlspecialchars($targetLive['title']) . " » a été supprimé du calendrier avec succès.");
                     } else {
-                        set_flash('error', "Vous n'avez pas l'autorisation de supprimer ce live.");
+                        set_flash('error', "Vous n'avez pas l'autorisation de supprimer ce live. Seul son créateur peut le supprimer.");
                     }
                 }
             }
@@ -119,47 +238,53 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
                 echo json_encode(['success' => true]);
                 exit;
             }
-            header('Location: dashboard.php?tab=tab-calendrier');
+            $targetTab = (!empty($_GET['tab']) && $_GET['tab'] === 'tab-lives') ? 'tab-lives' : 'tab-calendrier';
+            header('Location: dashboard.php?tab=' . $targetTab);
             exit;
         }
     } elseif ($_POST['action'] === 'edit_live') {
         if (!verify_csrf_token($_POST['csrf_token'] ?? null)) {
             set_flash('error', 'Session de formulaire expirée.');
         } else {
-            $liveId = (int)($_POST['edit_live_id'] ?? 0);
-            $title = trim($_POST['edit_live_title'] ?? '');
-            $desc = trim($_POST['edit_live_desc'] ?? '');
-            $format = trim($_POST['edit_live_format'] ?? 'Live Thématique');
-            $date = trim($_POST['edit_live_date'] ?? '');
-            $time = trim($_POST['edit_live_time'] ?? '19h00');
-            $duration = trim($_POST['edit_live_duration'] ?? '1h00');
-            $resources = trim($_POST['edit_live_resources'] ?? '');
+            $liveId = (int)($_POST['live_id'] ?? $_POST['edit_live_id'] ?? 0);
+            $title = trim($_POST['title'] ?? $_POST['edit_live_title'] ?? '');
+            $desc = trim($_POST['description'] ?? $_POST['edit_live_desc'] ?? '');
+            $format = trim($_POST['format'] ?? $_POST['edit_live_format'] ?? 'Live Thématique');
+            $date = trim($_POST['date'] ?? $_POST['edit_live_date'] ?? '');
+            $time = trim($_POST['time'] ?? $_POST['edit_live_time'] ?? '19h00');
+            $duration = trim($_POST['duration'] ?? $_POST['edit_live_duration'] ?? '1h00');
+            $resources = trim($_POST['resources'] ?? $_POST['edit_live_resources'] ?? '');
 
             if ($liveId > 0 && !empty($title)) {
-                $db->prepare("
-                    UPDATE lives 
-                    SET title = ?, description = ?, format = ?, scheduled_date = ?, scheduled_time = ?, duration = ?, resources = ?
-                    WHERE id = ?
-                ")->execute([$title, $desc, $format, $date, $time, $duration, $resources, $liveId]);
-                set_flash('success', "La session « " . htmlspecialchars($title) . " » a été modifiée avec succès.");
+                $stmt = $db->prepare("SELECT * FROM lives WHERE id = ?");
+                $stmt->execute([$liveId]);
+                $targetLive = $stmt->fetch();
+                if ($targetLive) {
+                    $canEdit = ($targetLive['user_id'] == $currentUser['id']) || is_owner($currentUser) || is_admin_user($currentUser) || user_has_permission($currentUser, 'gerer_lives');
+                    if ($canEdit) {
+                        $db->prepare("
+                            UPDATE lives 
+                            SET title = ?, description = ?, format = ?, scheduled_date = ?, scheduled_time = ?, duration = ?, resources = ?
+                            WHERE id = ?
+                        ")->execute([$title, $desc, $format, $date, $time, $duration, $resources, $liveId]);
+                        set_flash('success', "La session « " . htmlspecialchars($title) . " » a été modifiée avec succès.");
+                    } else {
+                        set_flash('error', "Vous n'avez pas l'autorisation de modifier ce live.");
+                    }
+                }
             }
             if (!empty($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest') {
                 header('Content-Type: application/json');
                 echo json_encode(['success' => true]);
                 exit;
             }
-            header('Location: dashboard.php?tab=tab-calendrier');
+            $targetTab = (!empty($_GET['tab']) && $_GET['tab'] === 'tab-lives') ? 'tab-lives' : 'tab-calendrier';
+            header('Location: dashboard.php?tab=' . $targetTab);
             exit;
         }
     } elseif ($_POST['action'] === 'upgrade_to_creator') {
-        if (!verify_csrf_token($_POST['csrf_token'] ?? null)) {
-            set_flash('error', 'Session de formulaire expirée.');
-        } else {
-            $db->prepare("UPDATE users SET subscription_plan = 'creator' WHERE id = ?")->execute([$currentUser['id']]);
-            set_flash('success', "Félicitations ! Votre compte est maintenant passé en Formule Créateur (29€/mois). Vous pouvez créer et animer vos propres lives.");
-            header('Location: creer-live.php');
-            exit;
-        }
+        header('Location: abonnements.php');
+        exit;
     }
 }
 
@@ -179,22 +304,26 @@ $userOrders = $ordersStmt->fetchAll();
 // Données d'administration si l'utilisateur est admin
 $adminTickets = [];
 $adminOrders = [];
-if (($currentUser['role'] ?? '') === 'admin') {
+$isAnimateur = is_animateur_user($currentUser);
+$isAdminUser = is_admin_user($currentUser);
+$isOwnerUser = is_owner($currentUser);
+$isAdminDelegue = is_admin_delegue($currentUser);
+$isCreator = $isAnimateur || $isAdminUser;
+$userPlan = $isAnimateur ? 'animateur' : 'membre';
+
+// Détection de l'accès animateur / hôte de la session
+$isLiveHost = $isOwnerUser || $isAdminUser || $isAnimateur || user_has_permission($currentUser, 'gerer_lives');
+foreach ($allLives as $l) {
+    if (!empty($l['is_live_now']) && ((int)$l['user_id'] === (int)$currentUser['id'])) {
+        $isLiveHost = true;
+        break;
+    }
+}
+
+if ($isAdminUser) {
     $adminTickets = $db->query("SELECT * FROM support_tickets ORDER BY id DESC")->fetchAll();
     $adminOrders = $db->query("SELECT o.*, u.full_name as user_name, u.email as user_email FROM orders o LEFT JOIN users u ON o.user_id = u.id ORDER BY o.id DESC")->fetchAll();
 }
-
-$userPlan = $currentUser['subscription_plan'] ?? 'member';
-$isAdminOrSpeaker = in_array($currentUser['role'] ?? '', ['admin', 'speaker'], true);
-
-if (isset($_GET['toggle_plan'])) {
-    $newPlan = ($_GET['toggle_plan'] === 'creator') ? 'creator' : 'member';
-    $db->prepare("UPDATE users SET subscription_plan = ? WHERE id = ?")->execute([$newPlan, $currentUser['id']]);
-    header('Location: dashboard.php?tab=tab-calendrier');
-    exit;
-}
-
-$isCreator = ($userPlan === 'creator') || $isAdminOrSpeaker;
 ?>
 <!DOCTYPE html>
 <html lang="fr" data-theme="light">
@@ -212,6 +341,145 @@ $isCreator = ($userPlan === 'creator') || $isAdminOrSpeaker;
 
   <link rel="stylesheet" href="./css/style.css?v=3">
   <meta name="csrf-token" content="<?= htmlspecialchars(csrf_token()) ?>">
+  <script>
+    window.IS_LIVE_HOST = <?= $isLiveHost ? 'true' : 'false' ?>;
+    window.CURRENT_USER_NAME = <?= json_encode($currentUser['full_name']) ?>;
+    window.CURRENT_USER_AVATAR = <?= json_encode($currentUser['avatar'] ?? './img/avatar-maxime.jpg') ?>;
+    window.CURRENT_USER_ID = <?= (int)$currentUser['id'] ?>;
+  </script>
+  <style>
+    /* Styles pour la modération et l'épinglage du Chat Live */
+    .live-chat-pinned-box {
+      background: #eff6ff;
+      border-bottom: 2px solid #bfdbfe;
+      padding: 0.65rem 0.85rem;
+      transition: all 0.25s ease;
+    }
+    .pinned-box-inner {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 0.6rem;
+    }
+    .pinned-box-left {
+      display: flex;
+      align-items: flex-start;
+      gap: 0.5rem;
+    }
+    .pinned-icon-badge {
+      font-size: 1.15rem;
+      line-height: 1;
+    }
+    .pinned-badge-title {
+      font-size: 0.72rem;
+      font-weight: 800;
+      text-transform: uppercase;
+      color: #1d4ed8;
+      letter-spacing: 0.4px;
+      margin-bottom: 2px;
+    }
+    .pinned-message-content {
+      font-size: 0.84rem;
+      color: #0f172a;
+      font-weight: 600;
+      line-height: 1.35;
+    }
+    .pinned-message-author {
+      font-size: 0.72rem;
+      color: #64748b;
+      margin-top: 2px;
+    }
+    .btn-unpin-action {
+      background: #ffffff;
+      border: 1px solid #cbd5e1;
+      color: #64748b;
+      font-size: 0.72rem;
+      padding: 3px 8px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-weight: 700;
+      white-space: nowrap;
+      transition: all 0.15s ease;
+    }
+    .btn-unpin-action:hover {
+      background: #fee2e2;
+      color: #dc2626;
+      border-color: #fca5a5;
+    }
+    .chat-msg {
+      position: relative;
+      transition: background 0.2s ease;
+    }
+    .chat-msg-actions {
+      display: none;
+      position: absolute;
+      top: 6px;
+      right: 8px;
+      background: rgba(255, 255, 255, 0.96);
+      backdrop-filter: blur(4px);
+      border: 1px solid #e2e8f0;
+      border-radius: 6px;
+      padding: 2px 4px;
+      gap: 4px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+      z-index: 10;
+    }
+    .chat-msg:hover .chat-msg-actions {
+      display: flex;
+    }
+    .btn-chat-pin, .btn-chat-delete {
+      background: none;
+      border: none;
+      font-size: 0.72rem;
+      cursor: pointer;
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-weight: 700;
+      transition: all 0.15s ease;
+    }
+    .btn-chat-pin {
+      color: #2563eb;
+    }
+    .btn-chat-pin:hover {
+      background: #eff6ff;
+    }
+    .btn-chat-delete {
+      color: #dc2626;
+    }
+    .btn-chat-delete:hover {
+      background: #fee2e2;
+    }
+    .chat-msg.is-pinned-highlight {
+      background: #f0fdf4 !important;
+      border-left: 3px solid #16a34a !important;
+    }
+    .participant-mod-actions {
+      display: flex;
+      gap: 0.35rem;
+      margin-top: 0.4rem;
+    }
+    .btn-mod-mic, .btn-mod-cam {
+      font-size: 0.72rem;
+      padding: 3px 7px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-weight: 700;
+      border: 1px solid #cbd5e1;
+      background: #ffffff;
+      color: #475569;
+      transition: all 0.15s ease;
+    }
+    .btn-mod-mic:hover, .btn-mod-cam:hover {
+      background: #fee2e2;
+      color: #dc2626;
+      border-color: #fca5a5;
+    }
+    .btn-mod-mic.is-muted, .btn-mod-cam.is-cut {
+      background: #fee2e2;
+      color: #dc2626;
+      border-color: #fca5a5;
+    }
+  </style>
 </head>
 <body class="dashboard-body">
 
@@ -300,7 +568,7 @@ $isCreator = ($userPlan === 'creator') || $isAdminOrSpeaker;
           <img src="<?= htmlspecialchars($currentUser['avatar'] ?? './img/avatar-maxime.jpg') ?>" alt="Photo profil" class="dash-user-avatar" id="dashAvatar">
           <div class="dash-user-meta">
             <span class="dash-user-name" id="dashUserName"><?= htmlspecialchars($currentUser['full_name']) ?></span>
-            <span class="dash-user-badge"><?= ($currentUser['role'] === 'admin') ? '👑 Administrateur' : 'Membre Actif • 9€/mois' ?></span>
+            <span class="dash-user-badge"><?= $isOwnerUser ? '👑 Propriétaire' : ($isAdminDelegue ? '🛡️ Admin Délégué' : ($isAnimateur ? '🌟 Animateur' : '💼 Membre Actif')) ?></span>
           </div>
           <svg class="dropdown-chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
             <polyline points="6 9 12 15 18 9"></polyline>
@@ -311,7 +579,7 @@ $isCreator = ($userPlan === 'creator') || $isAdminOrSpeaker;
         <div class="dash-user-dropdown-menu" id="dashUserDropdownMenu" style="display:none;">
           <div class="user-dropdown-header">
             <strong id="dropdownUserTitle"><?= htmlspecialchars($currentUser['full_name']) ?></strong>
-            <span class="badge-role-admin"><?= ($currentUser['role'] === 'admin') ? '👑 Administrateur' : '💼 Membre One Vision' ?></span>
+            <span class="badge-role-admin"><?= $isOwnerUser ? '👑 Propriétaire' : ($isAdminDelegue ? '🛡️ Admin Délégué' : ($isAnimateur ? '🌟 Animateur' : '💼 Membre One Vision')) ?></span>
             <span class="user-dropdown-email" id="dropdownUserEmail"><?= htmlspecialchars($currentUser['email']) ?></span>
           </div>
           <div class="user-dropdown-divider"></div>
@@ -326,13 +594,31 @@ $isCreator = ($userPlan === 'creator') || $isAdminOrSpeaker;
             <span>Mon Dashboard</span>
           </button>
 
-          <button type="button" class="user-dropdown-item" id="menuItemAbonnement">
+          <a href="abonnements.php" class="user-dropdown-item" id="menuItemAbonnement" style="text-decoration:none;">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <circle cx="12" cy="12" r="3"></circle>
               <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
             </svg>
             <span>Mon Abonnement</span>
-          </button>
+          </a>
+
+          <?php if ($isAnimateur || $isAdminUser): ?>
+          <a href="espace-animateur.php" class="user-dropdown-item" style="text-decoration:none;">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"></path>
+            </svg>
+            <span>Espace Animateur</span>
+          </a>
+          <?php endif; ?>
+
+          <?php if ($isAdminUser): ?>
+          <a href="admin/index.php" class="user-dropdown-item" style="text-decoration:none; color:#b45309; font-weight:600;">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"></path>
+            </svg>
+            <span>Administration</span>
+          </a>
+          <?php endif; ?>
 
           <button type="button" class="user-dropdown-item" id="menuItemParams">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -425,8 +711,47 @@ $isCreator = ($userPlan === 'creator') || $isAdminOrSpeaker;
           <span class="nav-counter" style="white-space:nowrap;padding:0.2rem 0.5rem;font-size:0.75rem;">1 240</span>
         </button>
 
-        <?php if (($currentUser['role'] ?? '') === 'admin'): ?>
+        <div class="dash-nav-section-label" style="margin-top:1.25rem;">Mon Espace</div>
+
+        <?php if ($isAnimateur || $isAdminUser): ?>
+        <a href="espace-animateur.php" class="dash-nav-item" style="text-decoration:none;">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"></path>
+          </svg>
+          <span>Espace Animateur</span>
+          <span class="nav-counter" style="background:#fef3c7;color:#b45309;font-weight:700;">★ Host</span>
+        </a>
+        <?php else: ?>
+        <a href="abonnements.php" class="dash-nav-item" style="text-decoration:none;opacity:0.85;" title="Réservé aux Animateurs — cliquez pour découvrir la formule">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+            <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+          </svg>
+          <span>Espace Animateur</span>
+          <span class="nav-counter" style="background:#fee2e2;color:#991b1b;">🔒</span>
+        </a>
+        <?php endif; ?>
+
+        <a href="abonnements.php" class="dash-nav-item" style="text-decoration:none;">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="3"></circle>
+            <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+          </svg>
+          <span>Mon Abonnement</span>
+        </a>
+
+        <?php if ($isAdminUser): ?>
         <div class="dash-nav-section-label" style="margin-top:1.5rem;color:#d97706;font-weight:700;">Administration</div>
+        <a href="admin/index.php" class="dash-nav-item" style="text-decoration:none;border-left: 2px solid #f59e0b;">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <rect x="3" y="3" width="7" height="7"></rect>
+            <rect x="14" y="3" width="7" height="7"></rect>
+            <rect x="14" y="14" width="7" height="7"></rect>
+            <rect x="3" y="14" width="7" height="7"></rect>
+          </svg>
+          <span>Gestion & Délégation</span>
+          <span class="nav-counter" style="background:#fef3c7;color:#b45309;font-weight:700;">Admin</span>
+        </a>
         <button type="button" class="dash-nav-item" data-dash-tab="tab-admin" style="border-left: 2px solid #f59e0b;">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"></path>
@@ -538,6 +863,7 @@ $isCreator = ($userPlan === 'creator') || $isAdminOrSpeaker;
                     <span class="cam-dot"></span> <span id="userCamLabel">Katahana Désiré (Vous)</span>
                   </div>
                   <button type="button" class="user-cam-close-btn" id="userCamCloseBtn" title="Couper ma caméra">✕</button>
+                  <button type="button" class="btn-host-cut-user-cam" id="btnHostCutUserCam" title="Couper la caméra de l'intervenant (Action Hôte)" style="position:absolute; bottom:6px; left:6px; font-size:0.68rem; background:rgba(220,38,38,0.92); color:#fff; border:none; padding:3px 7px; border-radius:6px; font-weight:700; cursor:pointer; z-index:10; display:flex; align-items:center; gap:3px;">🚫 Couper caméra (Hôte)</button>
                 </div>
                 
                 <div class="overlay-bottom-bar">
@@ -641,7 +967,28 @@ $isCreator = ($userPlan === 'creator') || $isAdminOrSpeaker;
                 <span>Discussion en direct</span>
                 <span class="chat-online-badge" id="liveChatCount">● 142 actifs</span>
               </div>
-              <span class="badge-chat-admin-pill" title="Vous postez avec le statut Administrateur">👑 Administrateur</span>
+              <?php if ($isLiveHost): ?>
+                <span class="badge-chat-admin-pill" title="Vous administrez la session en tant qu'Animateur">👑 Hôte / Animateur</span>
+              <?php else: ?>
+                <span class="badge-chat-admin-pill" style="background:#f1f5f9; color:#475569;" title="Participant à la session">🎧 Participant</span>
+              <?php endif; ?>
+            </div>
+
+            <!-- Message Épinglé en Direct par l'Animateur -->
+            <div id="liveChatPinnedMessage" class="live-chat-pinned-box" style="display:none;">
+              <div class="pinned-box-inner">
+                <div class="pinned-box-left">
+                  <span class="pinned-icon-badge">📌</span>
+                  <div class="pinned-text-wrap">
+                    <div class="pinned-badge-title">Message épinglé par l'animateur</div>
+                    <div class="pinned-message-content" id="pinnedMessageContent"></div>
+                    <div class="pinned-message-author" id="pinnedMessageAuthor"></div>
+                  </div>
+                </div>
+                <button type="button" class="btn-unpin-action" id="btnUnpinLiveMessage" title="Dépingler ce commentaire">
+                  ✕ Dépingler
+                </button>
+              </div>
             </div>
 
             <div class="dash-chat-messages" id="liveChatMessages">
@@ -651,6 +998,12 @@ $isCreator = ($userPlan === 'creator') || $isAdminOrSpeaker;
                   <div class="msg-author">Aurore M. <span class="msg-time">19:14</span></div>
                   <div class="msg-text">Totalement d'accord avec Cyril sur l'importance de simplifier la page de capture !</div>
                 </div>
+                <?php if ($isLiveHost): ?>
+                <div class="chat-msg-actions">
+                  <button type="button" class="btn-chat-pin" title="Épingler ce commentaire">📌 Épingler</button>
+                  <button type="button" class="btn-chat-delete" title="Supprimer ce commentaire">🗑️ Supprimer</button>
+                </div>
+                <?php endif; ?>
               </div>
 
               <div class="chat-msg">
@@ -659,6 +1012,12 @@ $isCreator = ($userPlan === 'creator') || $isAdminOrSpeaker;
                   <div class="msg-author">Florian L. <span class="msg-time">19:16</span></div>
                   <div class="msg-text">Est-ce que tu recommandes de proposer une offre d'entrée à 9€ avant un forfait coaching ?</div>
                 </div>
+                <?php if ($isLiveHost): ?>
+                <div class="chat-msg-actions">
+                  <button type="button" class="btn-chat-pin" title="Épingler ce commentaire">📌 Épingler</button>
+                  <button type="button" class="btn-chat-delete" title="Supprimer ce commentaire">🗑️ Supprimer</button>
+                </div>
+                <?php endif; ?>
               </div>
 
               <div class="chat-msg msg-highlight">
@@ -667,6 +1026,12 @@ $isCreator = ($userPlan === 'creator') || $isAdminOrSpeaker;
                   <div class="msg-author">Cyril D. (Host) <span class="msg-time">19:18</span></div>
                   <div class="msg-text">@Florian Absolument, c'est ce qu'on va détailler dans 5 minutes avec le partage d'écran !</div>
                 </div>
+                <?php if ($isLiveHost): ?>
+                <div class="chat-msg-actions">
+                  <button type="button" class="btn-chat-pin" title="Épingler ce commentaire">📌 Épingler</button>
+                  <button type="button" class="btn-chat-delete" title="Supprimer ce commentaire">🗑️ Supprimer</button>
+                </div>
+                <?php endif; ?>
               </div>
 
               <div class="chat-msg">
@@ -675,6 +1040,12 @@ $isCreator = ($userPlan === 'creator') || $isAdminOrSpeaker;
                   <div class="msg-author">Sarah B. <span class="msg-time">19:21</span></div>
                   <div class="msg-text">La trame de contrat freelance partagée la semaine dernière m'a sauvé un closing de 3 200€ 🙌</div>
                 </div>
+                <?php if ($isLiveHost): ?>
+                <div class="chat-msg-actions">
+                  <button type="button" class="btn-chat-pin" title="Épingler ce commentaire">📌 Épingler</button>
+                  <button type="button" class="btn-chat-delete" title="Supprimer ce commentaire">🗑️ Supprimer</button>
+                </div>
+                <?php endif; ?>
               </div>
             </div>
 
@@ -696,48 +1067,80 @@ $isCreator = ($userPlan === 'creator') || $isAdminOrSpeaker;
         <div class="dash-sub-block" style="margin-top:2.5rem;">
           <div class="sub-block-header">
             <h2 class="dash-sub-title">Calendrier des prochains Lives</h2>
-            <a href="creer-live.php" class="btn btn-primary btn-sm btn-create-session-dash" title="Proposer un nouveau live ou mastermind">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-                <circle cx="12" cy="12" r="10"></circle>
-                <line x1="12" y1="8" x2="12" y2="16"></line>
-                <line x1="8" y1="12" x2="16" y2="12"></line>
-              </svg>
-              <span>Créer un Live ou Mastermind</span>
-            </a>
+            <?php if ($isCreator): ?>
+              <a href="creer-live.php" class="btn btn-primary btn-sm btn-create-session-dash" title="Proposer un nouveau live ou mastermind">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                  <circle cx="12" cy="12" r="10"></circle>
+                  <line x1="12" y1="8" x2="12" y2="16"></line>
+                  <line x1="8" y1="12" x2="16" y2="12"></line>
+                </svg>
+                <span>Créer un Live ou Mastermind</span>
+              </a>
+            <?php endif; ?>
           </div>
           
           <div class="dash-cards-grid" id="dashUpcomingLivesGrid">
-            <div class="dash-event-card">
+            <?php foreach ($allLives as $live): 
+                $liveTimestamp = strtotime($live['scheduled_date']);
+                $dayNames = ['DIM', 'LUN', 'MAR', 'MER', 'JEU', 'VEN', 'SAM'];
+                $dayLetter = $dayNames[date('w', $liveTimestamp)];
+                $dayNum = date('d', $liveTimestamp);
+                $canManage = ($live['user_id'] == $currentUser['id']) || is_owner($currentUser) || is_admin_user($currentUser) || user_has_permission($currentUser, 'gerer_lives');
+                $authorAvatar = !empty($live['author_avatar']) ? $live['author_avatar'] : './img/avatar-maxime.jpg';
+            ?>
+            <div class="dash-event-card" id="dash-live-<?= $live['id'] ?>" data-live-id="<?= $live['id'] ?>">
               <div class="event-card-date">
-                <span class="event-day">VEN</span>
-                <span class="event-num">25</span>
+                <span class="event-day"><?= $dayLetter ?></span>
+                <span class="event-num"><?= $dayNum ?></span>
               </div>
               <div class="event-card-content">
-                <span class="event-tag">Co-Working & Feedback</span>
-                <h3 class="event-title">Revue en direct de vos pages de vente & tunnels</h3>
-                <p class="event-desc">4 membres volontaires présentent leur offre pour recevoir les retours constructifs de la communauté.</p>
-                <div class="event-footer">
-                  <span class="event-host">Animé par Sophie M. (Copywriter)</span>
-                  <button type="button" class="btn btn-secondary btn-sm btn-add-google-cal" data-cal-title="Co-Working : Revue en direct de vos pages de vente & tunnels" data-cal-date="20260925T140000Z/20260925T153000Z" data-cal-desc="Session de co-working et feedback constructif One Vision animée par Sophie M." data-cal-loc="Espace Live One Vision (dashboard.html)">📅 Rappel agenda</button>
+                <div style="display:flex; justify-content:space-between; align-items:center; gap:0.5rem; margin-bottom:0.35rem; flex-wrap:wrap;">
+                  <span class="event-tag"><?= htmlspecialchars($live['format']) ?></span>
+                  <span style="font-size:0.8rem; color:#64748b; font-weight:600;">🕒 <?= htmlspecialchars($live['scheduled_time']) ?> (<?= htmlspecialchars($live['duration']) ?>)</span>
+                </div>
+                <h3 class="event-title"><?= htmlspecialchars($live['title']) ?></h3>
+                <p class="event-desc"><?= htmlspecialchars($live['description']) ?></p>
+                
+                <div class="event-footer" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:0.6rem; margin-top:0.75rem;">
+                  <!-- Profil et visage réel de l'Animateur -->
+                  <div class="event-host-profile" style="display:flex; align-items:center; gap:0.65rem;">
+                    <img src="<?= htmlspecialchars($authorAvatar) ?>" alt="<?= htmlspecialchars($live['author_name']) ?>" style="width:38px; height:38px; border-radius:50%; object-fit:cover; border:2px solid #e2e8f0; box-shadow:0 2px 5px rgba(0,0,0,0.08);" onerror="this.src='./img/avatar-maxime.jpg'">
+                    <div>
+                      <div style="font-size:0.88rem; font-weight:700; color:#0f172a; line-height:1.2;"><?= htmlspecialchars($live['author_name']) ?></div>
+                      <div style="font-size:0.75rem; color:#64748b;"><?= htmlspecialchars($live['author_role'] ?? 'Animateur One Vision') ?></div>
+                    </div>
+                  </div>
+                  
+                  <div class="event-actions-row" style="display:flex; align-items:center; gap:0.45rem; flex-wrap:wrap;">
+                    <button type="button" class="btn btn-secondary btn-sm btn-add-google-cal" data-cal-title="<?= htmlspecialchars($live['title']) ?>" data-cal-date="<?= date('Ymd\THis\Z', $liveTimestamp) ?>" data-cal-desc="<?= htmlspecialchars($live['description']) ?>" data-cal-loc="Espace Live One Vision">📅 Rappel agenda</button>
+                    
+                    <?php if ($canManage): ?>
+                      <button type="button" class="btn btn-outline btn-sm btn-edit-live-trigger" 
+                        data-id="<?= $live['id'] ?>"
+                        data-title="<?= htmlspecialchars($live['title']) ?>"
+                        data-desc="<?= htmlspecialchars($live['description']) ?>"
+                        data-format="<?= htmlspecialchars($live['format']) ?>"
+                        data-date="<?= htmlspecialchars($live['scheduled_date']) ?>"
+                        data-time="<?= htmlspecialchars($live['scheduled_time']) ?>"
+                        data-duration="<?= htmlspecialchars($live['duration']) ?>"
+                        data-resources="<?= htmlspecialchars($live['resources']) ?>"
+                        style="font-size:0.78rem; padding:0.35rem 0.65rem; border:1px solid #bfdbfe; color:#2563eb; background:#eff6ff;"
+                        title="Modifier cette session">
+                        ✏️ Modifier
+                      </button>
+                      <button type="button" class="btn btn-outline btn-sm btn-delete-live-trigger" 
+                        data-id="<?= $live['id'] ?>"
+                        data-title="<?= htmlspecialchars($live['title']) ?>"
+                        style="font-size:0.78rem; padding:0.35rem 0.65rem; border:1px solid #fecaca; color:#dc2626; background:#fef2f2;"
+                        title="Supprimer cette session">
+                        🗑️ Supprimer
+                      </button>
+                    <?php endif; ?>
+                  </div>
                 </div>
               </div>
             </div>
-
-            <div class="dash-event-card">
-              <div class="event-card-date">
-                <span class="event-day">DIM</span>
-                <span class="event-num">27</span>
-              </div>
-              <div class="event-card-content">
-                <span class="event-tag">Mastermind Dimanche</span>
-                <h3 class="event-title">Bilan sans filtre de la semaine & objectifs du mois</h3>
-                <p class="event-desc">Le rendez-vous chaleureux du dimanche soir pour faire le point, débloquer ses doutes et planifier ses victoires.</p>
-                <div class="event-footer">
-                  <span class="event-host">Animé par Thomas R. (Mentor)</span>
-                  <button type="button" class="btn btn-secondary btn-sm btn-add-google-cal" data-cal-title="Mastermind Dimanche : Bilan de la semaine & objectifs du mois" data-cal-date="20260927T200000Z/20260927T211500Z" data-cal-desc="Le rendez-vous dominical chaleureux One Vision pour planifier ses victoires avec Thomas R." data-cal-loc="Espace Live One Vision (dashboard.html)">📅 Rappel agenda</button>
-                </div>
-              </div>
-            </div>
+            <?php endforeach; ?>
           </div>
         </div>
 
@@ -827,7 +1230,7 @@ $isCreator = ($userPlan === 'creator') || $isAdminOrSpeaker;
           </div>
           <div class="dash-header-actions">
             <?php if ($isCreator): ?>
-              <a href="creer-live.php" class="btn btn-primary btn-create-session-dash" id="btnCreateLiveDashTop" title="Proposer un nouveau live ou mastermind">
+              <a href="espace-animateur.php" class="btn btn-primary btn-create-session-dash" id="btnCreateLiveDashTop" title="Programmer un live dans l'Espace Animateur">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
                   <circle cx="12" cy="12" r="10"></circle>
                   <line x1="12" y1="8" x2="12" y2="16"></line>
@@ -836,15 +1239,13 @@ $isCreator = ($userPlan === 'creator') || $isAdminOrSpeaker;
                 <span>Créer un Live ou Mastermind</span>
               </a>
             <?php else: ?>
-              <button type="button" class="btn btn-primary btn-create-session-dash btn-upgrade-creator-trigger" id="btnCreateLiveDashTop" title="Statut Créateur (29€/mois) requis pour créer un live">
+              <a href="abonnements.php" class="btn btn-primary btn-create-session-dash" id="btnCreateLiveDashTop" title="Réservé aux Animateurs — Voir la formule Animateur">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-                  <circle cx="12" cy="12" r="10"></circle>
-                  <line x1="12" y1="8" x2="12" y2="16"></line>
-                  <line x1="8" y1="12" x2="16" y2="12"></line>
+                  <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+                  <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
                 </svg>
-                <span>Créer un Live ou Mastermind</span>
-                <span style="font-size:0.72rem;background:rgba(255,255,255,0.25);padding:0.15rem 0.45rem;border-radius:6px;margin-left:0.35rem;font-weight:700;">29€/m</span>
-              </button>
+                <span>Créer un Live (Formule Animateur)</span>
+              </a>
             <?php endif; ?>
           </div>
         </div>
@@ -857,8 +1258,10 @@ $isCreator = ($userPlan === 'creator') || $isAdminOrSpeaker;
               $dayNames = ['DIM', 'LUN', 'MAR', 'MER', 'JEU', 'VEN', 'SAM'];
               $dayLetter = $dayNames[date('w', $liveTimestamp)];
               $dayNum = date('d', $liveTimestamp);
+              $canManage = ($live['user_id'] == $currentUser['id']) || is_owner($currentUser) || is_admin_user($currentUser) || user_has_permission($currentUser, 'gerer_lives');
+              $authorAvatar = !empty($live['author_avatar']) ? $live['author_avatar'] : './img/avatar-maxime.jpg';
           ?>
-          <div class="calendar-card" data-live-id="<?= $live['id'] ?>">
+          <div class="calendar-card" id="cal-card-<?= $live['id'] ?>" data-live-id="<?= $live['id'] ?>">
             <div class="calendar-date-badge">
               <span class="calendar-date-month"><?= $dayLetter ?></span>
               <span class="calendar-date-day"><?= $dayNum ?></span>
@@ -869,7 +1272,17 @@ $isCreator = ($userPlan === 'creator') || $isAdminOrSpeaker;
                 <span class="calendar-time-tag"><?= htmlspecialchars($live['scheduled_time']) ?> (<?= htmlspecialchars($live['duration']) ?>)</span>
               </div>
               <h3 class="calendar-card-title"><?= htmlspecialchars($live['title']) ?></h3>
-              <p class="calendar-card-desc"><?= htmlspecialchars($live['description']) ?> Animé par <strong><?= htmlspecialchars($live['author_name']) ?></strong> (<?= htmlspecialchars($live['author_role']) ?>).</p>
+              <p class="calendar-card-desc"><?= htmlspecialchars($live['description']) ?></p>
+              
+              <!-- Profil et visage réel de l'Animateur -->
+              <div class="calendar-host-row" style="display:flex; align-items:center; gap:0.65rem; margin:0.6rem 0 0.85rem 0;">
+                <img src="<?= htmlspecialchars($authorAvatar) ?>" alt="<?= htmlspecialchars($live['author_name']) ?>" style="width:36px; height:36px; border-radius:50%; object-fit:cover; border:2px solid #e2e8f0; box-shadow:0 2px 4px rgba(0,0,0,0.06);" onerror="this.src='./img/avatar-maxime.jpg'">
+                <div>
+                  <strong style="font-size:0.86rem; color:#0f172a;"><?= htmlspecialchars($live['author_name']) ?></strong>
+                  <span style="font-size:0.75rem; color:#64748b; margin-left:0.35rem;">(<?= htmlspecialchars($live['author_role'] ?? 'Animateur One Vision') ?>)</span>
+                </div>
+              </div>
+
               <?php if (!empty($live['resources'])): ?>
                 <div style="font-size:0.83rem; color:#0369a1; background:#e0f2fe; padding:0.35rem 0.65rem; border-radius:6px; margin-bottom:0.75rem; display:inline-block;">
                   📎 Ressource offerte : <?= htmlspecialchars($live['resources']) ?>
@@ -880,15 +1293,12 @@ $isCreator = ($userPlan === 'creator') || $isAdminOrSpeaker;
                   <button type="button" class="btn btn-primary btn-sm btn-join-live-direct">
                     Rejoindre la salle Live
                   </button>
-                  <button type="button" class="btn btn-secondary btn-sm btn-add-google-cal" data-cal-title="<?= htmlspecialchars($live['title']) ?>" data-cal-date="<?= date('Ymd\THis\Z', $liveTimestamp) ?>" data-cal-desc="<?= htmlspecialchars($live['description']) ?>">
+                  <button type="button" class="btn btn-secondary btn-sm btn-add-google-cal" data-cal-title="<?= htmlspecialchars($live['title']) ?>" data-cal-date="<?= date('Ymd\THis\Z', $liveTimestamp) ?>" data-cal-desc="<?= htmlspecialchars($live['description']) ?>" data-cal-loc="Espace Live One Vision">
                     📅 Rappel agenda
                   </button>
                 </div>
                 
-                <?php 
-                  $canManage = $isCreator && (($live['user_id'] == $currentUser['id']) || empty($live['user_id']) || $isAdminOrSpeaker || $userPlan === 'creator');
-                  if ($canManage):
-                ?>
+                <?php if ($canManage): ?>
                 <div class="live-creator-actions" style="display:flex; align-items:center; gap:0.45rem;">
                   <button type="button" class="btn btn-outline btn-sm btn-edit-live-trigger" 
                     data-id="<?= $live['id'] ?>"
@@ -900,14 +1310,14 @@ $isCreator = ($userPlan === 'creator') || $isAdminOrSpeaker;
                     data-duration="<?= htmlspecialchars($live['duration']) ?>"
                     data-resources="<?= htmlspecialchars($live['resources']) ?>"
                     style="font-size:0.78rem; padding:0.35rem 0.65rem; border:1px solid #bfdbfe; color:#2563eb; background:#eff6ff;"
-                    title="Modifier ce live">
+                    title="Modifier cette session">
                     ✏️ Modifier
                   </button>
                   <button type="button" class="btn btn-outline btn-sm btn-delete-live-trigger"
                     data-id="<?= $live['id'] ?>"
                     data-title="<?= htmlspecialchars($live['title']) ?>"
                     style="font-size:0.78rem; padding:0.35rem 0.65rem; border:1px solid #fecaca; color:#dc2626; background:#fef2f2;"
-                    title="Supprimer ce live">
+                    title="Supprimer cette session">
                     🗑️ Supprimer
                   </button>
                 </div>
@@ -916,203 +1326,6 @@ $isCreator = ($userPlan === 'creator') || $isAdminOrSpeaker;
             </div>
           </div>
           <?php endforeach; ?>
-          
-          <div class="calendar-card" data-live-id="demo-24">
-            <div class="calendar-date-badge">
-              <span class="calendar-date-month">JEU</span>
-              <span class="calendar-date-day">24</span>
-            </div>
-            <div class="calendar-card-body">
-              <div class="calendar-card-top">
-                <span class="badge-plan-active" style="background:#2563eb;">Mastermind Stratégie</span>
-                <span class="calendar-time-tag">18h30 - 20h00 (Visio HD)</span>
-              </div>
-              <h3 class="calendar-card-title">Passer de 0 à 10 clients réguliers sans publicité payante</h3>
-              <p class="calendar-card-desc">Analyse complète des leviers organiques d'acquisition B2B, audit en direct des profils volontaires et plan d'action immédiat. Animé par Julien B. (Fondateur SaaS & Coach B2B).</p>
-              <div class="calendar-card-actions" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:0.6rem;">
-                <div style="display:flex; align-items:center; gap:0.5rem; flex-wrap:wrap;">
-                  <button type="button" class="btn btn-primary btn-sm btn-join-live-direct">
-                    Rejoindre la salle Live
-                  </button>
-                  <button type="button" class="btn btn-secondary btn-sm btn-add-google-cal" data-cal-title="Mastermind : Passer de 0 à 10 clients réguliers sans pub" data-cal-date="20260924T183000Z/20260924T200000Z" data-cal-desc="Mastermind Stratégie One Vision avec Julien B. : acquisition B2B organique." data-cal-loc="Espace Live One Vision (dashboard.html)">
-                    📅 Ajouter à mon calendrier
-                  </button>
-                </div>
-                <?php if ($isCreator): ?>
-                <div class="live-creator-actions" style="display:flex; align-items:center; gap:0.45rem;">
-                  <button type="button" class="btn btn-outline btn-sm btn-edit-live-trigger" 
-                    data-id="demo-24"
-                    data-title="Passer de 0 à 10 clients réguliers sans publicité payante"
-                    data-desc="Analyse complète des leviers organiques d'acquisition B2B, audit en direct des profils volontaires et plan d'action immédiat."
-                    data-format="Mastermind Stratégie"
-                    data-date="2026-09-24"
-                    data-time="18h30"
-                    data-duration="1h30"
-                    data-resources="Trame d'audit B2B (.PDF)"
-                    style="font-size:0.78rem; padding:0.35rem 0.65rem; border:1px solid #bfdbfe; color:#2563eb; background:#eff6ff;"
-                    title="Modifier ce live">
-                    ✏️ Modifier
-                  </button>
-                  <button type="button" class="btn btn-outline btn-sm btn-delete-live-trigger"
-                    data-id="demo-24"
-                    data-title="Passer de 0 à 10 clients réguliers sans publicité payante"
-                    style="font-size:0.78rem; padding:0.35rem 0.65rem; border:1px solid #fecaca; color:#dc2626; background:#fef2f2;"
-                    title="Supprimer ce live">
-                    🗑️ Supprimer
-                  </button>
-                </div>
-                <?php endif; ?>
-              </div>
-            </div>
-          </div>
-
-          <div class="calendar-card" data-live-id="demo-25">
-            <div class="calendar-date-badge">
-              <span class="calendar-date-month">VEN</span>
-              <span class="calendar-date-day">25</span>
-            </div>
-            <div class="calendar-card-body">
-              <div class="calendar-card-top">
-                <span class="badge-plan-active" style="background:#16a34a;">Co-Working & Feedback</span>
-                <span class="calendar-time-tag">14h00 - 15h30 (Interactif)</span>
-              </div>
-              <h3 class="calendar-card-title">Revue en direct de vos pages de vente & tunnels</h3>
-              <p class="calendar-card-desc">Session de feedback bienveillante et constructive. 4 membres volontaires présentent leur offre à l'écran pour optimiser le copywriting et la conversion. Animé par Sophie M. (Copywriter).</p>
-              <div class="calendar-card-actions" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:0.6rem;">
-                <div style="display:flex; align-items:center; gap:0.5rem; flex-wrap:wrap;">
-                  <button type="button" class="btn btn-primary btn-sm btn-join-live-direct">
-                    Rejoindre la salle Live
-                  </button>
-                  <button type="button" class="btn btn-secondary btn-sm btn-add-google-cal" data-cal-title="Co-Working : Revue en direct de vos pages de vente & tunnels" data-cal-date="20260925T140000Z/20260925T153000Z" data-cal-desc="Session de feedback bienveillante et constructive animée par Sophie M." data-cal-loc="Espace Live One Vision (dashboard.html)">
-                    📅 Ajouter à mon calendrier
-                  </button>
-                </div>
-                <?php if ($isCreator): ?>
-                <div class="live-creator-actions" style="display:flex; align-items:center; gap:0.45rem;">
-                  <button type="button" class="btn btn-outline btn-sm btn-edit-live-trigger" 
-                    data-id="demo-25"
-                    data-title="Revue en direct de vos pages de vente & tunnels"
-                    data-desc="Session de feedback bienveillante et constructive. Optimisation copywriting et conversion."
-                    data-format="Co-Working & Feedback"
-                    data-date="2026-09-25"
-                    data-time="14h00"
-                    data-duration="1h30"
-                    data-resources="Checklist conversion page de vente"
-                    style="font-size:0.78rem; padding:0.35rem 0.65rem; border:1px solid #bfdbfe; color:#2563eb; background:#eff6ff;"
-                    title="Modifier ce live">
-                    ✏️ Modifier
-                  </button>
-                  <button type="button" class="btn btn-outline btn-sm btn-delete-live-trigger"
-                    data-id="demo-25"
-                    data-title="Revue en direct de vos pages de vente & tunnels"
-                    style="font-size:0.78rem; padding:0.35rem 0.65rem; border:1px solid #fecaca; color:#dc2626; background:#fef2f2;"
-                    title="Supprimer ce live">
-                    🗑️ Supprimer
-                  </button>
-                </div>
-                <?php endif; ?>
-              </div>
-            </div>
-          </div>
-
-          <div class="calendar-card" data-live-id="demo-27">
-            <div class="calendar-date-badge">
-              <span class="calendar-date-month">DIM</span>
-              <span class="calendar-date-day">27</span>
-            </div>
-            <div class="calendar-card-body">
-              <div class="calendar-card-top">
-                <span class="badge-plan-active" style="background:#7c3aed;">Mastermind Dimanche</span>
-                <span class="calendar-time-tag">20h00 - 21h15 (Sans filtre)</span>
-              </div>
-              <h3 class="calendar-card-title">Bilan sans filtre de la semaine & objectifs du mois</h3>
-              <p class="calendar-card-desc">Le rendez-vous chaleureux du dimanche soir pour débloquer les doutes, célébrer les victoires commerciales et planifier une semaine productive. Animé par Thomas R. (Mentor).</p>
-              <div class="calendar-card-actions" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:0.6rem;">
-                <div style="display:flex; align-items:center; gap:0.5rem; flex-wrap:wrap;">
-                  <button type="button" class="btn btn-primary btn-sm btn-join-live-direct">
-                    Rejoindre la salle Live
-                  </button>
-                  <button type="button" class="btn btn-secondary btn-sm btn-add-google-cal" data-cal-title="Mastermind Dimanche : Bilan de la semaine & objectifs du mois" data-cal-date="20260927T200000Z/20260927T211500Z" data-cal-desc="Le rendez-vous chaleureux du dimanche soir One Vision avec Thomas R." data-cal-loc="Espace Live One Vision (dashboard.html)">
-                    📅 Ajouter à mon calendrier
-                  </button>
-                </div>
-                <?php if ($isCreator): ?>
-                <div class="live-creator-actions" style="display:flex; align-items:center; gap:0.45rem;">
-                  <button type="button" class="btn btn-outline btn-sm btn-edit-live-trigger" 
-                    data-id="demo-27"
-                    data-title="Bilan sans filtre de la semaine & objectifs du mois"
-                    data-desc="Le rendez-vous chaleureux du dimanche soir pour débloquer les doutes, célébrer les victoires et planifier."
-                    data-format="Mastermind Dimanche"
-                    data-date="2026-09-27"
-                    data-time="20h00"
-                    data-duration="1h15"
-                    data-resources="Fiche d'objectifs hebdomadaires (.PDF)"
-                    style="font-size:0.78rem; padding:0.35rem 0.65rem; border:1px solid #bfdbfe; color:#2563eb; background:#eff6ff;"
-                    title="Modifier ce live">
-                    ✏️ Modifier
-                  </button>
-                  <button type="button" class="btn btn-outline btn-sm btn-delete-live-trigger"
-                    data-id="demo-27"
-                    data-title="Bilan sans filtre de la semaine & objectifs du mois"
-                    style="font-size:0.78rem; padding:0.35rem 0.65rem; border:1px solid #fecaca; color:#dc2626; background:#fef2f2;"
-                    title="Supprimer ce live">
-                    🗑️ Supprimer
-                  </button>
-                </div>
-                <?php endif; ?>
-              </div>
-            </div>
-          </div>
-
-          <div class="calendar-card" data-live-id="demo-29">
-            <div class="calendar-date-badge">
-              <span class="calendar-date-month">MAR</span>
-              <span class="calendar-date-day">29</span>
-            </div>
-            <div class="calendar-card-body">
-              <div class="calendar-card-top">
-                <span class="badge-plan-active" style="background:#0891b2;">Conférence No-Code</span>
-                <span class="calendar-time-tag">19h00 - 20h30 (Atelier IA)</span>
-              </div>
-              <h3 class="calendar-card-title">Automatiser son back-office avec l'IA et No-Code</h3>
-              <p class="calendar-card-desc">Comment déléguer 10h de tâches chronophages chaque semaine grâce à des workflows simples et reproductibles. Animé par Alexandre L. (Expert No-Code).</p>
-              <div class="calendar-card-actions" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:0.6rem;">
-                <div style="display:flex; align-items:center; gap:0.5rem; flex-wrap:wrap;">
-                  <button type="button" class="btn btn-primary btn-sm btn-join-live-direct">
-                    Rejoindre la salle Live
-                  </button>
-                  <button type="button" class="btn btn-secondary btn-sm btn-add-google-cal" data-cal-title="Atelier No-Code : Automatiser son back-office avec l'IA" data-cal-date="20260929T190000Z/20260929T203000Z" data-cal-desc="Conférence No-Code & IA animée par Alexandre L. pour libérer 10h/semaine." data-cal-loc="Espace Live One Vision (dashboard.html)">
-                    📅 Ajouter à mon calendrier
-                  </button>
-                </div>
-                <?php if ($isCreator): ?>
-                <div class="live-creator-actions" style="display:flex; align-items:center; gap:0.45rem;">
-                  <button type="button" class="btn btn-outline btn-sm btn-edit-live-trigger" 
-                    data-id="demo-29"
-                    data-title="Automatiser son back-office avec l'IA et No-Code"
-                    data-desc="Comment déléguer 10h de tâches chronophages chaque semaine grâce à des workflows simples et reproductibles."
-                    data-format="Conférence No-Code"
-                    data-date="2026-09-29"
-                    data-time="19h00"
-                    data-duration="1h30"
-                    data-resources="Template Make / Zapier offert"
-                    style="font-size:0.78rem; padding:0.35rem 0.65rem; border:1px solid #bfdbfe; color:#2563eb; background:#eff6ff;"
-                    title="Modifier ce live">
-                    ✏️ Modifier
-                  </button>
-                  <button type="button" class="btn btn-outline btn-sm btn-delete-live-trigger"
-                    data-id="demo-29"
-                    data-title="Automatiser son back-office avec l'IA et No-Code"
-                    style="font-size:0.78rem; padding:0.35rem 0.65rem; border:1px solid #fecaca; color:#dc2626; background:#fef2f2;"
-                    title="Supprimer ce live">
-                    🗑️ Supprimer
-                  </button>
-                </div>
-                <?php endif; ?>
-              </div>
-            </div>
-          </div>
-
         </div>
       </section>
 
@@ -1567,9 +1780,6 @@ $isCreator = ($userPlan === 'creator') || $isAdminOrSpeaker;
             </svg>
             <span>Retour</span>
           </button>
-          <div class="account-badge-pill">
-            <span>⚙️ Paramètres & Sécurité</span>
-          </div>
         </div>
 
         <div class="dash-section-header">
@@ -1591,13 +1801,22 @@ $isCreator = ($userPlan === 'creator') || $isAdminOrSpeaker;
             <div class="settings-avatar-flex">
               <div class="settings-avatar-preview-box">
                 <img src="<?= htmlspecialchars($currentUser['avatar'] ?? './img/avatar-maxime.jpg') ?>" alt="Aperçu Photo" id="settingsAvatarPreview" class="settings-avatar-large">
-                <span class="badge-role-avatar">👑 Admin</span>
+                <span class="badge-role-avatar" style="display:inline-flex; align-items:center; gap:0.35rem;">
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M2 4l3 12h14l3-12-5 7-5-7-5 7-5-7z"></path>
+                  </svg>
+                  <span>Admin</span>
+                </span>
               </div>
               <div class="settings-avatar-controls">
                 <input type="file" id="settingsAvatarInput" accept="image/png, image/jpeg, image/jpg, image/webp" style="display:none;">
                 <div class="settings-avatar-btns">
                   <label for="settingsAvatarInput" class="btn btn-secondary btn-sm" id="btnUploadAvatar" style="cursor:pointer;display:inline-flex;align-items:center;gap:0.4rem;margin:0;">
-                    📷 Changer ma photo
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path>
+                      <circle cx="12" cy="13" r="4"></circle>
+                    </svg>
+                    <span>Changer ma photo</span>
                   </label>
                   <button type="button" class="btn btn-outline-dash btn-sm" id="btnResetAvatar">
                     Réinitialiser
@@ -1628,19 +1847,23 @@ $isCreator = ($userPlan === 'creator') || $isAdminOrSpeaker;
             <div class="settings-fields-grid">
               <div class="form-group">
                 <label for="settingsFullName" class="form-label">Nom complet ou Prénom & Nom *</label>
-                <input type="text" id="settingsFullName" class="form-input" value="<?= htmlspecialchars($currentUser['full_name']) ?>" required placeholder="Ex: Katahana Désiré">
+                <input type="text" id="settingsFullName" name="settingsFullName" class="form-input" value="<?= htmlspecialchars($currentUser['full_name']) ?>" required placeholder="Ex: Katahana Désiré">
               </div>
 
               <div class="form-group">
                 <label for="settingsRole" class="form-label">Activité ou Titre professionnel</label>
-                <input type="text" id="settingsRole" class="form-input" value="<?= htmlspecialchars($currentUser['job_title'] ?: 'Entrepreneur & Membre One Vision') ?>" placeholder="Ex: Entrepreneur, Développeur, Coach...">
+                <input type="text" id="settingsRole" name="settingsRole" class="form-input" value="<?= htmlspecialchars($currentUser['job_title'] ?: 'Entrepreneur & Membre One Vision') ?>" placeholder="Ex: Entrepreneur, Développeur, Coach...">
               </div>
 
               <div class="form-group">
                 <label for="settingsPhone" class="form-label">Numéro de téléphone direct *</label>
                 <div class="input-with-icon">
-                  <span class="input-icon">📞</span>
-                  <input type="tel" id="settingsPhone" class="form-input" value="+33 6 84 92 10 33" placeholder="+33 6 12 34 56 78" required>
+                  <span class="input-icon">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path>
+                    </svg>
+                  </span>
+                  <input type="tel" id="settingsPhone" name="settingsPhone" class="form-input" value="<?= htmlspecialchars(!empty($currentUser['phone']) ? $currentUser['phone'] : '+33 6 84 92 10 33') ?>" placeholder="+33 6 12 34 56 78" required>
                 </div>
                 <span class="settings-hint">Utile pour être contacté directement par la communauté et l'équipe One Vision.</span>
               </div>
@@ -1661,31 +1884,74 @@ $isCreator = ($userPlan === 'creator') || $isAdminOrSpeaker;
             <div class="settings-fields-grid">
               <div class="form-group">
                 <label for="settingsOldPassword" class="form-label">Mot de passe actuel</label>
-                <input type="password" id="settingsOldPassword" class="form-input" placeholder="••••••••••••">
+                <input type="password" id="settingsOldPassword" name="settingsOldPassword" class="form-input" placeholder="••••••••••••">
               </div>
 
               <div class="form-group">
                 <label for="settingsNewPassword" class="form-label">Nouveau mot de passe</label>
-                <input type="password" id="settingsNewPassword" class="form-input" placeholder="Min. 8 caractères sécurisés">
+                <input type="password" id="settingsNewPassword" name="settingsNewPassword" class="form-input" placeholder="Min. 8 caractères sécurisés">
               </div>
 
               <div class="form-group" style="grid-column: 1 / -1;">
                 <label for="settingsConfirmPassword" class="form-label">Confirmer le nouveau mot de passe</label>
-                <input type="password" id="settingsConfirmPassword" class="form-input" placeholder="Confirmez à l'identique">
+                <input type="password" id="settingsConfirmPassword" name="settingsConfirmPassword" class="form-input" placeholder="Confirmez à l'identique">
               </div>
             </div>
           </div>
 
           <!-- 4. BOUTONS D'ACTION -->
           <div class="settings-form-actions">
-            <button type="submit" class="btn btn-primary" id="btnSaveAccountSettings">
-              💾 Enregistrer les modifications
+            <button type="submit" class="btn btn-primary" id="btnSaveAccountSettings" style="display:inline-flex; align-items:center; gap:0.5rem;">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path>
+                <polyline points="17 21 17 13 7 13 7 21"></polyline>
+                <polyline points="7 3 7 8 15 8"></polyline>
+              </svg>
+              <span>Enregistrer les modifications</span>
             </button>
             <button type="button" class="btn btn-secondary" id="btnCancelAccountSettings">
               Annuler
             </button>
           </div>
         </form>
+
+        <!-- 5. ZONE CRITIQUE : RÉSILIATION ET SUPPRESSION DU COMPTE -->
+        <div class="settings-card danger-zone-card" style="border: 1.5px solid #fecaca; background: #fff5f5; margin-top: 1.75rem; border-radius: 16px; padding: 1.5rem;">
+          <div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 1.5rem; flex-wrap: wrap;">
+            <div style="max-width: 600px;">
+              <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.4rem;">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#dc2626" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;">
+                  <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
+                  <line x1="12" y1="9" x2="12" y2="13"></line>
+                  <line x1="12" y1="17" x2="12.01" y2="17"></line>
+                </svg>
+                <h3 class="settings-card-title" style="color: #991b1b; margin: 0; font-size: 1.15rem; font-weight: 800;">Résilier et supprimer mon compte</h3>
+              </div>
+              <p class="settings-card-desc" style="color: #7f1d1d; margin: 0 0 0.5rem 0; line-height: 1.5; font-size: 0.88rem;">
+                Si vous ne souhaitez plus utiliser One Vision Community, vous pouvez résilier votre adhésion et supprimer définitivement votre compte ainsi que l'ensemble de vos données personnelles de la plateforme.
+              </p>
+              <span style="font-size: 0.8rem; color: #b91c1c; font-weight: 600; display: inline-flex; align-items: center; gap: 0.4rem;">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" style="flex-shrink:0;">
+                  <circle cx="12" cy="12" r="10"></circle>
+                  <line x1="12" y1="8" x2="12" y2="12"></line>
+                  <line x1="12" y1="16" x2="12.01" y2="16"></line>
+                </svg>
+                <span>Cette action est irréversible. Votre accès aux salons d'échanges, masterminds, lives hebdomadaires et replays sera immédiatement interrompu.</span>
+              </span>
+            </div>
+            <div style="align-self: center;">
+              <button type="button" class="btn btn-danger btn-open-delete-account" id="btnOpenDeleteAccountModal" onclick="openDeleteAccountModal()" style="background: #dc2626; color: #ffffff; border: none; padding: 0.75rem 1.35rem; font-weight: 700; border-radius: 10px; cursor: pointer; display: inline-flex; align-items: center; gap: 0.5rem; transition: background 0.2s; box-shadow: 0 4px 12px rgba(220, 38, 38, 0.2); font-size: 0.9rem;">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                  <polyline points="3 6 5 6 21 6"></polyline>
+                  <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                  <line x1="10" y1="11" x2="10" y2="17"></line>
+                  <line x1="14" y1="11" x2="14" y2="17"></line>
+                </svg>
+                <span>Supprimer mon compte</span>
+              </button>
+            </div>
+          </div>
+        </div>
       </section>
 
       <!-- ======================================================================
@@ -2280,6 +2546,27 @@ $isCreator = ($userPlan === 'creator') || $isAdminOrSpeaker;
         <input type="text" id="searchParticipantInput" placeholder="Rechercher un membre par nom ou métier..." class="form-input">
       </div>
 
+      <?php if ($isLiveHost): ?>
+      <!-- Panneau d'Actions Animateur / Hôte de la Session -->
+      <div class="host-moderation-banner" style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:12px; padding:0.85rem 1.15rem; margin:1rem 1.5rem 0.25rem; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:0.6rem;">
+        <div style="display:flex; align-items:center; gap:0.55rem;">
+          <span style="font-size:1.2rem;">🛡️</span>
+          <div>
+            <strong style="font-size:0.86rem; color:#0f172a; display:block;">Contrôles d'Administration de Session</strong>
+            <span style="font-size:0.75rem; color:#64748b;">En tant qu'Animateur, modérez les micros et les flux caméras</span>
+          </div>
+        </div>
+        <div style="display:flex; gap:0.45rem;">
+          <button type="button" class="btn btn-sm btn-host-ctrl" id="btnHostMuteAll" style="font-size:0.78rem; padding:0.38rem 0.75rem; border:1px solid #fecaca; background:#fff; color:#dc2626; border-radius:8px; cursor:pointer; font-weight:700;">
+            🔇 Couper tous les micros
+          </button>
+          <button type="button" class="btn btn-sm btn-host-ctrl" id="btnHostCutAllCams" style="font-size:0.78rem; padding:0.38rem 0.75rem; border:1px solid #fecaca; background:#fff; color:#dc2626; border-radius:8px; cursor:pointer; font-weight:700;">
+            📷 Couper toutes les caméras
+          </button>
+        </div>
+      </div>
+      <?php endif; ?>
+
       <div class="participants-modal-body" id="participantsModalListBody">
         <!-- Section Animateur -->
         <div class="participants-section-label">Animateur de la session</div>
@@ -2478,7 +2765,8 @@ $isCreator = ($userPlan === 'creator') || $isAdminOrSpeaker;
         <button type="button" class="dash-modal-close" id="closeEditLiveModalBtn" aria-label="Fermer la boîte de dialogue" style="background:none;border:none;font-size:1.5rem;cursor:pointer;color:#64748b;">&times;</button>
       </div>
 
-      <form id="editLiveForm" method="POST" action="dashboard.php#tab-calendrier" style="margin:0;">
+      <form id="editLiveForm" method="POST" action="dashboard.php?tab=tab-calendrier" style="margin:0;">
+        <input type="hidden" name="csrf_token" value="<?= htmlspecialchars(csrf_token()) ?>">
         <input type="hidden" name="action" value="edit_live">
         <input type="hidden" name="live_id" id="editLiveId" value="">
 
@@ -2552,7 +2840,8 @@ $isCreator = ($userPlan === 'creator') || $isAdminOrSpeaker;
         Cette action est irréversible et la session sera retirée du calendrier pour tous les membres.
       </p>
 
-      <form id="deleteLiveForm" method="POST" action="dashboard.php#tab-calendrier" style="margin:0;">
+      <form id="deleteLiveForm" method="POST" action="dashboard.php?tab=tab-calendrier" style="margin:0;">
+        <input type="hidden" name="csrf_token" value="<?= htmlspecialchars(csrf_token()) ?>">
         <input type="hidden" name="action" value="delete_live">
         <input type="hidden" name="live_id" id="deleteLiveId" value="">
 
@@ -2569,76 +2858,96 @@ $isCreator = ($userPlan === 'creator') || $isAdminOrSpeaker;
   </div>
 
   <!-- ======================================================================
-       MODALE 9 : PASSER AU STATUT CRÉATEUR & HOST (29€/MOIS)
+       MODALE 9 : CONFIRMATION DE RÉSILIATION ET SUPPRESSION DU COMPTE MEMBRE
        ====================================================================== -->
-  <div id="upgradeToCreatorModal" class="dash-modal" style="display:none;" role="dialog" aria-modal="true" aria-labelledby="upgradeCreatorModalTitle">
-    <div class="dash-modal-backdrop" id="backdropUpgradeCreator"></div>
-    <div class="dash-modal-dialog" style="max-width: 540px;padding:2rem;background:#fff;border-radius:18px;box-shadow:0 25px 50px -12px rgba(0,0,0,0.25);border:1px solid #e2e8f0;position:relative;">
-      <button type="button" class="dash-modal-close" id="closeUpgradeCreatorModalBtn" aria-label="Fermer" style="position:absolute;top:1rem;right:1rem;background:none;border:none;font-size:1.5rem;color:#94a3b8;cursor:pointer;">&times;</button>
+  <!-- ======================================================================
+       MODALE 9 : CONFIRMATION DE RÉSILIATION ET SUPPRESSION DU COMPTE MEMBRE
+       ====================================================================== -->
+  <div id="deleteAccountModal" class="dash-modal" style="display:none;" role="dialog" aria-modal="true" aria-labelledby="deleteAccountModalTitle">
+    <div class="dash-modal-backdrop" id="backdropDeleteAccount" onclick="closeDeleteAccountModal()"></div>
+    <div class="dash-modal-dialog" style="max-width: 490px; text-align: center; padding: 2.25rem 2rem; background: #ffffff; border-radius: 18px; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.3); border: 1px solid #fee2e2; position: relative;">
       
-      <div style="text-align:center;margin-bottom:1.5rem;">
-        <div style="width:68px;height:68px;border-radius:50%;background:linear-gradient(135deg, rgba(230,57,70,0.15), rgba(255,183,3,0.2));color:#e63946;display:inline-flex;align-items:center;justify-content:center;font-size:2.2rem;margin-bottom:1rem;border:2px solid rgba(230,57,70,0.25);">
-          👑
+      <!-- ÉTAPE 1 : CONFIRMATION -->
+      <div id="deleteAccountConfirmView">
+        <div style="width: 64px; height: 64px; border-radius: 50%; background: #fef2f2; color: #dc2626; display: inline-flex; align-items: center; justify-content: center; margin-bottom: 1.2rem; border: 2px solid #fee2e2;">
+          <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#dc2626" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
+            <line x1="12" y1="9" x2="12" y2="13"></line>
+            <line x1="12" y1="17" x2="12.01" y2="17"></line>
+          </svg>
         </div>
-        <h3 class="dash-modal-title" id="upgradeCreatorModalTitle" style="font-size:1.35rem;font-weight:800;color:#0f172a;margin-bottom:0.4rem;">
-          Passez au Statut Créateur & Host
+
+        <h3 class="dash-modal-title" id="deleteAccountModalTitle" style="font-size: 1.35rem; font-weight: 800; color: #0f172a; margin-bottom: 0.6rem; line-height: 1.3;">
+          Est-ce que vous voulez réellement supprimer votre compte ?
         </h3>
-        <p style="font-size:0.92rem;color:#64748b;line-height:1.5;margin:0;">
-          L'abonnement <strong style="color:#0f172a;">Membre (9 € / mois)</strong> permet de participer à toutes les sessions. Pour programmer, animer et diffuser vos propres Lives & Masterminds, activez la formule Créateur.
-        </p>
-      </div>
 
-      <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:14px;padding:1.25rem;margin-bottom:1.5rem;">
-        <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:1rem;border-bottom:1px solid #e2e8f0;padding-bottom:0.75rem;">
+        <p style="font-size: 0.92rem; color: #64748b; line-height: 1.55; margin-bottom: 1.25rem;">
+          Vous êtes sur le point de résilier votre adhésion à <strong>One Vision Community</strong>.<br>
+          Votre profil, vos accès aux salons d'échanges et toutes vos données personnelles seront définitivement supprimés de la plateforme.
+        </p>
+
+        <div style="background: #fff1f2; border: 1px solid #ffe4e6; border-radius: 12px; padding: 0.85rem 1rem; margin-bottom: 1.5rem; text-align: left; font-size: 0.84rem; color: #9f1239; display: flex; align-items: flex-start; gap: 0.6rem;">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#dc2626" stroke-width="2.5" style="flex-shrink: 0; margin-top: 1px;">
+            <circle cx="12" cy="12" r="10"></circle>
+            <line x1="12" y1="8" x2="12" y2="12"></line>
+            <line x1="12" y1="16" x2="12.01" y2="16"></line>
+          </svg>
           <div>
-            <span style="font-size:0.75rem;font-weight:700;letter-spacing:0.05em;text-transform:uppercase;color:#e63946;background:#ffebee;padding:0.2rem 0.55rem;border-radius:6px;display:inline-block;margin-bottom:0.25rem;">Formule Pro Host</span>
-            <h4 style="margin:0;font-size:1.15rem;font-weight:800;color:#0f172a;">Créateur & Host Mastermind</h4>
-          </div>
-          <div style="text-align:right;">
-            <span style="font-size:1.6rem;font-weight:900;color:#e63946;">29 €</span>
-            <span style="font-size:0.8rem;color:#64748b;">/ mois</span>
-            <div style="font-size:0.75rem;color:#64748b;font-weight:500;">~19 000 FCFA / mois</div>
+            <strong style="color: #991b1b;">Attention :</strong> Cette action est immédiate et irréversible. Aucun retour en arrière n'est possible.
           </div>
         </div>
 
-        <ul style="list-style:none;padding:0;margin:0;display:flex;flex-direction:column;gap:0.6rem;font-size:0.88rem;color:#334155;">
-          <li style="display:flex;align-items:center;gap:0.6rem;">
-            <span style="color:#10b981;font-weight:bold;">✓</span>
-            <span><strong>Création & animation illimitée</strong> de Lives & Masterminds</span>
-          </li>
-          <li style="display:flex;align-items:center;gap:0.6rem;">
-            <span style="color:#10b981;font-weight:bold;">✓</span>
-            <span><strong>Diffusion officielle</strong> dans le calendrier communautaire</span>
-          </li>
-          <li style="display:flex;align-items:center;gap:0.6rem;">
-            <span style="color:#10b981;font-weight:bold;">✓</span>
-            <span><strong>Modification & suppression</strong> de vos sessions en autonomie</span>
-          </li>
-          <li style="display:flex;align-items:center;gap:0.6rem;">
-            <span style="color:#10b981;font-weight:bold;">✓</span>
-            <span><strong>Badge officiel « Créateur Host »</strong> sur votre profil et salons</span>
-          </li>
-          <li style="display:flex;align-items:center;gap:0.6rem;">
-            <span style="color:#10b981;font-weight:bold;">✓</span>
-            <span>Tous les accès Membre inclus (Replays HD, Salons thématiques, Fiches)</span>
-          </li>
-        </ul>
+        <form id="deleteAccountConfirmForm" method="POST" action="dashboard.php" style="margin: 0;">
+          <input type="hidden" name="csrf_token" value="<?= htmlspecialchars(csrf_token()) ?>">
+          <input type="hidden" name="action" value="delete_account">
+
+          <div style="display: flex; flex-direction: column; gap: 0.75rem;">
+            <button type="button" class="btn btn-secondary" id="btnCancelDeleteAccount" onclick="closeDeleteAccountModal()" style="padding: 0.8rem 1.25rem; font-size: 0.92rem; font-weight: 700; width: 100%; border: 1px solid #cbd5e1; border-radius: 10px; cursor: pointer;">
+              Non, je veux rester dans la communauté
+            </button>
+            <button type="submit" class="btn" id="btnConfirmDeleteAccount" style="background: #dc2626; color: #ffffff; border: none; padding: 0.8rem 1.25rem; border-radius: 10px; font-weight: 700; font-size: 0.92rem; cursor: pointer; width: 100%; box-shadow: 0 4px 14px rgba(220, 38, 38, 0.3); display: flex; align-items: center; justify-content: center; gap: 0.5rem;">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                <polyline points="3 6 5 6 21 6"></polyline>
+                <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                <line x1="10" y1="11" x2="10" y2="17"></line>
+                <line x1="14" y1="11" x2="14" y2="17"></line>
+              </svg>
+              <span>Oui, je supprime mon compte</span>
+            </button>
+          </div>
+        </form>
       </div>
 
-      <div style="display:flex;flex-direction:column;gap:0.75rem;">
-        <form method="POST" action="dashboard.php" style="margin:0;">
-          <input type="hidden" name="action" value="upgrade_to_creator">
-          <button type="submit" class="btn btn-primary" style="width:100%;padding:0.85rem;font-size:0.95rem;font-weight:700;display:flex;align-items:center;justify-content:center;gap:0.5rem;box-shadow:0 4px 14px rgba(230,57,70,0.35);border:none;cursor:pointer;">
-            ⚡ Activer l'abonnement Créateur (29 € / mois)
-          </button>
-        </form>
-        <button type="button" class="btn btn-secondary" id="btnCancelUpgradeCreator" style="padding:0.7rem;font-size:0.88rem;">
-          Garder mon abonnement Membre (9 € / mois)
-        </button>
+      <!-- ÉTAPE 2 : SUCCÈS APRÈS SUPPRESSION -->
+      <div id="deleteAccountSuccessView" style="display: none;">
+        <div style="width: 68px; height: 68px; border-radius: 50%; background: #ecfdf5; color: #059669; display: inline-flex; align-items: center; justify-content: center; margin-bottom: 1.25rem; border: 2px solid #a7f3d0;">
+          <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#059669" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+            <polyline points="22 4 12 14.01 9 11.01"></polyline>
+          </svg>
+        </div>
+
+        <h3 style="font-size: 1.35rem; font-weight: 800; color: #0f172a; margin-bottom: 0.6rem; line-height: 1.3;">
+          Votre compte a été bien résilié et supprimé
+        </h3>
+
+        <p style="font-size: 0.92rem; color: #64748b; line-height: 1.55; margin-bottom: 1.75rem;">
+          Nous vous remercions pour le parcours partagé au sein de One Vision Community.<br>
+          Votre compte a été résilié et l'ensemble de vos données a été définitivement supprimé.
+        </p>
+
+        <a href="index.php" class="btn btn-primary" id="btnReturnHomeAfterDelete" style="display: inline-flex; align-items: center; justify-content: center; gap: 0.6rem; width: 100%; padding: 0.85rem 1.25rem; font-weight: 700; text-decoration: none; border-radius: 10px;">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+            <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+            <polyline points="9 22 9 12 15 12 15 22"></polyline>
+          </svg>
+          <span>Retourner à l'accueil</span>
+        </a>
       </div>
+
     </div>
   </div>
 
-  <script src="./js/main.js?v=3"></script>
+  <script src="./js/main.js?v=4"></script>
 </body>
 </html>

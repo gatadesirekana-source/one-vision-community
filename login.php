@@ -17,9 +17,66 @@ if (is_logged_in()) {
 $error = '';
 $emailValue = '';
 
+// Connexion / Inscription rapide avec Google / Gmail
+if ((isset($_GET['action']) && $_GET['action'] === 'google_auth') || (isset($_POST['action']) && $_POST['action'] === 'google_auth')) {
+    $db = get_db();
+    $googleEmail = trim(strtolower($_POST['email'] ?? 'alexandre.martin@gmail.com'));
+    $googleName = trim($_POST['full_name'] ?? 'Alexandre Martin');
+
+    require_once __DIR__ . '/includes/onboarding.php';
+
+    $stmt = $db->prepare("SELECT * FROM users WHERE LOWER(email) = ?");
+    $stmt->execute([$googleEmail]);
+    $user = $stmt->fetch();
+
+    if (!$user) {
+        $dummyPassword = bin2hex(random_bytes(6)) . '1A';
+        $regResult = register_user($googleName, $googleEmail, $dummyPassword, [
+            'company' => 'Google Workspace',
+            'job_title' => 'Membre One Vision',
+            'avatar' => './img/avatar-alexandre.jpg',
+            'subscription_status' => 'none'
+        ]);
+        if ($regResult['success']) {
+            $userId = (int)$regResult['user_id'];
+            ensure_user_onboarding_profile($userId);
+
+            $stmtUser = $db->prepare("SELECT * FROM users WHERE id = ?");
+            $stmtUser->execute([$userId]);
+            $user = $stmtUser->fetch();
+        }
+    }
+
+    if ($user) {
+        if (!headers_sent()) {
+            session_regenerate_id(true);
+        }
+        $_SESSION['user_id'] = $user['id'];
+        $_SESSION['user_name'] = $user['full_name'];
+        $_SESSION['user_email'] = $user['email'];
+        $_SESSION['user_role'] = $user['role'] ?? 'membre';
+
+        $redir = check_onboarding_redirect($user) ?: 'dashboard.php';
+
+        set_flash('success', "👋 Connexion réussie ! Bienvenue.");
+        header('Content-Type: application/json; charset=utf-8');
+        echo json_encode(['success' => true, 'redirect' => $redir, 'user' => $user['full_name']]);
+        exit;
+    }
+}
+
 if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
+    $isAjax = (!empty($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest')
+        || (isset($_SERVER['HTTP_ACCEPT']) && strpos($_SERVER['HTTP_ACCEPT'], 'application/json') !== false);
+
     if (!verify_csrf_token($_POST['csrf_token'] ?? null)) {
         $error = "Session de formulaire expirée. Veuillez actualiser la page et réessayer.";
+        if ($isAjax) {
+            header('Content-Type: application/json; charset=utf-8');
+            http_response_code(400);
+            echo json_encode(['success' => false, 'error' => $error]);
+            exit;
+        }
     } else {
         $email = $_POST['email'] ?? '';
         $password = $_POST['password'] ?? '';
@@ -28,13 +85,41 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
         $loginResult = login_user($email, $password);
 
         if ($loginResult['success']) {
+            $user = $loginResult['user'];
+            require_once __DIR__ . '/includes/permissions.php';
+            require_once __DIR__ . '/includes/subscriptions.php';
+            require_once __DIR__ . '/includes/onboarding.php';
+
+            $redir = check_onboarding_redirect($user);
+            if ($redir !== null) {
+                unset($_SESSION['redirect_after_login']);
+                if ($isAjax) {
+                    header('Content-Type: application/json; charset=utf-8');
+                    echo json_encode(['success' => true, 'redirect' => $redir]);
+                    exit;
+                }
+                header("Location: {$redir}");
+                exit;
+            }
+
             set_flash('success', 'Ravi de vous revoir parmi nous ! Vous êtes connecté.');
             $redirectTo = $_SESSION['redirect_after_login'] ?? 'dashboard.php';
             unset($_SESSION['redirect_after_login']);
+            if ($isAjax) {
+                header('Content-Type: application/json; charset=utf-8');
+                echo json_encode(['success' => true, 'redirect' => $redirectTo]);
+                exit;
+            }
             header("Location: {$redirectTo}");
             exit;
         } else {
             $error = $loginResult['error'];
+            if ($isAjax) {
+                header('Content-Type: application/json; charset=utf-8');
+                http_response_code(401);
+                echo json_encode(['success' => false, 'error' => $error]);
+                exit;
+            }
         }
     }
 }
@@ -48,12 +133,32 @@ require_once __DIR__ . '/includes/header.php';
   <div class="modal-card" style="box-shadow: 0 25px 60px -15px rgba(0, 0, 0, 0.25), 0 0 0 1px rgba(15, 23, 42, 0.05); position: relative; margin: 0 auto;">
     <a href="index.php" class="modal-close-btn" aria-label="Fermer et retourner à l'accueil">✕</a>
 
-    <div class="modal-header">
+    <div class="modal-header" style="margin-bottom:0.75rem;">
       <div class="modal-header-top">
         <h1 class="modal-title">Espace Connexion</h1>
-        <span class="modal-badge-login">MEMBRES</span>
       </div>
       <p class="modal-subtitle">Accédez à vos salons d'échanges, masterminds et replays HD.</p>
+    </div>
+
+    <!-- Onglets Connexion / Inscription -->
+    <div class="auth-tabs" role="tablist">
+      <a href="login.php" class="auth-tab-btn active" role="tab" style="text-decoration:none; text-align:center;">Connexion</a>
+      <a href="register.php" class="auth-tab-btn" role="tab" style="text-decoration:none; text-align:center;">Inscription</a>
+    </div>
+
+    <!-- Bouton Google / Gmail -->
+    <button type="button" class="btn-google-auth google-auth-btn" id="googleLoginBtn">
+      <svg width="18" height="18" viewBox="0 0 24 24">
+        <path fill="#4285F4" d="M23.745 12.27c0-.7-.06-1.4-.19-2.07H12v4.51h6.6c-.29 1.52-1.14 2.8-2.4 3.66v3.05h3.88c2.27-2.09 3.665-5.17 3.665-9.15z"/>
+        <path fill="#34A853" d="M12 24c3.24 0 5.95-1.08 7.93-2.91l-3.88-3.05c-1.08.72-2.45 1.16-4.05 1.16-3.12 0-5.77-2.1-6.72-4.93H1.25v3.15C3.26 21.36 7.34 24 12 24z"/>
+        <path fill="#FBBC05" d="M5.28 14.27c-.25-.72-.38-1.49-.38-2.27s.13-1.55.38-2.27V6.58H1.25C.45 8.18 0 9.98 0 12s.45 3.82 1.25 5.42l4.03-3.15z"/>
+        <path fill="#EA4335" d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.42-3.42C17.95 1.19 15.24 0 12 0 7.34 0 3.26 2.64 1.25 6.58l4.03 3.15c.95-2.83 3.6-4.98 6.72-4.98z"/>
+      </svg>
+      <span>Continuer avec Google</span>
+    </button>
+
+    <div class="auth-divider">
+      <span>ou avec votre email</span>
     </div>
 
     <?php if (!empty($error)): ?>
@@ -107,10 +212,6 @@ require_once __DIR__ . '/includes/header.php';
 
       <div class="modal-footer-notes">
         <span style="color:#f97316;">⚡</span> Connexion rapide et chiffrée • Accès immédiat aux salons 24/7
-      </div>
-
-      <div class="modal-switch-mode">
-        Nouveau ici ? <a href="checkout.php">Rejoindre pour 9€/mois</a>
       </div>
     </form>
 

@@ -25,6 +25,41 @@ function get_db(): PDO {
         $pdo->exec('PRAGMA foreign_keys = ON;');
         $pdo->exec('CREATE TABLE IF NOT EXISTS login_attempts (id INTEGER PRIMARY KEY AUTOINCREMENT, ip TEXT NOT NULL, attempt_time INTEGER NOT NULL);');
 
+        // Tables du Questionnaire d'Accueil (Onboarding)
+        $pdo->exec("
+            CREATE TABLE IF NOT EXISTS profils_onboarding (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                user_id INTEGER NOT NULL UNIQUE,
+                tranche_age TEXT DEFAULT NULL,
+                situation TEXT DEFAULT NULL,
+                date_debut DATETIME DEFAULT CURRENT_TIMESTAMP,
+                date_fin DATETIME DEFAULT NULL,
+                statut TEXT NOT NULL DEFAULT 'en_cours',
+                consentement_marketing INTEGER DEFAULT 0,
+                date_consentement DATETIME DEFAULT NULL,
+                canal_rappel_prefere TEXT DEFAULT NULL,
+                source_decouverte TEXT DEFAULT NULL,
+                current_question_index INTEGER DEFAULT 1,
+                created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+            );
+        ");
+        $pdo->exec("CREATE INDEX IF NOT EXISTS idx_onboarding_user ON profils_onboarding(user_id);");
+        $pdo->exec("CREATE INDEX IF NOT EXISTS idx_onboarding_statut ON profils_onboarding(statut);");
+
+        $pdo->exec("
+            CREATE TABLE IF NOT EXISTS reponses_questionnaire (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                user_id INTEGER NOT NULL,
+                question_id TEXT NOT NULL,
+                reponse TEXT NOT NULL,
+                date DATETIME DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+            );
+        ");
+        $pdo->exec("CREATE INDEX IF NOT EXISTS idx_reponses_user_q ON reponses_questionnaire(user_id, question_id);");
+
         // Colonnes optionnelles de commandes pour Mobile Money et adhésions directes
         try { $pdo->exec("ALTER TABLE orders ADD COLUMN payment_id TEXT DEFAULT ''"); } catch (Exception $e) {}
         try { $pdo->exec("ALTER TABLE orders ADD COLUMN checkout_url TEXT DEFAULT ''"); } catch (Exception $e) {}
@@ -43,6 +78,7 @@ function get_db(): PDO {
         try { $pdo->exec("ALTER TABLE users ADD COLUMN failed_renewals_count INTEGER DEFAULT 0"); } catch (Exception $e) {}
         try { $pdo->exec("ALTER TABLE users ADD COLUMN subscription_plan TEXT DEFAULT 'member'"); } catch (Exception $e) {}
         try { $pdo->exec("ALTER TABLE orders ADD COLUMN plan TEXT DEFAULT 'member'"); } catch (Exception $e) {}
+        try { $pdo->exec("ALTER TABLE users ADD COLUMN phone TEXT DEFAULT ''"); } catch (Exception $e) {}
 
         // Initialiser l'échéance à 30 jours pour les membres actifs existants sans date d'expiration
         try {
@@ -58,6 +94,15 @@ function get_db(): PDO {
         if ($isNewDb || filesize(DB_FILE) === 0) {
             init_database($pdo);
         }
+
+        // Vérifier si les tables de formules et rôles sont migrées
+        try {
+            $hasPlans = $pdo->query("SELECT 1 FROM sqlite_master WHERE type='table' AND name='plans'")->fetch();
+            if (!$hasPlans) {
+                require_once dirname(__DIR__) . '/database/migrate.php';
+                run_migrations($pdo);
+            }
+        } catch (Exception $e) {}
     }
 
     return $pdo;
@@ -300,20 +345,38 @@ function seed_database(PDO $pdo): void {
 
     $insertLive->execute([
         $sophieId,
-        'Atelier Pratique : Construire une offre irrésistible de A à Z',
-        'Exercice en direct : nous prenons l\'offre d\'un participant et nous la réécrivons ensemble pas à pas pour la rendre évidente et désirable.',
-        'Atelier Pratique',
-        'Offres & Pricing',
+        'Revue en direct de vos pages de vente & tunnels',
+        '4 membres volontaires présentent leur offre pour recevoir les retours constructifs de la communauté.',
+        'Co-Working & Feedback',
+        'Copywriting & Offres',
         'next',
         $nextWeek,
-        '18h30',
-        '1h15',
-        'Sophie Laurent',
-        'Coach Business & Speaker',
+        '14h00',
+        '1h30',
+        'Sophie M.',
+        'Copywriter & Host',
         './img/avatar-sophie.jpg',
-        'Workbook d\'exercices (Notion & PDF)',
+        'Grille d\'audit de conversion (Notion)',
         0,
         115
+    ]);
+
+    $insertLive->execute([
+        $thomasId,
+        'Bilan sans filtre de la semaine & objectifs du mois',
+        'Le rendez-vous chaleureux du dimanche soir pour faire le point, débloquer ses doutes et planifier ses victoires.',
+        'Mastermind Dimanche',
+        'Mindset & Organisation',
+        'next',
+        date('Y-m-d', strtotime('+10 days')),
+        '20h00',
+        '1h15',
+        'Thomas R.',
+        'Mentor Business',
+        './img/avatar-thomas.jpg',
+        'Fiche d\'objectifs hebdomadaires',
+        0,
+        98
     ]);
 
     // Insertion des premiers messages de salons (Chat)

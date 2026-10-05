@@ -18,10 +18,6 @@ if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
 
-define('APP_NAME', 'One Vision Community');
-define('APP_TAGLINE', "Une communauté d'entrepreneurs qui avancent, pas qui attendent");
-define('APP_PRICE_MONTHLY', 9);
-define('APP_ENV', getenv('APP_ENV') ?: 'production');
 define('BASE_DIR', dirname(__DIR__));
 define('DB_FILE', BASE_DIR . DIRECTORY_SEPARATOR . 'database' . DIRECTORY_SEPARATOR . 'database.sqlite');
 
@@ -61,6 +57,13 @@ load_env(BASE_DIR . DIRECTORY_SEPARATOR . '.env');
 if (file_exists(__DIR__ . '/config.local.php')) {
     require_once __DIR__ . '/config.local.php';
 }
+
+define('APP_NAME', 'One Vision Community');
+define('APP_TAGLINE', "Une communauté d'entrepreneurs qui avancent, pas qui attendent");
+define('APP_PRICE_MONTHLY', 9);
+define('APP_ENV', getenv('APP_ENV') ?: 'production');
+define('PAIEMENT_MODE', getenv('PAIEMENT_MODE') ?: 'simulation');
+
 
 // 3. Détection et configuration de l'URL publique de base (APP_URL)
 $currentHost = $_SERVER['HTTP_HOST'] ?? '';

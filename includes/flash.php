@@ -26,7 +26,7 @@ function render_flash(): string {
         return '';
     }
 
-    $html = '<div class="flash-messages-container" style="max-width:1100px;margin:1rem auto 1.5rem;padding:0 1.25rem;">';
+    $html = '<div class="flash-messages-container" id="flashMessagesContainer">';
     foreach ($messages as $msg) {
         $type = htmlspecialchars($msg['type']);
         $text = htmlspecialchars($msg['message']);
@@ -54,15 +54,31 @@ function render_flash(): string {
         }
 
         $html .= "
-        <div class=\"alert alert-{$type}\" style=\"background:{$bgColor}; border:1px solid {$borderColor}; color:{$textColor}; padding:0.9rem 1.25rem; border-radius:12px; margin-bottom:0.75rem; font-size:0.95rem; display:flex; align-items:center; justify-content:space-between; box-shadow:0 4px 12px rgba(0,0,0,0.03);\">
+        <div class=\"alert alert-{$type} alert-float-toast\" style=\"background:{$bgColor}; border:1.5px solid {$borderColor}; color:{$textColor}; padding:0.85rem 1.15rem; border-radius:14px; font-size:0.92rem; font-weight:600; display:flex; align-items:center; justify-content:space-between; box-shadow:0 16px 36px rgba(15,23,42,0.14), 0 0 0 1px rgba(15,23,42,0.04); pointer-events:auto;\">
             <div style=\"display:flex; align-items:center; gap:0.75rem;\">
-                <span style=\"font-weight:bold; font-size:1.1rem;\">{$icon}</span>
-                <span>{$text}</span>
+                <span style=\"font-weight:bold; font-size:1.1rem; display:flex; align-items:center; justify-content:center; width:26px; height:26px; border-radius:50%; background:rgba(255,255,255,0.85); flex-shrink:0;\">{$icon}</span>
+                <span style=\"line-height:1.4;\">{$text}</span>
             </div>
-            <button type=\"button\" onclick=\"this.parentElement.remove()\" style=\"background:none; border:none; color:inherit; font-size:1.2rem; cursor:pointer; opacity:0.6;\">&times;</button>
+            <button type=\"button\" onclick=\"this.parentElement.classList.add('toast-leave'); var p=this.parentElement; setTimeout(function(){ p.remove(); }, 600);\" style=\"background:none; border:none; color:inherit; font-size:1.25rem; cursor:pointer; opacity:0.6; padding:0 0 0 0.5rem; line-height:1;\" aria-label=\"Fermer\">&times;</button>
         </div>";
     }
     $html .= '</div>';
+    $html .= '<script>
+(function() {
+    var c = document.getElementById("flashMessagesContainer");
+    if (!c) return;
+    var alerts = c.querySelectorAll(".alert-float-toast");
+    alerts.forEach(function(el) {
+        setTimeout(function() {
+            el.classList.add("toast-leave");
+            setTimeout(function() {
+                el.remove();
+                if (!c.children.length) c.remove();
+            }, 600);
+        }, 3000);
+    });
+})();
+</script>';
 
     return $html;
 }
