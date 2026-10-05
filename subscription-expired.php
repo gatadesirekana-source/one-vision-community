@@ -248,7 +248,7 @@ require_once __DIR__ . '/includes/header.php';
         <strong>Vous souhaitez payer par Mobile Money ?</strong>
         <div style="color:#64748b; font-size:0.78rem;">Wave, Orange Money, MTN, Moov (5 900 FCFA)</div>
       </div>
-      <a href="checkout.php?method=mobile_money" class="btn btn-secondary btn-sm" style="text-decoration:none; padding:0.5rem 0.9rem; border-radius:8px; font-size:0.8rem;">
+      <a href="choisir-abonnement.php?method=mobile_money" class="btn btn-secondary btn-sm" style="text-decoration:none; padding:0.5rem 0.9rem; border-radius:8px; font-size:0.8rem;">
         Payer par Mobile Money →
       </a>
     </div>

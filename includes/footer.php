@@ -39,8 +39,7 @@
               <li><a href="dashboard.php" style="font-weight:600; color:var(--color-primary);">Accéder au Dashboard</a></li>
               <li><a href="logout.php">Déconnexion</a></li>
             <?php else: ?>
-              <li><a href="login.php" class="open-login-btn">Espace de connexion</a></li>
-              <li><a href="checkout.php">Rejoindre le réseau</a></li>
+              <li><a href="login.php">Rejoindre le réseau</a></li>
             <?php endif; ?>
             <li><a href="support.php" style="font-weight:600; color:var(--color-white);">Support & Service Client</a></li>
           </ul>

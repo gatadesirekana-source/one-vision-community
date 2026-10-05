@@ -30,8 +30,8 @@
         <a href="index.php" class="btn btn-secondary" style="font-size:0.9rem;padding:0.55rem 1.1rem;">
           ← Retour à l'accueil
         </a>
-        <a href="checkout.php" class="btn btn-primary open-checkout-btn">
-          <span>Rejoindre pour 9€/mois</span>
+        <a href="login.php" class="btn btn-primary open-checkout-btn">
+          <span>Rejoindre le réseau</span>
         </a>
       </div>
     </div>
@@ -305,7 +305,7 @@
           </div>
 
           <div class="modal-switch-mode" id="loginSwitchMode">
-            Nouveau ici ? <button type="button" id="switchToJoinBtn">Rejoindre pour 9€/mois</button>
+            Nouveau ici ? <button type="button" id="switchToJoinBtn">Rejoindre le réseau</button>
           </div>
         </form>
       </div>
@@ -401,7 +401,7 @@
           </div>
 
           <div class="modal-switch-mode">
-            Nouveau ici ? <button type="button" id="switchToJoinBtn">Rejoindre pour 9€/mois</button>
+            Nouveau ici ? <button type="button" id="switchToJoinBtn">Rejoindre le réseau</button>
           </div>
         </form>
       </div>

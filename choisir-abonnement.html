@@ -171,7 +171,7 @@
               </div>
             </div>
 
-            <a href="checkout.html?plan=membre&billing=mensuel" id="btnChooseMembre" class="btn btn-secondary" style="width:100%; padding:0.85rem 1rem; font-size:0.95rem; font-weight:700; border-radius:10px; border:1.5px solid #cbd5e1; justify-content:center; display:flex; align-items:center; gap:0.45rem; text-decoration:none;">
+            <a href="dashboard.html" id="btnChooseMembre" class="btn btn-secondary" style="width:100%; padding:0.85rem 1rem; font-size:0.95rem; font-weight:700; border-radius:10px; border:1.5px solid #cbd5e1; justify-content:center; display:flex; align-items:center; gap:0.45rem; text-decoration:none;">
               <span>Rejoindre en Formule Membre</span>
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"></polyline></svg>
             </a>
@@ -264,7 +264,7 @@
               </div>
             </div>
 
-            <a href="checkout.html?plan=animateur&billing=mensuel" id="btnChooseAnimateur" class="btn btn-primary" style="width:100%; padding:0.85rem 1rem; font-size:0.95rem; font-weight:700; border-radius:10px; background:linear-gradient(135deg, #f97316, #ea580c); justify-content:center; display:flex; align-items:center; gap:0.45rem; box-shadow:0 4px 12px rgba(249,115,22,0.25); text-decoration:none; color:#ffffff;">
+            <a href="dashboard.html" id="btnChooseAnimateur" class="btn btn-primary" style="width:100%; padding:0.85rem 1rem; font-size:0.95rem; font-weight:700; border-radius:10px; background:linear-gradient(135deg, #f97316, #ea580c); justify-content:center; display:flex; align-items:center; gap:0.45rem; box-shadow:0 4px 12px rgba(249,115,22,0.25); text-decoration:none; color:#ffffff;">
               <span>Choisir la Formule Animateur</span>
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"></polyline></svg>
             </a>
@@ -326,8 +326,8 @@
         animateurPriceMonthly.style.display = 'none';
         animateurPriceYearly.style.display = 'block';
 
-        btnMembre.href = 'checkout.html?plan=membre&billing=annuel';
-        btnAnimateur.href = 'checkout.html?plan=animateur&billing=annuel';
+        btnMembre.href = 'dashboard.html';
+        btnAnimateur.href = 'dashboard.html';
       } else {
         btnMonthly.style.background = '#0f172a';
         btnMonthly.style.color = '#ffffff';
@@ -340,8 +340,8 @@
         animateurPriceMonthly.style.display = 'block';
         animateurPriceYearly.style.display = 'none';
 
-        btnMembre.href = 'checkout.html?plan=membre&billing=mensuel';
-        btnAnimateur.href = 'checkout.html?plan=animateur&billing=mensuel';
+        btnMembre.href = 'dashboard.html';
+        btnAnimateur.href = 'dashboard.html';
       }
     }
 

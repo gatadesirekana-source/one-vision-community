@@ -1425,7 +1425,67 @@
           </div>
         </form>
 
-        <!-- 5. ZONE CRITIQUE : RÉSILIATION ET SUPPRESSION DU COMPTE -->
+                <!-- 4. SECTION ABONNEMENT DANS LES PARAMÈTRES DU SITE -->
+        <div class="settings-card" id="settingsAbonnementSection" style="margin-top: 1.75rem; border: 1.5px solid #e2e8f0; border-radius: 16px; padding: 1.5rem;">
+          <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 1rem; margin-bottom: 1.25rem;">
+            <div>
+              <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.35rem;">
+                <span style="font-size: 1.25rem;">💳</span>
+                <h3 class="settings-card-title" style="margin: 0; font-size: 1.15rem; font-weight: 800; color: #0f172a;">Abonnement & Cotisations</h3>
+              </div>
+              <p class="settings-card-desc" style="margin: 0; color: #64748b; font-size: 0.88rem;">
+                Retrouvez les formules One Vision, votre abonnement en cours, l'évolution vers Animateur et vos options de résiliation.
+              </p>
+            </div>
+            <div>
+              <button type="button" class="btn btn-secondary btn-sm" onclick="switchToTab('tab-compte')" style="display: inline-flex; align-items: center; gap: 0.4rem; font-weight: 700; border-radius: 8px;">
+                <span>Gérer mon abonnement</span>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"></polyline></svg>
+              </button>
+            </div>
+          </div>
+
+          <!-- Récapitulatif statut en cours -->
+          <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 1rem 1.25rem; margin-bottom: 1.25rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.75rem;">
+            <div>
+              <span style="font-size: 0.78rem; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em; font-weight: 700; display: block; margin-bottom: 0.2rem;">Formule actuelle</span>
+              <strong style="color: #0f172a; font-size: 1.05rem;">
+                Formule Membre (Mensuel — 9,00 €)
+              </strong>
+            </div>
+            <div>
+              <span style="background: #dcfce7; color: #15803d; font-weight: 700; font-size: 0.8rem; padding: 0.3rem 0.75rem; border-radius: 20px;">
+                ● Actif (Échéance : 05/11/2026)
+              </span>
+            </div>
+          </div>
+
+          <!-- Présentation des 2 formules disponibles -->
+          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 1rem; margin-bottom: 1.25rem;">
+            <div style="border: 1px solid #bfdbfe; background: #eff6ff; border-radius: 10px; padding: 0.85rem 1rem;">
+              <strong style="color: #1e40af; font-size: 0.92rem; display: block; margin-bottom: 0.2rem;">Formule Membre</strong>
+              <div style="color: #1d4ed8; font-size: 1.15rem; font-weight: 800; margin-bottom: 0.25rem;">9 € <span style="font-size: 0.85rem; font-weight: 500;">/ mois</span> <span style="font-size: 0.78rem; font-weight: 600; color: #059669;">(ou 89 €/an)</span></div>
+              <p style="color: #3b82f6; font-size: 0.82rem; margin: 0;">Salons d'échanges, lives hebdomadaires, replays vidéo et réseau de pairs.</p>
+            </div>
+            <div style="border: 1px solid #fed7aa; background: #fff7ed; border-radius: 10px; padding: 0.85rem 1rem;">
+              <strong style="color: #9a3412; font-size: 0.92rem; display: block; margin-bottom: 0.2rem;">Formule Animateur</strong>
+              <div style="color: #c2410c; font-size: 1.15rem; font-weight: 800; margin-bottom: 0.25rem;">24 € <span style="font-size: 0.85rem; font-weight: 500;">/ mois</span> <span style="font-size: 0.78rem; font-weight: 600; color: #059669;">(ou 239 €/an)</span></div>
+              <p style="color: #ea580c; font-size: 0.82rem; margin: 0;">Tous les avantages Membre + Espace Animateur, organisation de lives et profil certifié.</p>
+            </div>
+          </div>
+
+          <!-- Boutons d'actions rapides -->
+          <div style="display: flex; gap: 0.75rem; flex-wrap: wrap; align-items: center;">
+            <button type="button" class="btn btn-secondary btn-sm" onclick="switchToTab('tab-compte')">
+              💳 Voir le détail & mes factures
+            </button>
+            <button type="button" class="btn btn-primary btn-sm" onclick="switchToTab('tab-compte')" style="background: linear-gradient(135deg, #f97316, #ea580c); border: none;">
+              🚀 Évoluer vers Animateur (24 €/mois)
+            </button>
+          </div>
+        </div>
+
+<!-- 5. ZONE CRITIQUE : RÉSILIATION ET SUPPRESSION DU COMPTE -->
         <div class="settings-card danger-zone-card" style="border: 1.5px solid #fecaca; background: #fff5f5; margin-top: 1.75rem; border-radius: 16px; padding: 1.5rem;">
           <div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 1.5rem; flex-wrap: wrap;">
             <div style="max-width: 600px;">
@@ -2257,7 +2317,7 @@
       </div>
 
       <div style="display:flex;flex-direction:column;gap:0.75rem;">
-        <a href="checkout.html?plan=creator" class="btn btn-primary" id="btnUpgradeToCreatorStatic" style="width:100%;padding:0.85rem;font-size:0.95rem;font-weight:700;display:flex;align-items:center;justify-content:center;gap:0.5rem;box-shadow:0 4px 14px rgba(230,57,70,0.35);text-decoration:none;border-radius:10px;">
+        <a href="choisir-abonnement.html?plan=animateur" class="btn btn-primary" id="btnUpgradeToCreatorStatic" style="width:100%;padding:0.85rem;font-size:0.95rem;font-weight:700;display:flex;align-items:center;justify-content:center;gap:0.5rem;box-shadow:0 4px 14px rgba(230,57,70,0.35);text-decoration:none;border-radius:10px;">
           ⚡ Activer l'abonnement Créateur (29 € / mois)
         </a>
         <button type="button" class="btn btn-secondary" id="btnCancelUpgradeCreator" style="padding:0.7rem;font-size:0.88rem;">

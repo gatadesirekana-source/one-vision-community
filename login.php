@@ -154,6 +154,7 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
 
 $pageTitle = "Espace Connexion — One Vision Community";
 $pageDescription = "Accédez à vos salons d'échanges, masterminds et replays HD.";
+$hideHeaderNav = true;
 require_once __DIR__ . '/includes/header.php';
 ?>
 

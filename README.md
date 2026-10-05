@@ -48,7 +48,7 @@ La base de données s'auto-initialise avec des comptes de démonstration prêts 
 ├── index.php                      # Page d'accueil dynamique avec stats et CTA adaptatifs
 ├── dashboard.php                  # Dashboard membre protégé (Lives, Salons, Réseau, Factures)
 ├── creer-live.php                 # Formulaire de programmation d'un live avec enregistrement en BDD
-├── checkout.php                   # Tunnel de paiement et adhésion 9€/mois avec création de commande
+├── choisir-abonnement.php                   # Tunnel de paiement et adhésion 9€/mois avec création de commande
 ├── facture.php                    # Facture officielle dynamique imprimable / exportable PDF
 ├── support.php                    # Formulaire de contact et d'assistance avec tickets en BDD
 ├── login.php                      # Page de connexion officielle des membres
@@ -87,10 +87,10 @@ La base de données s'auto-initialise avec des comptes de démonstration prêts 
    - Les messages sont sauvegardés en BDD SQLite et synchronisés en AJAX via `api/chat.php`.
 
 4. **Adhésion & Facturation Immédiate** :
-   - Tunnel d'adhésion sécurisé (`checkout.php`).
+   - Tunnel d'adhésion sécurisé (`choisir-abonnement.php`).
    - Prise en charge des coordonnées d'adhésion (Carte Bancaire & Paiement Mobile).
    - Activation instantanée de l'accès membre dans la base de données.
-   - Page de confirmation d'adhésion (`checkout-success.php`).
+   - Page de confirmation d'adhésion (`dashboard.php`).
    - Génération immédiate de la facture officielle acquittée (`facture.php?id=...`).
 
 5. **Centre d'Administration (Rôle Admin)** :

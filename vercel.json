@@ -4,8 +4,6 @@
   "rewrites": [
     { "source": "/questionnaire", "destination": "/questionnaire.html" },
     { "source": "/choisir-abonnement", "destination": "/choisir-abonnement.html" },
-    { "source": "/checkout", "destination": "/checkout.html" },
-    { "source": "/checkout-success", "destination": "/checkout-success.html" },
     { "source": "/dashboard", "destination": "/dashboard.html" },
     { "source": "/abonnements", "destination": "/abonnements.html" },
     { "source": "/espace-animateur", "destination": "/espace-animateur.html" },

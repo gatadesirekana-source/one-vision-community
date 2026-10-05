@@ -265,7 +265,7 @@ require_once __DIR__ . '/includes/header.php';
           </p>
 
           <div style="display:flex; justify-content:center; gap:0.85rem; flex-wrap:wrap; margin-bottom:1.75rem;">
-            <a href="checkout.php?plan=creator" class="btn btn-primary btn-lg" style="text-decoration:none;">
+            <a href="choisir-abonnement.php?plan=animateur" class="btn btn-primary btn-lg" style="text-decoration:none;">
               <span>Passer à la Formule Créateur (29€/mois)</span>
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
             </a>

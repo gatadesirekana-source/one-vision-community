@@ -121,11 +121,8 @@ if (!headers_sent()) {
             </a>
           <?php endif; ?>
         <?php else: ?>
-          <a href="login.php" class="btn btn-secondary" style="font-size:0.88rem; padding:0.55rem 1rem;">
-            Se connecter
-          </a>
-          <a href="choisir-abonnement.php" class="btn btn-primary">
-            <span>Choisir un abonnement</span>
+          <a href="login.php" class="btn btn-primary">
+            <span>Rejoindre le réseau</span>
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
               <line x1="5" y1="12" x2="19" y2="12"></line>
               <polyline points="12 5 19 12 12 19"></polyline>

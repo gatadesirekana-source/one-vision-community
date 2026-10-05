@@ -656,23 +656,12 @@ function initCheckoutModal() {
       return;
     }
 
-    if (targetJoinFlow || targetJoin) {
+    if (targetJoinFlow || targetJoin || targetLogin) {
       e.preventDefault();
-      window.location.href = isPhpEnvironment() ? 'questionnaire.php' : getAppUrl('questionnaire.html');
-      return;
-    }
-
-    if (targetLogin) {
-      e.preventDefault();
-      // Si c'est un lien avec une URL spécifique
-      const href = targetLogin.getAttribute('href');
+      const el = targetJoinFlow || targetJoin || targetLogin;
+      const href = el.getAttribute('href');
       if (href && href !== '#' && href !== 'javascript:void(0)') {
         window.location.href = href;
-        return;
-      }
-      // Si le texte est "Rejoindre"
-      if (targetLogin.textContent && targetLogin.textContent.includes('Rejoindre')) {
-        window.location.href = isPhpEnvironment() ? 'questionnaire.php' : getAppUrl('questionnaire.html');
         return;
       }
       window.location.href = isPhpEnvironment() ? 'login.php' : getAppUrl('login.html');

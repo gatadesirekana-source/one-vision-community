@@ -66,7 +66,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 }
 
 $pageTitle = "Inscription Membre — One Vision Community";
-$pageDescription = "Créez votre compte membre et rejoignez la communauté d'entrepreneurs pour 9€/mois.";
+$pageDescription = "Créez votre compte membre et rejoignez la communauté d'entrepreneurs.";
+$hideHeaderNav = true;
 require_once __DIR__ . '/includes/header.php';
 ?>
 
