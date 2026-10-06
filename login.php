@@ -8,13 +8,13 @@ require_once __DIR__ . '/includes/db.php';
 require_once __DIR__ . '/includes/auth.php';
 require_once __DIR__ . '/includes/flash.php';
 
-// Si déjà connecté, rediriger directement vers le dashboard
+// Si déjà connecté, rediriger vers questionnaire ou dashboard
 if (is_logged_in() && !isset($_GET['demo'])) {
-    header('Location: dashboard.php');
+    header('Location: questionnaire.php');
     exit;
 }
 
-// Démo / Test rapide en 1 clic pour inspecter tous les états en local
+// Démo / Test rapide en 1 clic
 if (isset($_GET['demo'])) {
     $db = get_db();
     $demo = $_GET['demo'];
@@ -37,7 +37,7 @@ if (isset($_GET['demo'])) {
             header('Location: subscription-expired.php');
             exit;
         }
-        header('Location: dashboard.php');
+        header('Location: questionnaire.php');
         exit;
     }
 }
@@ -48,7 +48,7 @@ $emailValue = '';
 // Connexion / Inscription rapide avec Google / Gmail
 if ((isset($_GET['action']) && $_GET['action'] === 'google_auth') || (isset($_POST['action']) && $_POST['action'] === 'google_auth')) {
     $db = get_db();
-    $googleEmail = trim(strtolower($_POST['email'] ?? 'alexandre.martin@gmail.com'));
+    $googleEmail = trim(strtolower($_POST['email'] ?? 'gatadesirekana@gmail.com'));
     $googleName = trim($_POST['full_name'] ?? 'Alexandre Martin');
 
     require_once __DIR__ . '/includes/onboarding.php';
@@ -84,11 +84,9 @@ if ((isset($_GET['action']) && $_GET['action'] === 'google_auth') || (isset($_PO
         $_SESSION['user_email'] = $user['email'];
         $_SESSION['user_role'] = $user['role'] ?? 'membre';
 
-        $redir = check_onboarding_redirect($user) ?: 'dashboard.php';
-
         set_flash('success', "👋 Connexion réussie ! Bienvenue.");
         header('Content-Type: application/json; charset=utf-8');
-        echo json_encode(['success' => true, 'redirect' => $redir, 'user' => $user['full_name']]);
+        echo json_encode(['success' => true, 'redirect' => 'questionnaire.php', 'user' => $user['full_name']]);
         exit;
     }
 }
@@ -118,27 +116,16 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
             require_once __DIR__ . '/includes/subscriptions.php';
             require_once __DIR__ . '/includes/onboarding.php';
 
-            $redir = check_onboarding_redirect($user);
-            if ($redir !== null) {
-                unset($_SESSION['redirect_after_login']);
-                if ($isAjax) {
-                    header('Content-Type: application/json; charset=utf-8');
-                    echo json_encode(['success' => true, 'redirect' => $redir]);
-                    exit;
-                }
-                header("Location: {$redir}");
-                exit;
-            }
-
             set_flash('success', 'Ravi de vous revoir parmi nous ! Vous êtes connecté.');
-            $redirectTo = $_SESSION['redirect_after_login'] ?? 'dashboard.php';
             unset($_SESSION['redirect_after_login']);
+            
+            // Redirection directe vers le questionnaire après connexion
             if ($isAjax) {
                 header('Content-Type: application/json; charset=utf-8');
-                echo json_encode(['success' => true, 'redirect' => $redirectTo]);
+                echo json_encode(['success' => true, 'redirect' => 'questionnaire.php']);
                 exit;
             }
-            header("Location: {$redirectTo}");
+            header("Location: questionnaire.php");
             exit;
         } else {
             $error = $loginResult['error'];
@@ -152,51 +139,30 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
     }
 }
 
-$pageTitle = "Espace Connexion — One Vision Community";
-$pageDescription = "Accédez à vos salons d'échanges, masterminds et replays HD.";
+$pageTitle = "Connexion Membre — One Vision Community";
+$pageDescription = "Connectez-vous à votre espace membre One Vision Community. Accédez aux lives, replays et salons d'échanges.";
 $hideHeaderNav = true;
 require_once __DIR__ . '/includes/header.php';
 ?>
 
-<main class="section auth-section" style="min-height: calc(100vh - 240px); display:flex; align-items:center; justify-content:center; padding: 3rem 1rem; background: #0f172a10;">
-  <div class="modal-card" style="box-shadow: 0 25px 60px -15px rgba(0, 0, 0, 0.25), 0 0 0 1px rgba(15, 23, 42, 0.05); position: relative; margin: 0 auto;">
+<main class="section auth-section" style="min-height: calc(100vh - 140px); display:flex; align-items:center; justify-content:center; padding: 2.5rem 1rem; background: #0f172a08;">
+  <div class="auth-card">
     <a href="index.php" class="modal-close-btn" aria-label="Fermer et retourner à l'accueil">✕</a>
 
-    <div class="modal-header" style="margin-bottom:0.75rem;">
-      <div class="modal-header-top">
-        <h1 class="modal-title">Espace Connexion</h1>
-      </div>
-      <p class="modal-subtitle">Accédez à vos salons d'échanges, masterminds et replays HD.</p>
+    <!-- En-tête de la carte -->
+    <div style="margin-bottom: 1.25rem; text-align: left;">
+      <h1 style="font-size: 1.55rem; font-weight: 800; color: #0f172a; margin: 0 0 0.35rem 0; letter-spacing: -0.02em;">
+        Connexion Membre
+      </h1>
+      <p style="font-size: 0.9rem; color: #64748b; margin: 0; line-height: 1.45;">
+        Rejoignez le réseau One Vision et accédez à tous vos espaces.
+      </p>
     </div>
 
     <!-- Onglets Connexion / Inscription -->
     <div class="auth-tabs" role="tablist">
-      <a href="login.php" class="auth-tab-btn active" role="tab" style="text-decoration:none; text-align:center;">Connexion</a>
-      <a href="register.php" class="auth-tab-btn" role="tab" style="text-decoration:none; text-align:center;">Inscription</a>
-    </div>
-
-    <!-- ACCÈS RAPIDE DÉMO / TEST EN 1 CLIC (PHP) -->
-    <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:14px; padding:0.95rem; margin-bottom:1.25rem;">
-      <div style="font-size:0.75rem; font-weight:800; text-transform:uppercase; color:#475569; letter-spacing:0.04em; margin-bottom:0.6rem; text-align:center;">
-        Accès Rapide Démo & Parcours :
-      </div>
-      <div style="display:flex; flex-direction:column; gap:0.45rem;">
-        <a href="login.php?demo=animateur" class="btn btn-secondary btn-sm" style="font-size:0.82rem; padding:0.45rem 0.6rem; font-weight:700; width:100%; justify-content:flex-start; text-decoration:none; text-align:left; color:#c2410c; background:#fff7ed; border-color:#fed7aa;">
-          🌟 <span><strong>Animateur</strong> (Abonnement Plus • 24€/m)</span>
-        </a>
-        <a href="login.php?demo=membre" class="btn btn-secondary btn-sm" style="font-size:0.82rem; padding:0.45rem 0.6rem; font-weight:700; width:100%; justify-content:flex-start; text-decoration:none; text-align:left; color:#1e293b;">
-          💼 <span><strong>Membre Standard</strong> (Actif • 9€/m)</span>
-        </a>
-        <a href="questionnaire.php" class="btn btn-secondary btn-sm" style="font-size:0.82rem; padding:0.45rem 0.6rem; font-weight:700; width:100%; justify-content:flex-start; text-decoration:none; text-align:left; color:#1e293b;">
-          📋 <span><strong>Nouveau Membre</strong> (Passer le Questionnaire)</span>
-        </a>
-        <a href="choisir-abonnement.php" class="btn btn-secondary btn-sm" style="font-size:0.82rem; padding:0.45rem 0.6rem; font-weight:700; width:100%; justify-content:flex-start; text-decoration:none; text-align:left; color:#1e293b;">
-          💳 <span><strong>Choix Abonnement</strong> (Grille 9€ vs 24€)</span>
-        </a>
-        <a href="login.php?demo=expired" class="btn btn-secondary btn-sm" style="font-size:0.82rem; padding:0.45rem 0.6rem; font-weight:700; width:100%; justify-content:flex-start; text-decoration:none; text-align:left; color:#b91c1c; background:#fef2f2; border-color:#fecaca;">
-          ⏳ <span><strong>Compte Expiré</strong> (Aperçu restreint & relance)</span>
-        </a>
-      </div>
+      <a href="login.php" class="auth-tab-btn active" role="tab">Connexion</a>
+      <a href="register.php" class="auth-tab-btn" role="tab">Inscription</a>
     </div>
 
     <!-- Bouton Google / Gmail -->
@@ -207,7 +173,7 @@ require_once __DIR__ . '/includes/header.php';
         <path fill="#FBBC05" d="M5.28 14.27c-.25-.72-.38-1.49-.38-2.27s.13-1.55.38-2.27V6.58H1.25C.45 8.18 0 9.98 0 12s.45 3.82 1.25 5.42l4.03-3.15z"/>
         <path fill="#EA4335" d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.42-3.42C17.95 1.19 15.24 0 12 0 7.34 0 3.26 2.64 1.25 6.58l4.03 3.15c.95-2.83 3.6-4.98 6.72-4.98z"/>
       </svg>
-      <span>Continuer avec Google</span>
+      <span>Se connecter avec Google</span>
     </button>
 
     <div class="auth-divider">
@@ -231,8 +197,8 @@ require_once __DIR__ . '/includes/header.php';
           id="email" 
           name="email" 
           required 
-          value="<?= $emailValue ?>" 
-          placeholder="ex. alexandre@monprojet.fr"
+          value="<?= $emailValue ?: 'gatadesirekana@gmail.com' ?>" 
+          placeholder="gatadesirekana@gmail.com"
           class="form-input"
           autocomplete="email"
         >
@@ -250,25 +216,53 @@ require_once __DIR__ . '/includes/header.php';
           id="password" 
           name="password" 
           required 
-          placeholder="Votre mot de passe"
+          placeholder="Au moins 6 caractères"
           class="form-input"
           autocomplete="current-password"
         >
       </div>
 
       <button type="submit" class="btn btn-primary modal-submit-btn">
-        <span>Me connecter à mon espace</span>
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-          <polyline points="9 18 15 12 9 6"></polyline>
-        </svg>
+        Se connecter
       </button>
-
-      <div class="modal-footer-notes">
-        <span style="color:#f97316;">⚡</span> Connexion rapide et chiffrée • Accès immédiat aux salons 24/7
-      </div>
     </form>
 
   </div>
 </main>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  const googleBtn = document.getElementById('googleLoginBtn');
+  if (googleBtn) {
+    googleBtn.addEventListener('click', function() {
+      const emailInput = document.getElementById('email');
+      const emailVal = emailInput && emailInput.value ? emailInput.value : 'gatadesirekana@gmail.com';
+      const formData = new FormData();
+      formData.append('action', 'google_auth');
+      formData.append('email', emailVal);
+      formData.append('full_name', 'Alexandre Martin');
+
+      fetch('login.php?action=google_auth', {
+        method: 'POST',
+        headers: {
+          'X-Requested-With': 'XMLHttpRequest'
+        },
+        body: formData
+      })
+      .then(res => res.json())
+      .then(data => {
+        if (data.success && data.redirect) {
+          window.location.href = data.redirect;
+        } else {
+          window.location.href = 'questionnaire.php';
+        }
+      })
+      .catch(() => {
+        window.location.href = 'questionnaire.php';
+      });
+    });
+  }
+});
+</script>
 
 <?php require_once __DIR__ . '/includes/footer.php'; ?>

@@ -9,11 +9,11 @@
   
   <!-- Polices Google -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="preconnect" href="https://gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Great+Vibes&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   
   <!-- Feuilles de style -->
-  <link rel="stylesheet" href="./css/style.css?v=8">
+  <link rel="stylesheet" href="./css/style.css?v=9">
 </head>
 <body class="checkout-body">
 
@@ -25,122 +25,106 @@
           <span class="logo-sub">Community</span>
         </div>
       </a>
-      <a href="questionnaire.html" class="btn btn-primary btn-sm" style="text-decoration:none; font-weight:700;">
-        Rejoindre pour 9€/mois
-      </a>
     </div>
   </header>
 
-  <main class="section auth-section" style="min-height: calc(100vh - 160px); display:flex; align-items:center; justify-content:center; padding: 2.5rem 1rem; background:#f8fafc;">
-    <div style="background:#ffffff; border:1px solid #e2e8f0; border-radius:22px; padding:2.5rem 2rem; max-width:440px; width:100%; box-shadow:0 15px 35px rgba(0,0,0,0.06);">
+  <main class="section auth-section" style="min-height: calc(100vh - 140px); display:flex; align-items:center; justify-content:center; padding: 2.5rem 1rem; background: #0f172a08;">
+    <div class="auth-card">
       
-      <div style="text-align:center; margin-bottom:1.75rem;">
-        <h1 style="font-size:1.6rem; font-weight:800; color:#0f172a; margin:0 0 0.35rem 0;">
-          Espace Membre
+      <!-- Bouton Fermer ✕ -->
+      <a href="index.html" class="modal-close-btn" aria-label="Fermer et retourner à l'accueil">✕</a>
+
+      <!-- En-tête de la carte -->
+      <div style="margin-bottom: 1.25rem; text-align: left;">
+        <h1 style="font-size: 1.55rem; font-weight: 800; color: #0f172a; margin: 0 0 0.35rem 0; letter-spacing: -0.02em;">
+          Connexion Membre
         </h1>
-        <p style="font-size:0.88rem; color:#64748b; margin:0;">
-          Renseignez vos identifiants pour accéder à la communauté.
+        <p style="font-size: 0.9rem; color: #64748b; margin: 0; line-height: 1.45;">
+          Rejoignez le réseau One Vision et accédez à tous vos espaces.
         </p>
       </div>
 
-      <!-- ACCÈS RAPIDE DÉMO / TEST EN 1 CLIC -->
-      <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:14px; padding:0.95rem; margin-bottom:1.5rem;">
-        <div style="font-size:0.75rem; font-weight:800; text-transform:uppercase; color:#475569; letter-spacing:0.04em; margin-bottom:0.6rem; text-align:center;">
-          Accès Rapide Démo & Parcours :
-        </div>
-        <div style="display:flex; flex-direction:column; gap:0.45rem;">
-          <button type="button" class="btn btn-secondary btn-sm" onclick="quickLogin('animateur')" style="font-size:0.82rem; padding:0.45rem 0.6rem; font-weight:700; width:100%; justify-content:flex-start; text-align:left;">
-            🌟 <span><strong>Animateur</strong> (Abonnement Plus • 24€/m)</span>
-          </button>
-          <button type="button" class="btn btn-secondary btn-sm" onclick="quickLogin('membre')" style="font-size:0.82rem; padding:0.45rem 0.6rem; font-weight:700; width:100%; justify-content:flex-start; text-align:left;">
-            💼 <span><strong>Membre Standard</strong> (Actif • 9€/m)</span>
-          </button>
-          <a href="questionnaire.html" class="btn btn-secondary btn-sm" style="font-size:0.82rem; padding:0.45rem 0.6rem; font-weight:700; width:100%; justify-content:flex-start; text-decoration:none; text-align:left; color:#1e293b;">
-            📋 <span><strong>Nouveau Membre</strong> (Passer le Questionnaire)</span>
-          </a>
-          <a href="choisir-abonnement.html" class="btn btn-secondary btn-sm" style="font-size:0.82rem; padding:0.45rem 0.6rem; font-weight:700; width:100%; justify-content:flex-start; text-decoration:none; text-align:left; color:#1e293b;">
-            💳 <span><strong>Choix Abonnement</strong> (Grille 9€ vs 24€)</span>
-          </a>
-          <button type="button" class="btn btn-secondary btn-sm" onclick="quickLogin('expired')" style="font-size:0.82rem; padding:0.45rem 0.6rem; font-weight:700; width:100%; justify-content:flex-start; text-align:left; color:#b91c1c;">
-            ⏳ <span><strong>Compte Expiré</strong> (Aperçu restreint & relance)</span>
-          </button>
-        </div>
+      <!-- Onglets Connexion / Inscription -->
+      <div class="auth-tabs" role="tablist">
+        <a href="login.html" class="auth-tab-btn active" role="tab">Connexion</a>
+        <a href="register.html" class="auth-tab-btn" role="tab">Inscription</a>
+      </div>
+
+      <!-- Bouton Google / Gmail -->
+      <button type="button" class="btn-google-auth" id="googleLoginBtn" onclick="handleGoogleAuth()">
+        <svg width="18" height="18" viewBox="0 0 24 24">
+          <path fill="#4285F4" d="M23.745 12.27c0-.7-.06-1.4-.19-2.07H12v4.51h6.6c-.29 1.52-1.14 2.8-2.4 3.66v3.05h3.88c2.27-2.09 3.665-5.17 3.665-9.15z"/>
+          <path fill="#34A853" d="M12 24c3.24 0 5.95-1.08 7.93-2.91l-3.88-3.05c-1.08.72-2.45 1.16-4.05 1.16-3.12 0-5.77-2.1-6.72-4.93H1.25v3.15C3.26 21.36 7.34 24 12 24z"/>
+          <path fill="#FBBC05" d="M5.28 14.27c-.25-.72-.38-1.49-.38-2.27s.13-1.55.38-2.27V6.58H1.25C.45 8.18 0 9.98 0 12s.45 3.82 1.25 5.42l4.03-3.15z"/>
+          <path fill="#EA4335" d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.42-3.42C17.95 1.19 15.24 0 12 0 7.34 0 3.26 2.64 1.25 6.58l4.03 3.15c.95-2.83 3.6-4.98 6.72-4.98z"/>
+        </svg>
+        <span>Se connecter avec Google</span>
+      </button>
+
+      <div class="auth-divider">
+        <span>ou avec votre email</span>
       </div>
 
       <form id="loginForm" onsubmit="handleLoginSubmit(event)">
-        <div style="margin-bottom:1.15rem;">
-          <label for="loginEmail" style="display:block; font-size:0.86rem; font-weight:700; color:#0f172a; margin-bottom:0.35rem;">Adresse email</label>
-          <input type="email" id="loginEmail" class="form-input" placeholder="ex. alexandre@monprojet.fr" value="alexandre@monprojet.fr" required style="width:100%; padding:0.65rem 0.85rem; border:1px solid #cbd5e1; border-radius:8px; font-size:0.92rem;">
+        <div class="form-group">
+          <label for="loginEmail" class="form-label">Adresse email</label>
+          <input 
+            type="email" 
+            id="loginEmail" 
+            class="form-input" 
+            placeholder="gatadesirekana@gmail.com" 
+            value="gatadesirekana@gmail.com" 
+            required 
+            autocomplete="email"
+          >
         </div>
 
-        <div style="margin-bottom:1.5rem;">
-          <label for="loginPassword" style="display:block; font-size:0.86rem; font-weight:700; color:#0f172a; margin-bottom:0.35rem;">Mot de passe</label>
-          <input type="password" id="loginPassword" class="form-input" placeholder="••••••••" value="OneVision2026!" required style="width:100%; padding:0.65rem 0.85rem; border:1px solid #cbd5e1; border-radius:8px; font-size:0.92rem;">
+        <div class="form-group">
+          <div style="display:flex; justify-content:space-between; align-items:baseline;">
+            <label for="loginPassword" class="form-label">Mot de passe</label>
+          </div>
+          <input 
+            type="password" 
+            id="loginPassword" 
+            class="form-input" 
+            placeholder="Au moins 6 caractères" 
+            value="OneVision2026!" 
+            required 
+            autocomplete="current-password"
+          >
         </div>
 
-        <button type="submit" class="btn btn-primary" style="width:100%; padding:0.8rem; font-weight:700; border-radius:10px; font-size:0.95rem; justify-content:center; display:flex;">
+        <button type="submit" class="btn btn-primary modal-submit-btn">
           Se connecter
         </button>
       </form>
-
-      <div style="text-align:center; margin-top:1.5rem; font-size:0.86rem; color:#64748b;">
-        Nouveau sur One Vision ?
-        <a href="questionnaire.html" style="color:#2563eb; font-weight:700; text-decoration:none; margin-left:0.25rem;">
-          Rejoindre le réseau (Questionnaire) →
-        </a>
-      </div>
 
     </div>
   </main>
 
   <script>
-    function quickLogin(role) {
-      if (role === 'expired') {
-        localStorage.setItem('ov_has_paid', 'false');
-        localStorage.setItem('ov_subscription_status', 'expired');
-        localStorage.setItem('ov_subscription_plan', 'none');
-        localStorage.setItem('ov_member_name', 'Membre Expiré');
-        localStorage.setItem('ov_member_email', 'expire@monprojet.fr');
-        window.location.href = 'dashboard.html';
-        return;
-      }
-
-      localStorage.setItem('ov_has_paid', 'true');
-      localStorage.setItem('ov_subscription_status', 'active');
-      localStorage.setItem('ov_subscription_plan', role);
-      localStorage.setItem('ov_is_creator', role === 'animateur' ? 'true' : 'false');
-      localStorage.setItem('ov_member_name', role === 'animateur' ? 'Cyril D.' : 'Alexandre Martin');
-      localStorage.setItem('ov_member_email', role === 'animateur' ? 'cyril@onevision.academy' : 'alexandre@monprojet.fr');
-      window.location.href = 'dashboard.html';
-    }
-
     function handleLoginSubmit(e) {
       e.preventDefault();
-      const email = document.getElementById('loginEmail').value;
-      const name = email.split('@')[0].replace('.', ' ');
-
-      // Si l'utilisateur n'a pas encore fait le questionnaire
-      const hasDoneQuestionnaire = localStorage.getItem('ov_has_completed_questionnaire') === 'true';
-      const hasPaid = localStorage.getItem('ov_has_paid') === 'true';
-
-      localStorage.setItem('ov_member_name', name.charAt(0).toUpperCase() + name.slice(1));
-      localStorage.setItem('ov_member_email', email);
-
-      if (!hasDoneQuestionnaire) {
-        window.location.href = 'questionnaire.html';
-        return;
+      const emailInput = document.getElementById('loginEmail');
+      const email = emailInput ? emailInput.value.trim() : '';
+      if (email) {
+        const name = email.split('@')[0].replace('.', ' ');
+        localStorage.setItem('ov_member_name', name.charAt(0).toUpperCase() + name.slice(1));
+        localStorage.setItem('ov_member_email', email);
       }
+      localStorage.setItem('ov_logged_in', 'true');
+      
+      // Redirection directe vers la page de questionnaire
+      window.location.href = 'questionnaire.html';
+    }
 
-      if (!hasPaid) {
-        window.location.href = 'choisir-abonnement.html';
-        return;
-      }
-
-      localStorage.setItem('ov_subscription_status', 'active');
-      if (!localStorage.getItem('ov_subscription_plan')) {
-        localStorage.setItem('ov_subscription_plan', 'membre');
-      }
-      window.location.href = 'dashboard.html';
+    function handleGoogleAuth() {
+      localStorage.setItem('ov_member_name', 'Alexandre Martin');
+      localStorage.setItem('ov_member_email', 'gatadesirekana@gmail.com');
+      localStorage.setItem('ov_logged_in', 'true');
+      
+      // Redirection directe vers la page de questionnaire
+      window.location.href = 'questionnaire.html';
     }
   </script>
 </body>

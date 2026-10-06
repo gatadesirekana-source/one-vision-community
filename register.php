@@ -9,7 +9,7 @@ require_once __DIR__ . '/includes/auth.php';
 require_once __DIR__ . '/includes/flash.php';
 
 if (is_logged_in()) {
-    header('Location: dashboard.php');
+    header('Location: questionnaire.php');
     exit;
 }
 
@@ -71,22 +71,26 @@ $hideHeaderNav = true;
 require_once __DIR__ . '/includes/header.php';
 ?>
 
-<main class="section auth-section" style="min-height: calc(100vh - 200px); display:flex; align-items:center; justify-content:center; padding: 1.75rem 1rem;">
-  <div class="auth-card" style="width:100%; max-width:420px; background:var(--color-bg-card, #ffffff); border:1px solid var(--color-border, #e2e8f0); border-radius:18px; padding:1.65rem 1.6rem; box-shadow:0 12px 35px rgba(0,0,0,0.06);">
+<main class="section auth-section" style="min-height: calc(100vh - 140px); display:flex; align-items:center; justify-content:center; padding: 2.5rem 1rem; background: #0f172a08;">
+  <div class="auth-card">
     
-    <div style="text-align:center; margin-bottom:1rem;">
-      <h1 style="font-size:1.45rem; font-weight:800; color:var(--color-text-main, #0f172a); margin-bottom:0.35rem; letter-spacing:-0.02em;">
-        Rejoindre la communauté
+    <!-- Bouton Fermer ✕ -->
+    <a href="index.php" class="modal-close-btn" aria-label="Fermer et retourner à l'accueil">✕</a>
+
+    <!-- En-tête de la carte -->
+    <div style="margin-bottom: 1.25rem; text-align: left;">
+      <h1 style="font-size: 1.55rem; font-weight: 800; color: #0f172a; margin: 0 0 0.35rem 0; letter-spacing: -0.02em;">
+        Inscription Membre
       </h1>
-      <p style="font-size:0.86rem; color:var(--color-text-muted, #64748b); line-height:1.45; margin:0;">
-        Créez votre profil pour accéder immédiatement aux lives hebdomadaires et aux salons.
+      <p style="font-size: 0.9rem; color: #64748b; margin: 0; line-height: 1.45;">
+        Rejoignez le réseau One Vision et accédez à tous vos espaces.
       </p>
     </div>
 
     <!-- Onglets Connexion / Inscription -->
     <div class="auth-tabs" role="tablist">
-      <a href="login.php" class="auth-tab-btn" role="tab" style="text-decoration:none; text-align:center;">Connexion</a>
-      <a href="register.php" class="auth-tab-btn active" role="tab" style="text-decoration:none; text-align:center;">Inscription</a>
+      <a href="login.php" class="auth-tab-btn" role="tab">Connexion</a>
+      <a href="register.php" class="auth-tab-btn active" role="tab">Inscription</a>
     </div>
 
     <!-- Bouton Google / Gmail -->
@@ -105,76 +109,100 @@ require_once __DIR__ . '/includes/header.php';
     </div>
 
     <?php if (!empty($error)): ?>
-      <div style="background:#fef2f2; border:1px solid #fecaca; color:#991b1b; padding:0.65rem 0.85rem; border-radius:10px; margin-bottom:1rem; font-size:0.85rem; display:flex; align-items:center; gap:0.4rem;">
+      <div style="background:#fef2f2; border:1px solid #fecaca; color:#991b1b; padding:0.75rem 1rem; border-radius:12px; margin-bottom:1.15rem; font-size:0.875rem; display:flex; align-items:center; gap:0.5rem;">
         <span>⚠️</span>
         <span><?= htmlspecialchars($error) ?></span>
       </div>
     <?php endif; ?>
 
-    <form method="POST" action="register.php" class="auth-form" style="display:flex; flex-direction:column; gap:0.75rem;">
+    <form method="POST" action="register.php">
       <?= csrf_field() ?>
 
-      <div class="form-group" style="margin-bottom:0;">
-        <label for="full_name" style="display:block; font-size:0.82rem; font-weight:700; margin-bottom:0.25rem; color:var(--color-text-main, #1e293b);">
-          Nom & Prénom <span style="color:#ef4444;">*</span>
-        </label>
+      <div class="form-group">
+        <label for="full_name" class="form-label">Nom complet</label>
         <input 
           type="text" 
           id="full_name" 
           name="full_name" 
           required 
-          value="<?= htmlspecialchars($fullNameVal) ?>" 
-          placeholder="Ex: Maxime Robert"
-          style="width:100%; padding:0.65rem 0.85rem; border:1.5px solid var(--color-border, #cbd5e1); border-radius:10px; font-size:0.9rem; outline:none; transition:border-color 0.2s; background:#ffffff;"
+          value="<?= htmlspecialchars($fullNameVal ?: 'Gkd') ?>" 
+          placeholder="Gkd"
+          class="form-input"
+          autocomplete="name"
         >
       </div>
 
-      <div class="form-group" style="margin-bottom:0;">
-        <label for="email" style="display:block; font-size:0.82rem; font-weight:700; margin-bottom:0.25rem; color:var(--color-text-main, #1e293b);">
-          Adresse email professionnelle <span style="color:#ef4444;">*</span>
-        </label>
+      <div class="form-group">
+        <label for="email" class="form-label">Adresse email</label>
         <input 
           type="email" 
           id="email" 
           name="email" 
           required 
-          value="<?= htmlspecialchars($emailVal) ?>" 
-          placeholder="maxime@monprojet.fr"
-          style="width:100%; padding:0.65rem 0.85rem; border:1.5px solid var(--color-border, #cbd5e1); border-radius:10px; font-size:0.9rem; outline:none; transition:border-color 0.2s; background:#ffffff;"
+          value="<?= htmlspecialchars($emailVal ?: 'gatadesirekana@gmail.com') ?>" 
+          placeholder="gatadesirekana@gmail.com"
+          class="form-input"
+          autocomplete="email"
         >
       </div>
 
-      <div class="form-group" style="margin-bottom:0;">
-        <label for="password" style="display:block; font-size:0.82rem; font-weight:700; margin-bottom:0.25rem; color:var(--color-text-main, #1e293b);">
-          Mot de passe (8 caractères min., avec lettres et chiffres) <span style="color:#ef4444;">*</span>
-        </label>
+      <div class="form-group">
+        <label for="password" class="form-label">Mot de passe</label>
         <input 
           type="password" 
           id="password" 
           name="password" 
           required 
-          placeholder="••••••••"
-          style="width:100%; padding:0.65rem 0.85rem; border:1.5px solid var(--color-border, #cbd5e1); border-radius:10px; font-size:0.9rem; outline:none; transition:border-color 0.2s; background:#ffffff;"
+          placeholder="Au moins 6 caractères"
+          class="form-input"
+          autocomplete="new-password"
         >
       </div>
 
-      <button type="submit" class="btn btn-primary" style="width:100%; padding:0.75rem; font-size:0.95rem; font-weight:700; border-radius:10px; margin-top:0.4rem; justify-content:center;">
-        <span>Finaliser mon inscription</span>
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-          <line x1="5" y1="12" x2="19" y2="12"></line>
-          <polyline points="12 5 19 12 12 19"></polyline>
-        </svg>
+      <button type="submit" class="btn btn-primary modal-submit-btn">
+        S'inscrire
       </button>
     </form>
 
-    <div style="margin-top:1.25rem; text-align:center; font-size:0.85rem; color:var(--color-text-muted, #64748b);">
-      Déjà membre ? 
-      <a href="login.php" style="color:var(--color-primary, #2563eb); font-weight:700; text-decoration:none;">
-        Connectez-vous ici
-      </a>
-    </div>
-
   </div>
 </main>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  const googleBtn = document.getElementById('googleRegisterBtn');
+  if (googleBtn) {
+    googleBtn.addEventListener('click', function() {
+      const emailInput = document.getElementById('email');
+      const nameInput = document.getElementById('full_name');
+      const emailVal = emailInput && emailInput.value ? emailInput.value : 'gatadesirekana@gmail.com';
+      const nameVal = nameInput && nameInput.value ? nameInput.value : 'Gkd';
+
+      const formData = new FormData();
+      formData.append('action', 'google_auth');
+      formData.append('email', emailVal);
+      formData.append('full_name', nameVal);
+
+      fetch('login.php?action=google_auth', {
+        method: 'POST',
+        headers: {
+          'X-Requested-With': 'XMLHttpRequest'
+        },
+        body: formData
+      })
+      .then(res => res.json())
+      .then(data => {
+        if (data.success && data.redirect) {
+          window.location.href = data.redirect;
+        } else {
+          window.location.href = 'questionnaire.php';
+        }
+      })
+      .catch(() => {
+        window.location.href = 'questionnaire.php';
+      });
+    });
+  }
+});
+</script>
 
 <?php require_once __DIR__ . '/includes/footer.php'; ?>
