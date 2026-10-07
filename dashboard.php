@@ -691,7 +691,7 @@ $userPayments = get_user_payments_history($userId);
         <div class="dash-user-dropdown-menu" id="dashUserDropdownMenu" style="display:none;">
           <div class="user-dropdown-header">
             <strong id="dropdownUserTitle"><?= htmlspecialchars($currentUser['full_name']) ?></strong>
-            <span class="badge-role-admin"><?= $isOwnerUser ? '👑 Propriétaire' : ($isAdminDelegue ? '🛡️ Admin Délégué' : ($isAnimateur ? '🌟 Animateur' : '💼 Membre One Vision')) ?></span>
+            <span class="badge-role-admin"><?= $isOwnerUser ? '👑 Propriétaire' : ($isAdminDelegue ? '🛡️ Admin Délégué' : ($isAnimateur ? '🌟 Animateur One Vision' : '💼 Membre One Vision')) ?></span>
             <span class="user-dropdown-email" id="dropdownUserEmail"><?= htmlspecialchars($currentUser['email']) ?></span>
           </div>
           <div class="user-dropdown-divider"></div>
@@ -703,7 +703,7 @@ $userPayments = get_user_payments_history($userId);
               <rect x="14" y="14" width="7" height="7"></rect>
               <rect x="3" y="14" width="7" height="7"></rect>
             </svg>
-            <span>Mon Dashboard</span>
+            <span>Accueil</span>
           </button>
 
           <a href="abonnements.php" class="user-dropdown-item" id="menuItemAbonnement" style="text-decoration:none;">
@@ -739,15 +739,6 @@ $userPayments = get_user_payments_history($userId);
             </svg>
             <span>Paramètres du compte</span>
           </button>
-
-          <a href="index.php" class="user-dropdown-item" title="Revenir à la page vitrine">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path>
-              <polyline points="15 3 21 3 21 9"></polyline>
-              <line x1="10" y1="14" x2="21" y2="3"></line>
-            </svg>
-            <span>Retour au site vitrine</span>
-          </a>
 
           <div class="user-dropdown-divider"></div>
 
