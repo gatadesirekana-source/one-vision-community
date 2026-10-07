@@ -143,12 +143,12 @@ require_once __DIR__ . '/includes/header.php';
 <main class="section sub-manage-section" style="min-height: calc(100vh - 260px); padding: 3rem 1rem; background: #f8fafc;">
   <div class="container" style="max-width: 980px; margin: 0 auto;">
 
-    <!-- En-tête de section : Retour au Dashboard à gauche en haut, et titre en-dessous -->
+    <!-- En-tête de section : Bouton Retour à gauche en haut, et titre en-dessous -->
     <div style="margin-bottom: 2rem; border-bottom: 1px solid #e2e8f0; padding-bottom: 1.5rem;">
       <div style="margin-bottom: 1.25rem;">
-        <a href="dashboard.php" class="btn btn-secondary btn-sm" style="display:inline-flex; align-items:center; gap:0.45rem; padding:0.5rem 1.05rem; border-radius:10px; font-weight:600; background:#ffffff; border:1px solid #cbd5e1; color:#1e293b; box-shadow:0 1px 3px rgba(0,0,0,0.05);">
+        <a href="dashboard.php" class="btn btn-secondary btn-sm" style="display:inline-flex; align-items:center; gap:0.45rem; padding:0.5rem 1.05rem; border-radius:10px; font-weight:600; background:#ffffff; border:1px solid #cbd5e1; color:#1e293b; box-shadow:0 1px 3px rgba(0,0,0,0.05); transition:all 0.2s ease;">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
-          <span>Retour au Dashboard</span>
+          <span>Retour</span>
         </a>
       </div>
       <div>
