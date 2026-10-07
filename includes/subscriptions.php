@@ -18,6 +18,25 @@ require_once __DIR__ . '/permissions.php';
 require_once __DIR__ . '/payment_service.php';
 
 /**
+ * Formate une date en français lisible (ex: 5 Octobre 2026).
+ */
+function ov_format_date_fr(?string $dateStr): string {
+    if (!$dateStr) return '—';
+    $timestamp = strtotime($dateStr);
+    if (!$timestamp) return '—';
+    $months = [
+        1 => 'Janvier', 2 => 'Février', 3 => 'Mars', 4 => 'Avril',
+        5 => 'Mai', 6 => 'Juin', 7 => 'Juillet', 8 => 'Août',
+        9 => 'Septembre', 10 => 'Octobre', 11 => 'Novembre', 12 => 'Décembre'
+    ];
+    $day = (int)date('j', $timestamp);
+    $monthNum = (int)date('n', $timestamp);
+    $year = date('Y', $timestamp);
+    $monthName = $months[$monthNum] ?? date('F', $timestamp);
+    return "{$day} {$monthName} {$year}";
+}
+
+/**
  * Récupère l'abonnement actif actuel d'un utilisateur avec les données de sa formule.
  */
 function get_user_active_subscription(int $userId): ?array {

@@ -55,49 +55,53 @@
         </p>
       </div>
 
-      <!-- 1. CARTE RÉCAPITULATIF DE L'ABONNEMENT COURANT -->
-      <div style="background:#ffffff; border:1px solid #e2e8f0; border-radius:18px; padding:1.75rem 2rem; margin-bottom:2.25rem; box-shadow:0 8px 25px rgba(0,0,0,0.04);">
+      <!-- 1. CARTE RÉCAPITULATIF DE L'ABONNEMENT COURANT (FORMULE UNIQUE) -->
+      <div style="background:#ffffff; border:1px solid #e2e8f0; border-radius:18px; padding:2rem 2.25rem; margin-bottom:2.5rem; box-shadow:0 8px 25px rgba(0,0,0,0.04);">
         <div style="display:flex; justify-content:space-between; align-items:flex-start; flex-wrap:wrap; gap:1.25rem; border-bottom:1px solid #f1f5f9; padding-bottom:1.5rem; margin-bottom:1.5rem;">
           <div>
-            <span style="font-size:0.75rem; font-weight:800; text-transform:uppercase; letter-spacing:0.05em; background:#dcfce7; color:#15803d; padding:0.25rem 0.65rem; border-radius:6px; display:inline-block; margin-bottom:0.5rem;">
-              ● Abonnement Actif
+            <span style="font-size:0.78rem; font-weight:800; text-transform:uppercase; letter-spacing:0.04em; background:#dcfce7; color:#15803d; padding:0.35rem 0.9rem; border-radius:9999px; display:inline-flex; align-items:center; gap:0.45rem; margin-bottom:0.75rem;">
+              <span style="width:7px; height:7px; border-radius:50%; background:#16a34a; display:inline-block;"></span>
+              ABONNEMENT ACTIF
             </span>
-            <h2 id="currentPlanTitle" style="font-size:1.5rem; font-weight:800; color:#0f172a; margin:0 0 0.25rem 0;">
-              Formule Membre Standard
+            <h2 id="currentPlanTitle" style="font-size:1.6rem; font-weight:800; color:#0f172a; margin:0 0 0.35rem 0; letter-spacing:-0.02em;">
+              Formule Animateur & Expert (Abonnement Plus)
             </h2>
-            <p style="color:#64748b; font-size:0.88rem; margin:0;">
+            <p style="color:#64748b; font-size:0.92rem; margin:0;">
               Prochain prélèvement automatique le <strong>5 Novembre 2026</strong>.
             </p>
           </div>
 
           <div style="text-align:right;">
-            <div id="currentPlanPrice" style="font-size:2.2rem; font-weight:900; color:#0f172a; letter-spacing:-0.03em;">
-              9,00 €
+            <div id="currentPlanPrice" style="font-size:2.35rem; font-weight:900; color:#0f172a; letter-spacing:-0.03em; line-height:1.1;">
+              24,00 €
             </div>
             <span style="font-size:0.85rem; color:#64748b; font-weight:600;">/ mois TTC</span>
           </div>
         </div>
 
-        <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(200px, 1fr)); gap:1.25rem; font-size:0.88rem; margin-bottom:1.5rem;">
+        <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(200px, 1fr)); gap:1.5rem; font-size:0.9rem; margin-bottom:1.5rem;">
           <div>
-            <span style="color:#64748b; font-size:0.78rem; text-transform:uppercase; font-weight:700;">Date de souscription</span>
-            <div style="font-weight:700; color:#0f172a; margin-top:2px;">5 Octobre 2026</div>
+            <span style="color:#64748b; font-size:0.78rem; text-transform:uppercase; font-weight:700; letter-spacing:0.04em; display:block; margin-bottom:0.35rem;">Date de souscription</span>
+            <div style="font-weight:700; color:#0f172a; font-size:0.98rem;">5 Octobre 2026</div>
           </div>
           <div>
-            <span style="color:#64748b; font-size:0.78rem; text-transform:uppercase; font-weight:700;">Renouvellement</span>
-            <div style="font-weight:700; color:#15803d; margin-top:2px;">Automatique (Résiliable 1 clic)</div>
+            <span style="color:#64748b; font-size:0.78rem; text-transform:uppercase; font-weight:700; letter-spacing:0.04em; display:block; margin-bottom:0.35rem;">Renouvellement</span>
+            <div style="font-weight:700; color:#15803d; font-size:0.98rem;">Automatique (Résiliable 1 clic)</div>
           </div>
           <div>
-            <span style="color:#64748b; font-size:0.78rem; text-transform:uppercase; font-weight:700;">Mode de paiement</span>
-            <div style="font-weight:700; color:#0f172a; margin-top:2px;">💳 Visa terminant par 4242</div>
+            <span style="color:#64748b; font-size:0.78rem; text-transform:uppercase; font-weight:700; letter-spacing:0.04em; display:block; margin-bottom:0.35rem;">Mode de paiement</span>
+            <div style="font-weight:700; color:#0f172a; font-size:0.98rem; display:flex; align-items:center; gap:0.45rem;">
+              <svg width="18" height="14" viewBox="0 0 24 18" fill="none" style="vertical-align:middle; flex-shrink:0;"><rect width="24" height="18" rx="3" fill="#2563eb"/><rect y="4" width="24" height="3" fill="#1e293b"/><rect x="3" y="11" width="6" height="3" rx="1" fill="#cbd5e1"/></svg>
+              <span>Visa terminant par 4242</span>
+            </div>
           </div>
         </div>
 
-        <div style="display:flex; justify-content:flex-end; gap:0.75rem; flex-wrap:wrap; border-top:1px solid #f1f5f9; padding-top:1.25rem;">
-          <a href="choisir-abonnement.html" class="btn btn-secondary btn-sm" style="font-weight:700; text-decoration:none;">
+        <div style="display:flex; justify-content:flex-end; align-items:center; gap:1rem; flex-wrap:wrap; border-top:1px solid #f1f5f9; padding-top:1.5rem;">
+          <a href="choisir-abonnement.html" style="background:#f1f5f9; border:1.5px solid #cbd5e1; color:#0f172a; font-weight:700; font-size:0.92rem; padding:0.65rem 1.6rem; border-radius:9999px; text-decoration:none; display:inline-flex; align-items:center; gap:0.5rem; transition:all 0.2s ease; box-shadow:0 1px 3px rgba(0,0,0,0.03);">
             Changer de formule d'abonnement
           </a>
-          <button type="button" class="btn btn-sm" onclick="alert('Votre demande de résiliation a été prise en compte. Vos accès restent valides jusqu\'au 5 Novembre 2026.');" style="background:#fee2e2; color:#dc2626; border:1px solid #fecaca; font-weight:700; border-radius:8px; padding:0.45rem 0.9rem; cursor:pointer;">
+          <button type="button" onclick="alert('Votre demande de résiliation a été prise en compte. Vos accès restent valides jusqu\'au 5 Novembre 2026.');" style="background:#fef2f2; border:1.5px solid #fecaca; color:#dc2626; font-weight:700; font-size:0.92rem; padding:0.65rem 1.6rem; border-radius:9999px; cursor:pointer; display:inline-flex; align-items:center; gap:0.5rem; transition:all 0.2s ease;">
             Résilier mon abonnement
           </button>
         </div>

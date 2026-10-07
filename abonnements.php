@@ -156,7 +156,7 @@ require_once __DIR__ . '/includes/header.php';
           Gestion de mon abonnement
         </h1>
         <p style="font-size: 0.98rem; color: #64748b; margin: 0;">
-          Suivez votre formule, vos échéances et personnalisez votre niveau d'adhésion.
+          Consultez votre formule active, modifiez vos options ou téléchargez vos reçus et factures officielles.
         </p>
       </div>
     </div>
@@ -185,323 +185,110 @@ require_once __DIR__ . '/includes/header.php';
       </div>
 
     <?php elseif ($activeSub): ?>
-      <!-- Utilisateur avec abonnement actif -->
-      <div style="background:#ffffff; border:1px solid #e2e8f0; border-radius:18px; padding:2rem; margin-bottom:2.5rem; box-shadow:0 8px 25px rgba(0,0,0,0.04);">
+      <!-- Formule unique active (conforme à la maquette) -->
+      <div style="background:#ffffff; border:1px solid #e2e8f0; border-radius:18px; padding:2rem 2.25rem; margin-bottom:2.5rem; box-shadow:0 8px 25px rgba(0,0,0,0.04);">
         
         <!-- En-tête de la formule active -->
-        <div style="display:flex; justify-content:space-between; align-items:flex-start; flex-wrap:wrap; gap:1rem; margin-bottom:1.5rem; border-bottom:1px solid #f1f5f9; padding-bottom:1.25rem;">
-          <div>
-            <span style="font-size:0.78rem; font-weight:800; text-transform:uppercase; letter-spacing:0.05em; color:<?= ($activeSub['plan_code'] === 'animateur') ? '#ea580c' : '#2563eb' ?>; background:<?= ($activeSub['plan_code'] === 'animateur') ? '#fff7ed' : '#eff6ff' ?>; padding:0.25rem 0.7rem; border-radius:6px; display:inline-block; margin-bottom:0.5rem;">
-              Formule Active • <?= ucfirst($activeSub['periodicite']) ?>
-            </span>
-            <h2 style="font-size:1.6rem; font-weight:800; color:#0f172a; margin:0 0 0.25rem 0;">
-              <?= htmlspecialchars($activeSub['plan_nom']) ?>
-            </h2>
-            <div style="font-size:0.95rem; color:#64748b;">
-              Montant réglé : <strong><?= number_format((float)$activeSub['prix_paye'], 2, ',', ' ') ?> €</strong> / <?= ($activeSub['periodicite'] === 'annuel') ? 'an' : 'mois' ?>
-            </div>
-          </div>
-
+        <div style="display:flex; justify-content:space-between; align-items:flex-start; flex-wrap:wrap; gap:1.25rem; border-bottom:1px solid #f1f5f9; padding-bottom:1.5rem; margin-bottom:1.5rem;">
           <div>
             <?php if (!empty($subInfo['is_cancelled'])): ?>
-              <span style="background:#fee2e2; color:#991b1b; padding:0.4rem 0.9rem; border-radius:30px; font-weight:700; font-size:0.85rem; display:inline-flex; align-items:center; gap:0.4rem;">
-                <span>⚠️</span> Résiliation programmée
+              <span style="background:#fee2e2; color:#991b1b; padding:0.35rem 0.9rem; border-radius:9999px; font-weight:800; font-size:0.78rem; text-transform:uppercase; letter-spacing:0.04em; display:inline-flex; align-items:center; gap:0.45rem; margin-bottom:0.75rem;">
+                <span style="width:7px; height:7px; border-radius:50%; background:#ef4444;"></span>
+                Résiliation programmée
               </span>
             <?php else: ?>
-              <span style="background:#dcfce7; color:#15803d; padding:0.4rem 0.9rem; border-radius:30px; font-weight:700; font-size:0.85rem; display:inline-flex; align-items:center; gap:0.4rem;">
-                <span style="width:8px; height:8px; border-radius:50%; background:#16a34a;"></span>
-                Abonnement Actif
+              <span style="background:#dcfce7; color:#15803d; padding:0.35rem 0.9rem; border-radius:9999px; font-weight:800; font-size:0.78rem; text-transform:uppercase; letter-spacing:0.04em; display:inline-flex; align-items:center; gap:0.45rem; margin-bottom:0.75rem;">
+                <span style="width:7px; height:7px; border-radius:50%; background:#16a34a;"></span>
+                ABONNEMENT ACTIF
               </span>
             <?php endif; ?>
+
+            <h2 style="font-size:1.6rem; font-weight:800; color:#0f172a; margin:0 0 0.35rem 0; letter-spacing:-0.02em;">
+              <?= ($activeSub['plan_code'] === 'animateur') ? 'Formule Animateur & Expert (Abonnement Plus)' : 'Formule Membre Standard' ?>
+            </h2>
+            <p style="color:#64748b; font-size:0.92rem; margin:0;">
+              <?php if (!empty($subInfo['is_cancelled'])): ?>
+                Vos privilèges restent valides jusqu'au <strong><?= ov_format_date_fr($activeSub['date_fin']) ?></strong>.
+              <?php else: ?>
+                Prochain prélèvement automatique le <strong><?= ov_format_date_fr($activeSub['date_fin']) ?></strong>.
+              <?php endif; ?>
+            </p>
+          </div>
+
+          <div style="text-align:right;">
+            <div style="font-size:2.35rem; font-weight:900; color:#0f172a; letter-spacing:-0.03em; line-height:1.1;">
+              <?= number_format((float)$activeSub['prix_paye'], 2, ',', ' ') ?> €
+            </div>
+            <span style="font-size:0.85rem; color:#64748b; font-weight:600;">/ <?= ($activeSub['periodicite'] === 'annuel') ? 'an' : 'mois' ?> TTC</span>
           </div>
         </div>
 
-        <!-- Détails et dates clés -->
-        <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(200px, 1fr)); gap:1.25rem; margin-bottom:1.75rem;">
-          <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:12px; padding:1rem;">
-            <span style="font-size:0.8rem; color:#64748b; display:block; margin-bottom:0.25rem;">Date de début</span>
-            <strong style="color:#0f172a; font-size:1rem;"><?= date('d/m/Y', strtotime($activeSub['date_debut'])) ?></strong>
-          </div>
-          <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:12px; padding:1rem;">
-            <span style="font-size:0.8rem; color:#64748b; display:block; margin-bottom:0.25rem;">Date d'échéance</span>
-            <strong style="color:#0f172a; font-size:1rem;"><?= date('d/m/Y', strtotime($activeSub['date_fin'])) ?></strong>
-            <span style="font-size:0.75rem; color:#64748b; display:block; margin-top:0.2rem;">(reste <?= $subInfo['days_left'] ?> jour<?= ($subInfo['days_left'] > 1) ? 's' : '' ?>)</span>
-          </div>
-          <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:12px; padding:1rem;">
-            <span style="font-size:0.8rem; color:#64748b; display:block; margin-bottom:0.25rem;">Renouvellement automatique</span>
-            <strong style="color:<?= empty($subInfo['is_cancelled']) ? '#16a34a' : '#dc2626' ?>; font-size:1rem;">
-              <?= empty($subInfo['is_cancelled']) ? 'Activé' : 'Désactivé' ?>
-            </strong>
-          </div>
-        </div>
-
-        <!-- Message d'information si résiliation programmée -->
-        <?php if (!empty($subInfo['cancellation_notice'])): ?>
-          <div style="background:#fff7ed; border:1px solid #fed7aa; color:#9a3412; padding:1rem 1.25rem; border-radius:12px; margin-bottom:1.5rem; font-size:0.92rem;">
-            📢 <strong>Information :</strong> <?= htmlspecialchars($subInfo['cancellation_notice']) ?>. Vous continuerez de profiter de vos privilèges jusqu'à cette date.
-          </div>
-        <?php endif; ?>
-
-        <!-- Actions sur l'abonnement en cours -->
-        <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:1rem; border-top:1px solid #f1f5f9; padding-top:1.25rem;">
-          <div style="display:flex; align-items:center; gap:0.75rem; flex-wrap:wrap;">
-            <?php if ($activeSub['periodicite'] === 'mensuel'): ?>
-              <!-- Bouton pour passer à l'annuel -->
-              <form method="POST" action="abonnements.php" style="display:inline;" onsubmit="return confirm('Confirmez-vous le passage à la formule annuelle (2 mois offerts) ?');">
-                <?= csrf_field() ?>
-                <input type="hidden" name="action" value="passer_annuel">
-                <button type="submit" class="btn btn-secondary btn-sm" style="font-weight:700; color:#15803d; border-color:#86efac; background:#f0fdf4;">
-                  ✨ Passer en Annuel (2 mois offerts)
-                </button>
-              </form>
-            <?php endif; ?>
-
-            <?php if ($activeSub['plan_code'] === 'animateur'): ?>
-              <!-- Bouton pour rétrograder directement vers Membre -->
-              <form method="POST" action="abonnements.php" style="display:inline;" onsubmit="return confirm('Confirmez-vous le passage à la Formule Membre (9 €/mois) ? Votre formule Animateur prendra fin immédiatement.');">
-                <?= csrf_field() ?>
-                <input type="hidden" name="action" value="souscrire">
-                <input type="hidden" name="plan_code" value="membre">
-                <input type="hidden" name="periodicite" value="mensuel">
-                <button type="submit" class="btn btn-secondary btn-sm" style="color:#2563eb; border-color:#bfdbfe; background:#eff6ff; font-weight:700; font-size:0.85rem;">
-                  🔄 Passer à la Formule Membre (9 €/mois)
-                </button>
-              </form>
-            <?php endif; ?>
-          </div>
-
+        <!-- Détails 3 colonnes -->
+        <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(200px, 1fr)); gap:1.5rem; font-size:0.9rem; margin-bottom:1.5rem;">
           <div>
-            <!-- Bouton de résiliation TOUJOURS ACCESSIBLE -->
-            <form method="POST" action="abonnements.php" style="display:inline;" onsubmit="return confirm('Êtes-vous certain de vouloir résilier votre abonnement ? Vos privilèges actuels seront désactivés immédiatement et vous pourrez choisir une nouvelle formule.');">
-              <?= csrf_field() ?>
-              <input type="hidden" name="action" value="resilier">
-              <button type="submit" class="btn btn-outline btn-sm" style="color:#ef4444; border-color:#fca5a5; font-size:0.85rem; font-weight:700; padding:0.45rem 1rem; border-radius:8px;">
-                Résilier mon abonnement
-              </button>
-            </form>
+            <span style="color:#64748b; font-size:0.78rem; text-transform:uppercase; font-weight:700; letter-spacing:0.04em; display:block; margin-bottom:0.35rem;">Date de souscription</span>
+            <div style="font-weight:700; color:#0f172a; font-size:0.98rem;"><?= ov_format_date_fr($activeSub['date_debut']) ?></div>
+          </div>
+          <div>
+            <span style="color:#64748b; font-size:0.78rem; text-transform:uppercase; font-weight:700; letter-spacing:0.04em; display:block; margin-bottom:0.35rem;">Renouvellement</span>
+            <div style="font-weight:700; color:<?= empty($subInfo['is_cancelled']) ? '#15803d' : '#dc2626' ?>; font-size:0.98rem;">
+              <?= empty($subInfo['is_cancelled']) ? 'Automatique (Résiliable 1 clic)' : 'Résiliation programmée' ?>
+            </div>
+          </div>
+          <div>
+            <span style="color:#64748b; font-size:0.78rem; text-transform:uppercase; font-weight:700; letter-spacing:0.04em; display:block; margin-bottom:0.35rem;">Mode de paiement</span>
+            <div style="font-weight:700; color:#0f172a; font-size:0.98rem; display:flex; align-items:center; gap:0.45rem;">
+              <svg width="18" height="14" viewBox="0 0 24 18" fill="none" style="vertical-align:middle; flex-shrink:0;"><rect width="24" height="18" rx="3" fill="#2563eb"/><rect y="4" width="24" height="3" fill="#1e293b"/><rect x="3" y="11" width="6" height="3" rx="1" fill="#cbd5e1"/></svg>
+              <span>Visa terminant par 4242</span>
+            </div>
           </div>
         </div>
 
-      </div>
-
-      <!-- BLOC ÉVOLUTION POUR LES MEMBRES : PASSER À ANIMATEUR -->
-      <?php if ($activeSub['plan_code'] === 'membre' && $animateurPlan): ?>
-        <div style="background:#ffffff; border:2px solid #f97316; border-radius:20px; padding:2.25rem 2rem; margin-bottom:2.5rem; box-shadow:0 12px 35px rgba(249,115,22,0.1); position:relative;">
-          <div style="display:flex; justify-content:space-between; align-items:flex-start; flex-wrap:wrap; gap:1rem; margin-bottom:1.25rem;">
-            <div>
-              <span style="background:#fff7ed; color:#ea580c; font-weight:800; font-size:0.78rem; text-transform:uppercase; letter-spacing:0.05em; padding:0.25rem 0.7rem; border-radius:6px; display:inline-block; margin-bottom:0.4rem;">
-                Évolution de formule
-              </span>
-              <h2 style="font-size:1.5rem; font-weight:800; color:#0f172a; margin:0;">
-                Devenir Animateur One Vision
-              </h2>
-            </div>
-            <div class="period-toggle-upgrade" style="background:#f8fafc; border:1px solid #cbd5e1; padding:0.25rem; border-radius:30px; display:inline-flex; align-items:center;">
-              <button type="button" class="upgrade-period-btn active" id="btnUpgradeMonthly" onclick="setUpgradePeriod('mensuel')" style="padding:0.4rem 1rem; border-radius:25px; font-size:0.82rem; font-weight:700; border:none; cursor:pointer; background:#0f172a; color:#fff;">
-                Mensuel (24 €/mois)
-              </button>
-              <button type="button" class="upgrade-period-btn" id="btnUpgradeYearly" onclick="setUpgradePeriod('annuel')" style="padding:0.4rem 1rem; border-radius:25px; font-size:0.82rem; font-weight:700; border:none; cursor:pointer; background:transparent; color:#64748b;">
-                Annuel (239 €/an)
-              </button>
-            </div>
-          </div>
-
-          <p style="color:#475569; font-size:0.95rem; line-height:1.55; margin:0 0 1.5rem 0;">
-            L'abonnement Animateur remplace immédiatement votre formule Membre. Vous débloquez l'Espace Animateur, programmez vos propres masterminds et disposez de votre page d'expert certifié.
-          </p>
-
-          <div style="background:#fffaf0; border:1px solid #fed7aa; border-radius:14px; padding:1.25rem 1.5rem; margin-bottom:1.75rem;">
-            <div style="font-size:0.82rem; font-weight:800; text-transform:uppercase; letter-spacing:0.05em; color:#ea580c; margin-bottom:0.75rem;">
-              Avantages exclusifs Formule Animateur :
-            </div>
-            <ul style="list-style:none; padding:0; margin:0; display:grid; grid-template-columns:repeat(auto-fit, minmax(280px, 1fr)); gap:0.65rem; font-size:0.9rem; color:#334155;">
-              <?php foreach ($animateurPlan['avantages_list'] as $av): ?>
-                <li style="display:flex; align-items:flex-start; gap:0.55rem; line-height:1.4;">
-                  <span style="color:#f97316; font-weight:900;">✓</span>
-                  <span><?= htmlspecialchars($av) ?></span>
-                </li>
-              <?php endforeach; ?>
-            </ul>
-          </div>
-
-          <form method="POST" action="abonnements.php" onsubmit="return confirm('Confirmez-vous le passage à la formule Animateur ? Votre abonnement Membre sera remplacé automatiquement.');">
+        <!-- Boutons d'action : pilules conformes à la maquette -->
+        <div style="display:flex; justify-content:flex-end; align-items:center; gap:1rem; flex-wrap:wrap; border-top:1px solid #f1f5f9; padding-top:1.5rem;">
+          <a href="choisir-abonnement.php" style="background:#f1f5f9; border:1.5px solid #cbd5e1; color:#0f172a; font-weight:700; font-size:0.92rem; padding:0.65rem 1.6rem; border-radius:9999px; text-decoration:none; display:inline-flex; align-items:center; gap:0.5rem; transition:all 0.2s ease; box-shadow:0 1px 3px rgba(0,0,0,0.03);">
+            Changer de formule d'abonnement
+          </a>
+          <form method="POST" action="abonnements.php" style="display:inline; margin:0;" onsubmit="return confirm('Êtes-vous certain de vouloir résilier votre abonnement ?');">
             <?= csrf_field() ?>
-            <input type="hidden" name="action" value="upgrade_animateur">
-            <input type="hidden" name="periodicite" id="upgradePeriodiciteInput" value="mensuel">
-            
-            <button type="submit" class="btn btn-primary" style="padding:0.85rem 1.75rem; font-size:0.98rem; font-weight:700; border-radius:12px; background:linear-gradient(135deg, #f97316, #ea580c); display:inline-flex; align-items:center; gap:0.6rem; box-shadow:0 6px 18px rgba(249,115,22,0.3);">
-              <span>🚀 Devenir Animateur maintenant</span>
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"></polyline></svg>
+            <input type="hidden" name="action" value="resilier">
+            <button type="submit" style="background:#fef2f2; border:1.5px solid #fecaca; color:#dc2626; font-weight:700; font-size:0.92rem; padding:0.65rem 1.6rem; border-radius:9999px; cursor:pointer; display:inline-flex; align-items:center; gap:0.5rem; transition:all 0.2s ease;">
+              Résilier mon abonnement
             </button>
           </form>
         </div>
-      <?php endif; ?>
+
+      </div>
 
     <?php else: ?>
-      <!-- 2. UTILISATEUR SANS ABONNEMENT ACTIF (OU APRÈS RÉSILIATION) : LES DEUX FORMULES EMPILÉES VERTICALEMENT -->
-      
-      <!-- Bannière d'information -->
-      <div style="background:#fff7ed; border:1px solid #fed7aa; border-radius:14px; padding:1.25rem 1.5rem; margin-bottom:2rem; display:flex; align-items:flex-start; gap:0.85rem;">
-        <span style="font-size:1.6rem; line-height:1;">📢</span>
-        <div>
-          <strong style="color:#9a3412; font-size:1rem; display:block; margin-bottom:0.25rem;">Abonnement non actif</strong>
-          <p style="color:#7c2d12; font-size:0.92rem; margin:0; line-height:1.5;">
-            Vous ne bénéficiez actuellement plus d'un abonnement actif. Pour continuer à profiter de l'ensemble des masterminds, replays et salons d'échange de la communauté, veuillez choisir une formule ci-dessous :
-          </p>
-        </div>
-      </div>
-
-      <!-- FORMULE 1 (EN HAUT) : FORMULE MEMBRE BASIQUE À 9 € -->
-      <div style="background:#ffffff; border:2px solid #2563eb; border-radius:20px; padding:2.25rem 2rem; margin-bottom:2rem; box-shadow:0 10px 30px rgba(37,99,235,0.08); position:relative;">
-        <div style="display:flex; justify-content:space-between; align-items:flex-start; flex-wrap:wrap; gap:1rem; margin-bottom:1.25rem;">
+      <!-- Utilisateur sans abonnement actif : carte unique invitant au choix de formule -->
+      <div style="background:#ffffff; border:1px solid #e2e8f0; border-radius:18px; padding:2rem 2.25rem; margin-bottom:2.5rem; box-shadow:0 8px 25px rgba(0,0,0,0.04);">
+        <div style="display:flex; justify-content:space-between; align-items:flex-start; flex-wrap:wrap; gap:1.25rem; border-bottom:1px solid #f1f5f9; padding-bottom:1.5rem; margin-bottom:1.5rem;">
           <div>
-            <span style="background:#eff6ff; color:#2563eb; font-weight:800; font-size:0.78rem; text-transform:uppercase; letter-spacing:0.05em; padding:0.3rem 0.8rem; border-radius:6px; display:inline-block; margin-bottom:0.5rem;">
-              Formule Basique • Membre One Vision
+            <span style="font-size:0.78rem; font-weight:800; text-transform:uppercase; letter-spacing:0.04em; background:#fee2e2; color:#dc2626; padding:0.35rem 0.9rem; border-radius:9999px; display:inline-flex; align-items:center; gap:0.45rem; margin-bottom:0.75rem;">
+              <span style="width:7px; height:7px; border-radius:50%; background:#dc2626; display:inline-block;"></span>
+              Abonnement Inactif
             </span>
-            <h2 style="font-size:1.65rem; font-weight:800; color:#0f172a; margin:0 0 0.35rem 0;">
-              Formule Membre (Basique)
+            <h2 style="font-size:1.6rem; font-weight:800; color:#0f172a; margin:0 0 0.35rem 0; letter-spacing:-0.02em;">
+              Aucun abonnement en cours
             </h2>
-            <p style="color:#64748b; font-size:0.95rem; margin:0;">
-              Accédez à toute la communauté, assistez aux masterminds en direct et profitez des replays vidéo.
+            <p style="color:#64748b; font-size:0.92rem; margin:0;">
+              Vous ne bénéficiez actuellement plus d'un abonnement actif.
             </p>
           </div>
-
-          <!-- Sélecteur de périodicité pour Membre -->
-          <div style="background:#f8fafc; border:1px solid #cbd5e1; padding:0.25rem; border-radius:30px; display:inline-flex; align-items:center;">
-            <button type="button" id="btnMembreMonthly" onclick="setMembrePeriod('mensuel')" style="padding:0.4rem 1rem; border-radius:25px; font-size:0.82rem; font-weight:700; border:none; cursor:pointer; background:#0f172a; color:#fff;">
-              Mensuel (9 €/mois)
-            </button>
-            <button type="button" id="btnMembreYearly" onclick="setMembrePeriod('annuel')" style="padding:0.4rem 1rem; border-radius:25px; font-size:0.82rem; font-weight:700; border:none; cursor:pointer; background:transparent; color:#64748b;">
-              Annuel (89 €/an)
-            </button>
-          </div>
         </div>
 
-        <!-- Tarification Membre -->
-        <div style="margin-bottom:1.5rem; display:flex; align-items:baseline; gap:0.5rem;">
-          <span id="priceMembreDisplay" style="font-size:2.4rem; font-weight:800; color:#0f172a; line-height:1;">
-            9,00 €
-          </span>
-          <span style="font-size:1rem; color:#64748b; font-weight:600;">
-            / <span id="periodMembreUnit">mois</span>
-          </span>
-          <span id="badgeMembreSavings" style="display:none; background:#dcfce7; color:#15803d; font-size:0.75rem; font-weight:800; padding:0.2rem 0.6rem; border-radius:20px; text-transform:uppercase;">
-            2 mois offerts !
-          </span>
-        </div>
+        <p style="color:#475569; font-size:0.95rem; line-height:1.6; margin:0 0 1.5rem 0;">
+          Pour continuer à profiter de l'ensemble des masterminds, replays vidéo, salons d'échange et outils de l'Académie, choisissez une formule d'abonnement.
+        </p>
 
-        <!-- Liste des avantages Membre -->
-        <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:14px; padding:1.25rem 1.5rem; margin-bottom:1.75rem;">
-          <div style="font-size:0.82rem; font-weight:800; text-transform:uppercase; letter-spacing:0.05em; color:#2563eb; margin-bottom:0.75rem;">
-            Avantages inclus dans la Formule Membre :
-          </div>
-          <ul style="list-style:none; padding:0; margin:0; display:grid; grid-template-columns:repeat(auto-fit, minmax(280px, 1fr)); gap:0.65rem; font-size:0.9rem; color:#334155;">
-            <?php if ($membrePlan && !empty($membrePlan['avantages_list'])): ?>
-              <?php foreach ($membrePlan['avantages_list'] as $av): ?>
-                <li style="display:flex; align-items:flex-start; gap:0.55rem; line-height:1.4;">
-                  <span style="color:#2563eb; font-weight:900;">✓</span>
-                  <span><?= htmlspecialchars($av) ?></span>
-                </li>
-              <?php endforeach; ?>
-            <?php else: ?>
-              <li style="display:flex; align-items:flex-start; gap:0.55rem;"><span style="color:#2563eb; font-weight:900;">✓</span><span>Accès complet au Dashboard et aux salons d'échanges</span></li>
-              <li style="display:flex; align-items:flex-start; gap:0.55rem;"><span style="color:#2563eb; font-weight:900;">✓</span><span>Participation en direct à tous les lives hebdomadaires</span></li>
-              <li style="display:flex; align-items:flex-start; gap:0.55rem;"><span style="color:#2563eb; font-weight:900;">✓</span><span>Accès illimité aux rediffusions et replays vidéo</span></li>
-              <li style="display:flex; align-items:flex-start; gap:0.55rem;"><span style="color:#2563eb; font-weight:900;">✓</span><span>Réseau d'entraide entre entrepreneurs et fiches pratiques</span></li>
-            <?php endif; ?>
-          </ul>
+        <div style="display:flex; justify-content:flex-end; gap:1rem; border-top:1px solid #f1f5f9; padding-top:1.5rem;">
+          <a href="choisir-abonnement.php" style="background:#f1f5f9; border:1.5px solid #cbd5e1; color:#0f172a; font-weight:700; font-size:0.92rem; padding:0.65rem 1.6rem; border-radius:9999px; text-decoration:none; display:inline-flex; align-items:center; gap:0.5rem; transition:all 0.2s ease;">
+            <span>Changer de formule d'abonnement</span>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"></polyline></svg>
+          </a>
         </div>
-
-        <!-- Bouton d'action Membre -->
-        <form method="POST" action="abonnements.php">
-          <?= csrf_field() ?>
-          <input type="hidden" name="action" value="souscrire">
-          <input type="hidden" name="plan_code" value="membre">
-          <input type="hidden" name="periodicite" id="inputMembrePeriod" value="mensuel">
-          
-          <button type="submit" class="btn btn-primary" style="padding:0.9rem 2rem; font-size:1rem; font-weight:700; border-radius:12px; background:#2563eb; box-shadow:0 6px 20px rgba(37,99,235,0.25); display:inline-flex; align-items:center; gap:0.6rem;">
-            <span id="btnMembreLabel">✨ Choisir la Formule Membre (9 € / mois)</span>
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"></polyline></svg>
-          </button>
-        </form>
       </div>
-
-      <!-- FORMULE 2 (EN BAS) : FORMULE ANIMATEUR À 24 € -->
-      <div style="background:#ffffff; border:2px solid #f97316; border-radius:20px; padding:2.25rem 2rem; margin-bottom:2.5rem; box-shadow:0 10px 30px rgba(249,115,22,0.1); position:relative;">
-        <div style="display:flex; justify-content:space-between; align-items:flex-start; flex-wrap:wrap; gap:1rem; margin-bottom:1.25rem;">
-          <div>
-            <span style="background:#fff7ed; color:#ea580c; font-weight:800; font-size:0.78rem; text-transform:uppercase; letter-spacing:0.05em; padding:0.3rem 0.8rem; border-radius:6px; display:inline-block; margin-bottom:0.5rem;">
-              Formule Animateur • Expert & Leader (Rôle Privilégié)
-            </span>
-            <h2 style="font-size:1.65rem; font-weight:800; color:#0f172a; margin:0 0 0.35rem 0;">
-              Formule Animateur
-            </h2>
-            <p style="color:#64748b; font-size:0.95rem; margin:0;">
-              Animez vos propres masterminds, débloquez l'Espace Animateur et développez votre influence.
-            </p>
-          </div>
-
-          <!-- Sélecteur de périodicité pour Animateur -->
-          <div style="background:#f8fafc; border:1px solid #cbd5e1; padding:0.25rem; border-radius:30px; display:inline-flex; align-items:center;">
-            <button type="button" id="btnAnimateurMonthly" onclick="setAnimateurPeriod('mensuel')" style="padding:0.4rem 1rem; border-radius:25px; font-size:0.82rem; font-weight:700; border:none; cursor:pointer; background:#0f172a; color:#fff;">
-              Mensuel (24 €/mois)
-            </button>
-            <button type="button" id="btnAnimateurYearly" onclick="setAnimateurPeriod('annuel')" style="padding:0.4rem 1rem; border-radius:25px; font-size:0.82rem; font-weight:700; border:none; cursor:pointer; background:transparent; color:#64748b;">
-              Annuel (239 €/an)
-            </button>
-          </div>
-        </div>
-
-        <!-- Tarification Animateur -->
-        <div style="margin-bottom:1.5rem; display:flex; align-items:baseline; gap:0.5rem;">
-          <span id="priceAnimateurDisplay" style="font-size:2.4rem; font-weight:800; color:#0f172a; line-height:1;">
-            24,00 €
-          </span>
-          <span style="font-size:1rem; color:#64748b; font-weight:600;">
-            / <span id="periodAnimateurUnit">mois</span>
-          </span>
-          <span id="badgeAnimateurSavings" style="display:none; background:#dcfce7; color:#15803d; font-size:0.75rem; font-weight:800; padding:0.2rem 0.6rem; border-radius:20px; text-transform:uppercase;">
-            2 mois offerts !
-          </span>
-        </div>
-
-        <!-- Liste des avantages Animateur -->
-        <div style="background:#fffaf0; border:1px solid #fed7aa; border-radius:14px; padding:1.25rem 1.5rem; margin-bottom:1.75rem;">
-          <div style="font-size:0.82rem; font-weight:800; text-transform:uppercase; letter-spacing:0.05em; color:#ea580c; margin-bottom:0.75rem;">
-            Avantages exclusifs Formule Animateur :
-          </div>
-          <ul style="list-style:none; padding:0; margin:0; display:grid; grid-template-columns:repeat(auto-fit, minmax(280px, 1fr)); gap:0.65rem; font-size:0.9rem; color:#334155;">
-            <?php if ($animateurPlan && !empty($animateurPlan['avantages_list'])): ?>
-              <?php foreach ($animateurPlan['avantages_list'] as $av): ?>
-                <li style="display:flex; align-items:flex-start; gap:0.55rem; line-height:1.4;">
-                  <span style="color:#f97316; font-weight:900;">✓</span>
-                  <span><?= htmlspecialchars($av) ?></span>
-                </li>
-              <?php endforeach; ?>
-            <?php else: ?>
-              <li style="display:flex; align-items:flex-start; gap:0.55rem;"><span style="color:#f97316; font-weight:900;">✓</span><span><strong>Tous les avantages de la Formule Membre inclus</strong></span></li>
-              <li style="display:flex; align-items:flex-start; gap:0.55rem;"><span style="color:#f97316; font-weight:900;">✓</span><span>Déblocage exclusif de votre Espace Animateur</span></li>
-              <li style="display:flex; align-items:flex-start; gap:0.55rem;"><span style="color:#f97316; font-weight:900;">✓</span><span>Création et animation de masterminds & lives</span></li>
-              <li style="display:flex; align-items:flex-start; gap:0.55rem;"><span style="color:#f97316; font-weight:900;">✓</span><span>Profil certifié avec badge officiel d'Animateur</span></li>
-              <li style="display:flex; align-items:flex-start; gap:0.55rem;"><span style="color:#f97316; font-weight:900;">✓</span><span>Salon vocal dédié et modération de vos événements</span></li>
-            <?php endif; ?>
-          </ul>
-        </div>
-
-        <!-- Bouton d'action Animateur -->
-        <form method="POST" action="abonnements.php">
-          <?= csrf_field() ?>
-          <input type="hidden" name="action" value="souscrire">
-          <input type="hidden" name="plan_code" value="animateur">
-          <input type="hidden" name="periodicite" id="inputAnimateurPeriod" value="mensuel">
-          
-          <button type="submit" class="btn btn-primary" style="padding:0.9rem 2rem; font-size:1rem; font-weight:700; border-radius:12px; background:linear-gradient(135deg, #f97316, #ea580c); box-shadow:0 6px 20px rgba(249,115,22,0.3); display:inline-flex; align-items:center; gap:0.6rem;">
-            <span id="btnAnimateurLabel">🎙️ Choisir la Formule Animateur (24 € / mois)</span>
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"></polyline></svg>
-          </button>
-        </form>
-      </div>
-
     <?php endif; ?>
 
     <!-- 3. HISTORIQUE DES PAIEMENTS -->
@@ -566,96 +353,4 @@ require_once __DIR__ . '/includes/header.php';
 
   </div>
 </main>
-
-<script>
-// Gestion dynamique de la période pour Membre
-function setMembrePeriod(mode) {
-  const btnM = document.getElementById('btnMembreMonthly');
-  const btnY = document.getElementById('btnMembreYearly');
-  const inp = document.getElementById('inputMembrePeriod');
-  const priceDisp = document.getElementById('priceMembreDisplay');
-  const unitDisp = document.getElementById('periodMembreUnit');
-  const badgeSavings = document.getElementById('badgeMembreSavings');
-  const btnLabel = document.getElementById('btnMembreLabel');
-
-  if (mode === 'annuel') {
-    btnY.style.background = '#0f172a';
-    btnY.style.color = '#fff';
-    btnM.style.background = 'transparent';
-    btnM.style.color = '#64748b';
-    inp.value = 'annuel';
-    priceDisp.textContent = '89,00 €';
-    unitDisp.textContent = 'an';
-    badgeSavings.style.display = 'inline-block';
-    btnLabel.textContent = '✨ Choisir la Formule Membre (89 € / an)';
-  } else {
-    btnM.style.background = '#0f172a';
-    btnM.style.color = '#fff';
-    btnY.style.background = 'transparent';
-    btnY.style.color = '#64748b';
-    inp.value = 'mensuel';
-    priceDisp.textContent = '9,00 €';
-    unitDisp.textContent = 'mois';
-    badgeSavings.style.display = 'none';
-    btnLabel.textContent = '✨ Choisir la Formule Membre (9 € / mois)';
-  }
-}
-
-// Gestion dynamique de la période pour Animateur
-function setAnimateurPeriod(mode) {
-  const btnM = document.getElementById('btnAnimateurMonthly');
-  const btnY = document.getElementById('btnAnimateurYearly');
-  const inp = document.getElementById('inputAnimateurPeriod');
-  const priceDisp = document.getElementById('priceAnimateurDisplay');
-  const unitDisp = document.getElementById('periodAnimateurUnit');
-  const badgeSavings = document.getElementById('badgeAnimateurSavings');
-  const btnLabel = document.getElementById('btnAnimateurLabel');
-
-  if (mode === 'annuel') {
-    btnY.style.background = '#0f172a';
-    btnY.style.color = '#fff';
-    btnM.style.background = 'transparent';
-    btnM.style.color = '#64748b';
-    inp.value = 'annuel';
-    priceDisp.textContent = '239,00 €';
-    unitDisp.textContent = 'an';
-    badgeSavings.style.display = 'inline-block';
-    btnLabel.textContent = '🎙️ Choisir la Formule Animateur (239 € / an)';
-  } else {
-    btnM.style.background = '#0f172a';
-    btnM.style.color = '#fff';
-    btnY.style.background = 'transparent';
-    btnY.style.color = '#64748b';
-    inp.value = 'mensuel';
-    priceDisp.textContent = '24,00 €';
-    unitDisp.textContent = 'mois';
-    badgeSavings.style.display = 'none';
-    btnLabel.textContent = '🎙️ Choisir la Formule Animateur (24 € / mois)';
-  }
-}
-
-// Gestion du toggle Upgrade (si abonné membre actif)
-function setUpgradePeriod(mode) {
-  const btnM = document.getElementById('btnUpgradeMonthly');
-  const btnY = document.getElementById('btnUpgradeYearly');
-  const inp = document.getElementById('upgradePeriodiciteInput');
-
-  if (!btnM || !btnY || !inp) return;
-
-  if (mode === 'annuel') {
-    btnY.style.background = '#0f172a';
-    btnY.style.color = '#fff';
-    btnM.style.background = 'transparent';
-    btnM.style.color = '#64748b';
-    inp.value = 'annuel';
-  } else {
-    btnM.style.background = '#0f172a';
-    btnM.style.color = '#fff';
-    btnY.style.background = 'transparent';
-    btnY.style.color = '#64748b';
-    inp.value = 'mensuel';
-  }
-}
-</script>
-
 <?php require_once __DIR__ . '/includes/footer.php'; ?>
