@@ -81,6 +81,72 @@ function reset_attempts(string $ip): void {
     } catch (Exception $e) {}
 }
 
+/**
+ * Valide rigoureusement l'authenticité d'une adresse email :
+ * - Format conforme RFC
+ * - Exclusion stricte des domaines jetables / temporaires / poubelles
+ * - Contrôle de la présence d'une extension TLD valide (>= 2 caractères)
+ * - Vérification de l'existence DNS effective du domaine sur Internet
+ */
+function validate_authentic_email(string $email): array {
+    $email = trim(strtolower($email));
+
+    if (empty($email) || strlen($email) > 180) {
+        return ['valid' => false, 'error' => "Veuillez renseigner une adresse email valide."];
+    }
+
+    if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+        return ['valid' => false, 'error' => "Format d'adresse email invalide (ex: nom@domaine.com)."];
+    }
+
+    $parts = explode('@', $email);
+    if (count($parts) !== 2) {
+        return ['valid' => false, 'error' => "Format d'adresse email non conforme."];
+    }
+
+    $local = $parts[0];
+    $domain = $parts[1];
+
+    if (strpos($domain, '.') === false) {
+        return ['valid' => false, 'error' => "Le domaine de l'email doit comporter une extension valide (ex: .com, .fr)."];
+    }
+
+    $domainParts = explode('.', $domain);
+    $tld = end($domainParts);
+    if (strlen($tld) < 2 || !preg_match('/^[a-z]{2,24}$/i', $tld)) {
+        return ['valid' => false, 'error' => "Extension de domaine email non reconnue."];
+    }
+
+    // Liste des domaines jetables, fictifs ou temporaires rejetés
+    $disposableDomains = [
+        'mailinator.com', 'tempmail.com', 'temp-mail.org', '10minutemail.com',
+        'guerrillamail.com', 'throwawaymail.com', 'yopmail.com', 'sharklasers.com',
+        'fake.com', 'test.com', 'exemple.com', 'example.com', 'dispostable.com',
+        'trashmail.com', 'generator.email', 'fakeinbox.com', 'getairmail.com',
+        'mohmal.com', 'burnermail.io', 'mailcatch.com', 'mytemp.email', 'dropmail.me'
+    ];
+
+    if (in_array($domain, $disposableDomains, true)) {
+        return ['valid' => false, 'error' => "Les adresses email temporaires ou fictives sont refusées. Veuillez utiliser une adresse authentique."];
+    }
+
+    // Contrôle DNS actif pour confirmer l'existence du domaine (avec exclusion des domaines de test locaux)
+    $isLocal = in_array($domain, ['localhost', 'test.local', 'onevisioncommunity.fr'], true)
+        || (strpos($domain, 'onevisioncommunity') !== false)
+        || (defined('APP_ENV') && APP_ENV === 'testing');
+
+    if (!$isLocal && function_exists('checkdnsrr')) {
+        $hasMx = @checkdnsrr($domain, 'MX');
+        $hasA = $hasMx ? true : (@checkdnsrr($domain, 'A') || @checkdnsrr($domain, 'AAAA'));
+
+        if (!$hasMx && !$hasA) {
+            return ['valid' => false, 'error' => "Ce nom de domaine (@{$domain}) est inexistant. Veuillez saisir une adresse email active."];
+        }
+    }
+
+    return ['valid' => true, 'email' => $email];
+}
+
 function login_user(string $email, string $password): array {
     $ip = get_client_ip();
 
@@ -93,6 +159,12 @@ function login_user(string $email, string $password): array {
 
     if (empty($email) || empty($password)) {
         return ['success' => false, 'error' => 'Veuillez saisir votre adresse email et votre mot de passe.'];
+    }
+
+    // Validation stricte de l'authenticité de l'email
+    $emailCheck = validate_authentic_email($email);
+    if (!$emailCheck['valid']) {
+        return ['success' => false, 'error' => $emailCheck['error']];
     }
 
     $stmt = $db->prepare("SELECT * FROM users WHERE LOWER(email) = ?");
@@ -143,8 +215,10 @@ function register_user(string $fullName, string $email, string $password, array 
         return ['success' => false, 'error' => 'Veuillez renseigner un nom valide (100 caractères maximum).'];
     }
 
-    if (empty($email) || !filter_var($email, FILTER_VALIDATE_EMAIL)) {
-        return ['success' => false, 'error' => 'Adresse email invalide.'];
+    // Validation stricte de l'authenticité de l'email
+    $emailCheck = validate_authentic_email($email);
+    if (!$emailCheck['valid']) {
+        return ['success' => false, 'error' => $emailCheck['error']];
     }
 
     if (strlen($password) < 6) {

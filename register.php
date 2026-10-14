@@ -93,8 +93,8 @@ require_once __DIR__ . '/includes/header.php';
       <a href="register.php" class="auth-tab-btn active" role="tab">Inscription</a>
     </div>
 
-    <!-- Bouton Google / Gmail -->
-    <button type="button" class="btn-google-auth google-auth-btn" id="googleRegisterBtn">
+    <!-- Bouton Google / Gmail avec choix de compte -->
+    <button type="button" class="btn-google-auth google-auth-btn" id="googleRegisterBtn" onclick="showGoogleAccountPicker({ isRegister: true, redirectTarget: 'questionnaire.php' })">
       <svg width="18" height="18" viewBox="0 0 24 24">
         <path fill="#4285F4" d="M23.745 12.27c0-.7-.06-1.4-.19-2.07H12v4.51h6.6c-.29 1.52-1.14 2.8-2.4 3.66v3.05h3.88c2.27-2.09 3.665-5.17 3.665-9.15z"/>
         <path fill="#34A853" d="M12 24c3.24 0 5.95-1.08 7.93-2.91l-3.88-3.05c-1.08.72-2.45 1.16-4.05 1.16-3.12 0-5.77-2.1-6.72-4.93H1.25v3.15C3.26 21.36 7.34 24 12 24z"/>
@@ -115,7 +115,7 @@ require_once __DIR__ . '/includes/header.php';
       </div>
     <?php endif; ?>
 
-    <form method="POST" action="register.php">
+    <form method="POST" action="register.php" id="registerForm">
       <?= csrf_field() ?>
 
       <div class="form-group">
@@ -144,19 +144,28 @@ require_once __DIR__ . '/includes/header.php';
           class="form-input"
           autocomplete="email"
         >
+        <div id="registerEmailFeedback" class="email-feedback"></div>
       </div>
 
       <div class="form-group">
         <label for="password" class="form-label">Mot de passe</label>
-        <input 
-          type="password" 
-          id="password" 
-          name="password" 
-          required 
-          placeholder="Au moins 6 caractères"
-          class="form-input"
-          autocomplete="new-password"
-        >
+        <div class="password-input-wrapper">
+          <input 
+            type="password" 
+            id="password" 
+            name="password" 
+            required 
+            placeholder="Au moins 6 caractères"
+            class="form-input"
+            autocomplete="new-password"
+          >
+          <button type="button" class="password-toggle-btn" onclick="togglePasswordVisibility('password', this)" aria-label="Afficher le mot de passe" title="Afficher le mot de passe">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+              <circle cx="12" cy="12" r="3"></circle>
+            </svg>
+          </button>
+        </div>
       </div>
 
       <button type="submit" class="btn btn-primary modal-submit-btn">
@@ -167,39 +176,27 @@ require_once __DIR__ . '/includes/header.php';
   </div>
 </main>
 
+<script src="./js/auth-utils.js?v=2"></script>
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-  const googleBtn = document.getElementById('googleRegisterBtn');
-  if (googleBtn) {
-    googleBtn.addEventListener('click', function() {
+  attachLiveEmailValidation('email', 'registerEmailFeedback');
+
+  const form = document.getElementById('registerForm');
+  if (form) {
+    form.addEventListener('submit', function(e) {
       const emailInput = document.getElementById('email');
-      const nameInput = document.getElementById('full_name');
-      const emailVal = emailInput && emailInput.value ? emailInput.value : 'gatadesirekana@gmail.com';
-      const nameVal = nameInput && nameInput.value ? nameInput.value : 'Gkd';
-
-      const formData = new FormData();
-      formData.append('action', 'google_auth');
-      formData.append('email', emailVal);
-      formData.append('full_name', nameVal);
-
-      fetch('login.php?action=google_auth', {
-        method: 'POST',
-        headers: {
-          'X-Requested-With': 'XMLHttpRequest'
-        },
-        body: formData
-      })
-      .then(res => res.json())
-      .then(data => {
-        if (data.success && data.redirect) {
-          window.location.href = data.redirect;
-        } else {
-          window.location.href = 'questionnaire.php';
+      const val = emailInput ? emailInput.value.trim() : '';
+      const check = checkEmailAuthenticity(val);
+      if (!check.valid) {
+        e.preventDefault();
+        const feedback = document.getElementById('registerEmailFeedback');
+        if (feedback) {
+          feedback.className = 'email-feedback error';
+          feedback.innerHTML = `⚠️ ${check.message}`;
+          feedback.style.display = 'block';
         }
-      })
-      .catch(() => {
-        window.location.href = 'questionnaire.php';
-      });
+        if (emailInput) emailInput.focus();
+      }
     });
   }
 });

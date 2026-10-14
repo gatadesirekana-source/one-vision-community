@@ -2561,6 +2561,109 @@ h1, h2, h3, h4 {
   box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
 }
 
+/* Champ mot de passe avec bouton œil (afficher / masquer) */
+.password-input-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+  width: 100%;
+}
+
+.password-input-wrapper .form-input {
+  padding-right: 2.85rem !important;
+}
+
+.password-toggle-btn {
+  position: absolute;
+  right: 0.75rem;
+  top: 50%;
+  transform: translateY(-50%);
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  color: #64748b;
+  padding: 0.35rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+  transition: color 0.15s ease, background-color 0.15s ease;
+  z-index: 3;
+}
+
+.password-toggle-btn:hover {
+  color: #0f172a;
+  background-color: rgba(15, 23, 42, 0.08);
+}
+
+.password-toggle-btn:focus-visible {
+  outline: 2px solid #2563eb;
+  outline-offset: 1px;
+}
+
+/* Feedback d'authenticité et validation email */
+.email-feedback {
+  font-size: 0.82rem;
+  font-weight: 600;
+  margin-top: 0.35rem;
+  line-height: 1.4;
+  display: none;
+}
+.email-feedback.error {
+  display: block;
+  color: #dc2626;
+}
+.email-feedback.success {
+  display: block;
+  color: #16a34a;
+}
+
+/* Modale Sélecteur de Compte Google */
+.google-account-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.65);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  animation: fadeIn 0.2s ease;
+}
+
+.google-account-modal {
+  background: #ffffff;
+  border-radius: 20px;
+  max-width: 420px;
+  width: 100%;
+  padding: 1.75rem 1.5rem;
+  box-shadow: 0 25px 60px -15px rgba(0, 0, 0, 0.25), 0 0 0 1px rgba(15, 23, 42, 0.06);
+  position: relative;
+  text-align: left;
+}
+
+.google-account-item {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+  padding: 0.75rem 0.85rem;
+  border-radius: 12px;
+  border: 1px solid #e2e8f0;
+  margin-bottom: 0.65rem;
+  cursor: pointer;
+  background: #ffffff;
+  transition: all 0.15s ease;
+  width: 100%;
+  text-align: left;
+}
+.google-account-item:hover {
+  background: #f8fafc;
+  border-color: #cbd5e1;
+  transform: translateY(-1px);
+}
+
 .modal-submit-btn {
   width: 100%;
   padding: 0.85rem 1rem;
