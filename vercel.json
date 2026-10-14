@@ -2,6 +2,8 @@
   "version": 2,
   "cleanUrls": true,
   "rewrites": [
+    { "source": "/api/create-checkout", "destination": "/api/create-checkout.js" },
+    { "source": "/api/webhook", "destination": "/api/webhook.js" },
     { "source": "/questionnaire", "destination": "/questionnaire.html" },
     { "source": "/choisir-abonnement", "destination": "/choisir-abonnement.html" },
     { "source": "/dashboard", "destination": "/dashboard.html" },
@@ -15,6 +17,7 @@
     { "source": "/conditions-generales", "destination": "/conditions-generales.html" },
     { "source": "/mentions-legales", "destination": "/mentions-legales.html" },
     { "source": "/politique-confidentialite", "destination": "/politique-confidentialite.html" },
-    { "source": "/gestion-cookies", "destination": "/gestion-cookies.html" }
+    { "source": "/gestion-cookies", "destination": "/gestion-cookies.html" },
+    { "source": "/paiement-retour", "destination": "/paiement-retour.html" }
   ]
 }

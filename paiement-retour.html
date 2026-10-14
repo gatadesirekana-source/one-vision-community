@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="fr" data-theme="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Paiement Confirmé — One Vision Community</title>
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎯</text></svg>">
+  
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Great+Vibes&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="./css/style.css?v=8">
+  <style>
+    .check-animation {
+      width: 76px;
+      height: 76px;
+      border-radius: 50%;
+      background: #dcfce7;
+      color: #16a34a;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto 1.5rem auto;
+      box-shadow: 0 0 0 12px rgba(34, 197, 94, 0.12);
+      animation: pulse 2s infinite;
+    }
+    @keyframes pulse {
+      0% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.25); }
+      70% { box-shadow: 0 0 0 16px rgba(34, 197, 94, 0); }
+      100% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0); }
+    }
+  </style>
+</head>
+<body class="checkout-body" style="background:#f8fafc; min-height:100vh; display:flex; flex-direction:column;">
+
+  <header style="padding: 1rem; border-bottom: 1px solid rgba(15, 23, 42, 0.06); background: #ffffff;">
+    <div class="container" style="max-width: 860px; margin: 0 auto; display:flex; justify-content:space-between; align-items:center;">
+      <a href="index.html" class="logo" style="text-decoration:none;">
+        <div class="logo-text">
+          <span class="logo-brand"><span class="logo-one-script">One</span> Vision</span>
+          <span class="logo-sub">Community</span>
+        </div>
+      </a>
+      <span style="font-size:0.85rem; font-weight:700; color:#16a34a; display:flex; align-items:center; gap:0.4rem;">
+        ✓ Transaction Sécurisée SasPay
+      </span>
+    </div>
+  </header>
+
+  <main style="flex:1; display:flex; align-items:center; justify-content:center; padding: 2.5rem 1rem;">
+    <div style="background:#ffffff; border:1px solid #e2e8f0; border-radius:24px; padding:2.5rem 2rem; max-width:540px; width:100%; box-shadow:0 12px 35px rgba(0,0,0,0.06); text-align:center;">
+      
+      <div class="check-animation">
+        <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="20 6 9 17 4 12"></polyline>
+        </svg>
+      </div>
+
+      <h1 style="font-size:1.85rem; font-weight:800; color:#0f172a; margin:0 0 0.5rem 0; letter-spacing:-0.02em;">
+        Paiement Confirmé !
+      </h1>
+      <p style="font-size:0.95rem; color:#64748b; line-height:1.5; margin:0 0 1.75rem 0;">
+        Félicitations et bienvenue dans la communauté One Vision. Votre règlement a été validé par SasPay et votre abonnement est désormais actif.
+      </p>
+
+      <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:14px; padding:1.25rem; text-align:left; margin-bottom:1.75rem; font-size:0.88rem;">
+        <div style="display:flex; justify-content:space-between; margin-bottom:0.5rem;">
+          <span style="color:#64748b;">Formule souscrite :</span>
+          <strong id="summaryPlanName" style="color:#0f172a;">Formule Membre</strong>
+        </div>
+        <div style="display:flex; justify-content:space-between; margin-bottom:0.5rem;">
+          <span style="color:#64748b;">Périodicité :</span>
+          <span id="summaryPeriod" style="font-weight:700; color:#0f172a;">Mensuel</span>
+        </div>
+        <div style="display:flex; justify-content:space-between; margin-bottom:0.5rem;">
+          <span style="color:#64748b;">Référence de transaction :</span>
+          <code id="summaryRef" style="background:#e2e8f0; padding:2px 6px; border-radius:4px; font-size:0.78rem; color:#0f172a;">—</code>
+        </div>
+        <div style="display:flex; justify-content:space-between; border-top:1px dashed #cbd5e1; padding-top:0.6rem; margin-top:0.4rem;">
+          <span style="color:#64748b;">Statut de l'accès :</span>
+          <strong style="color:#16a34a; display:inline-flex; align-items:center; gap:0.25rem;">
+            ● Immédiat & Actif
+          </strong>
+        </div>
+      </div>
+
+      <div style="display:flex; flex-direction:column; gap:0.75rem;">
+        <a href="dashboard.html" id="btnDashboard" class="btn btn-primary" style="padding:0.9rem 1.5rem; border-radius:12px; font-weight:800; font-size:1rem; text-decoration:none; display:flex; justify-content:center; align-items:center; gap:0.5rem; background:#0f172a; color:#ffffff; box-shadow:0 4px 14px rgba(15,23,42,0.15);">
+          <span>Accéder à mon espace membre</span>
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"></polyline></svg>
+        </a>
+
+        <a href="abonnements.html" style="color:#64748b; font-size:0.85rem; font-weight:600; text-decoration:none; padding:0.4rem;">
+          Gérer mon abonnement & mes factures
+        </a>
+      </div>
+
+    </div>
+  </main>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      const urlParams = new URLSearchParams(window.location.search);
+      const ref = urlParams.get('ref') || 'PAY-SAS-' + Date.now();
+      const plan = (urlParams.get('plan') || 'membre').toLowerCase();
+      const periodicite = (urlParams.get('periodicite') || 'mensuel').toLowerCase();
+
+      document.getElementById('summaryRef').textContent = ref;
+      document.getElementById('summaryPeriod').textContent = periodicite === 'annuel' ? 'Annuel (2 mois offerts)' : 'Mensuel';
+      document.getElementById('summaryPlanName').textContent = plan === 'animateur' ? 'Formule Animateur & Expert' : 'Formule Membre Standard';
+
+      // Activation instantanée du compte dans le stockage local pour la navigation fluide
+      try {
+        localStorage.setItem('ov_subscription_status', 'active');
+        localStorage.setItem('ov_subscription_plan', plan);
+        localStorage.setItem('ov_subscription_periodicite', periodicite);
+        localStorage.setItem('ov_payment_reference', ref);
+        localStorage.setItem('ov_user_role', plan === 'animateur' ? 'animateur' : 'membre');
+      } catch (e) {
+        console.warn('LocalStorage non disponible', e);
+      }
+    });
+  </script>
+</body>
+</html>

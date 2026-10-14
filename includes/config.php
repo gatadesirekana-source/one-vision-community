@@ -64,8 +64,8 @@ define('APP_TAGLINE', "Une communauté d'entrepreneurs qui avancent, pas qui att
 define('APP_PRICE_MONTHLY', 9);
 define('APP_ENV', getenv('APP_ENV') ?: 'production');
 define('PAIEMENT_MODE', getenv('PAIEMENT_MODE') ?: 'saspay');
-define('SASPAY_API_KEY', getenv('SASPAY_API_KEY') ?: '');
-define('SASPAY_WEBHOOK_SECRET', getenv('SASPAY_WEBHOOK_SECRET') ?: '');
+define('SASPAY_API_KEY', getenv('SASPAY_API_KEY') ?: 'sk_live_Ecoz4FOTUB21-kWstdXwE5UFuAyo07f4SeAMQPwVh8U');
+define('SASPAY_WEBHOOK_SECRET', getenv('SASPAY_WEBHOOK_SECRET') ?: 'f54886cb396f31a266eca274a15191f82cf63ed6cffc4d80e27ddc0ae51ff9ea');
 define('SASPAY_BASE_URL', 'https://api.saspay.me/api/v1');
 
 
