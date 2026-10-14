@@ -310,6 +310,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
             } else {
                 $creation = PaymentService::creerPaiement($currentUser, $targetPlan, $periodicite);
                 if ($creation['success']) {
+                    if (!empty($creation['checkout_url'])) {
+                        header('Location: ' . $creation['checkout_url']);
+                        exit;
+                    }
                     $conf = PaymentService::confirmerPaiement($creation['reference']);
                     if ($conf['success']) {
                         $periodLabel = ($periodicite === 'annuel') ? 'annuel' : 'mensuel';
@@ -340,6 +344,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
             if ($targetPlan) {
                 $creation = PaymentService::creerPaiement($currentUser, $targetPlan, $periodicite);
                 if ($creation['success']) {
+                    if (!empty($creation['checkout_url'])) {
+                        header('Location: ' . $creation['checkout_url']);
+                        exit;
+                    }
                     $conf = PaymentService::confirmerPaiement($creation['reference']);
                     if ($conf['success']) {
                         set_flash('success', "Félicitations ! Vous êtes désormais Animateur One Vision. Votre formule est active immédiatement.");
@@ -368,6 +376,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
             if ($targetPlan) {
                 $creation = PaymentService::creerPaiement($currentUser, $targetPlan, 'annuel');
                 if ($creation['success']) {
+                    if (!empty($creation['checkout_url'])) {
+                        header('Location: ' . $creation['checkout_url']);
+                        exit;
+                    }
                     $conf = PaymentService::confirmerPaiement($creation['reference']);
                     if ($conf['success']) {
                         set_flash('success', "Votre abonnement est maintenant annuel ! Vous bénéficiez de 2 mois offerts.");
@@ -379,6 +391,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
                 }
             }
         }
+
         header('Location: dashboard.php?tab=tab-compte');
         exit;
     } elseif ($_POST['action'] === 'upgrade_to_creator') {

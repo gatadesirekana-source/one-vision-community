@@ -41,8 +41,9 @@ function load_env(string $path): void {
             if (strlen($val) >= 2 && (($val[0] === '"' && substr($val, -1) === '"') || ($val[0] === "'" && substr($val, -1) === "'"))) {
                 $val = substr($val, 1, -1);
             }
-            if (!array_key_exists($key, $_SERVER) && !array_key_exists($key, $_ENV)) {
+            if (!array_key_exists($key, $_SERVER) && !array_key_exists($key, $_ENV) && getenv($key) === false) {
                 putenv("{$key}={$val}");
+
                 $_ENV[$key] = $val;
                 $_SERVER[$key] = $val;
             }
@@ -62,7 +63,10 @@ define('APP_NAME', 'One Vision Community');
 define('APP_TAGLINE', "Une communauté d'entrepreneurs qui avancent, pas qui attendent");
 define('APP_PRICE_MONTHLY', 9);
 define('APP_ENV', getenv('APP_ENV') ?: 'production');
-define('PAIEMENT_MODE', getenv('PAIEMENT_MODE') ?: 'simulation');
+define('PAIEMENT_MODE', getenv('PAIEMENT_MODE') ?: 'saspay');
+define('SASPAY_API_KEY', getenv('SASPAY_API_KEY') ?: '');
+define('SASPAY_WEBHOOK_SECRET', getenv('SASPAY_WEBHOOK_SECRET') ?: '');
+define('SASPAY_BASE_URL', 'https://api.saspay.me/api/v1');
 
 
 // 3. Détection et configuration de l'URL publique de base (APP_URL)

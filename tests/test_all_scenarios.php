@@ -11,6 +11,8 @@ require_once __DIR__ . '/../includes/permissions.php';
 require_once __DIR__ . '/../includes/payment_service.php';
 require_once __DIR__ . '/../includes/subscriptions.php';
 
+putenv('PAIEMENT_MODE=simulation');
+
 $db = get_db();
 
 $testsPassed = 0;

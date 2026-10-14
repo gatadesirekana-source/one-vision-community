@@ -12,6 +12,7 @@
 require_once __DIR__ . '/config.php';
 require_once __DIR__ . '/db.php';
 require_once __DIR__ . '/permissions.php';
+require_once __DIR__ . '/saspay.php';
 
 class PaymentService {
 
@@ -32,15 +33,15 @@ class PaymentService {
 
     /**
      * Initialise un paiement pour un utilisateur, une formule et une périodicité.
-     * En mode simulation, prépare une référence prête à être validée.
+     * Prend en charge les modes 'saspay' (production/live) et 'simulation'.
      */
     public static function creerPaiement(array $utilisateur, array $plan, string $periodicite): array {
         // 1. Contrôle du mode de paiement
-        $mode = strtolower(trim(getenv('PAIEMENT_MODE') ?: (defined('PAIEMENT_MODE') ? PAIEMENT_MODE : 'simulation')));
-        if ($mode !== 'simulation') {
+        $mode = strtolower(trim(getenv('PAIEMENT_MODE') ?: (defined('PAIEMENT_MODE') ? PAIEMENT_MODE : 'saspay')));
+        if ($mode !== 'simulation' && $mode !== 'saspay') {
             return [
                 'success' => false,
-                'error'   => "Aucun prestataire de paiement n'est configuré."
+                'error'   => "Aucun prestataire de paiement valide n'est configuré."
             ];
         }
 
@@ -51,11 +52,87 @@ class PaymentService {
 
         $db = get_db();
 
-        // 2. Génération d'une référence générique unique
+        // Mode SasPay (Live ou Test via API REST)
+        if ($mode === 'saspay') {
+            $reference = 'PAY-SAS-' . date('YmdHis') . '-' . strtoupper(bin2hex(random_bytes(4)));
+
+            try {
+                $stmt = $db->prepare("
+                    INSERT INTO payments (
+                        user_id, montant, devise, statut, reference_externe, methode, date_paiement
+                    ) VALUES (
+                        ?, ?, ?, 'en_attente', ?, 'saspay', datetime('now')
+                    )
+                ");
+                $stmt->execute([$userId, $montant, $devise, $reference]);
+                $paymentId = (int)$db->lastInsertId();
+
+                $saspay = new SasPayClient();
+                $customerName = trim(($utilisateur['prenom'] ?? '') . ' ' . ($utilisateur['nom'] ?? ''));
+                if (empty($customerName)) {
+                    $customerName = $utilisateur['email'] ?? 'Membre One Vision';
+                }
+                $periodLabel = ($periodicite === 'annuel') ? 'Annuel' : 'Mensuel';
+
+                $sessionResult = $saspay->createCheckoutSession([
+                    'amount'         => $montant,
+                    'currency'       => $devise,
+                    'description'    => "One Vision Community — {$plan['nom']} ({$periodLabel})",
+                    'customer_email' => $utilisateur['email'],
+                    'customer_name'  => $customerName,
+                    'customer_phone' => $utilisateur['telephone'] ?? '',
+                    'return_url'     => rtrim(APP_URL, '/') . '/paiement-retour.php?ref=' . urlencode($reference),
+                    'metadata'       => [
+                        'payment_id'  => $paymentId,
+                        'reference'   => $reference,
+                        'user_id'     => $userId,
+                        'plan_id'     => $plan['id'],
+                        'plan_code'   => $plan['code'],
+                        'periodicite' => $periodicite
+                    ]
+                ]);
+
+                if (!$sessionResult['success']) {
+                    return [
+                        'success' => false,
+                        'error'   => "SasPay : " . ($sessionResult['error'] ?? "Impossible d'initialiser la session de paiement.")
+                    ];
+                }
+
+                $sessionId = $sessionResult['session_id'];
+                $checkoutUrl = $sessionResult['checkout_url'];
+
+                // Mise à jour du paiement avec les identifiants de session
+                $stmtUp = $db->prepare("UPDATE payments SET session_id = ?, checkout_url = ? WHERE id = ?");
+                $stmtUp->execute([$sessionId, $checkoutUrl, $paymentId]);
+
+                return [
+                    'success'      => true,
+                    'mode'         => 'saspay',
+                    'payment_id'   => $paymentId,
+                    'reference'    => $reference,
+                    'session_id'   => $sessionId,
+                    'checkout_url' => $checkoutUrl,
+                    'montant'      => $montant,
+                    'devise'       => $devise,
+                    'plan_id'      => $plan['id'],
+                    'plan_code'    => $plan['code'],
+                    'plan_nom'     => $plan['nom'],
+                    'periodicite'  => $periodicite,
+                    'user_id'      => $userId
+                ];
+            } catch (Exception $e) {
+                return [
+                    'success' => false,
+                    'error'   => "Impossible d'initialiser le paiement SasPay : " . $e->getMessage()
+                ];
+            }
+        }
+
+        // Mode Simulation
         $reference = 'PAY-SIM-' . date('YmdHis') . '-' . strtoupper(bin2hex(random_bytes(4)));
 
         try {
-            // Enregistrement d'un paiement en attente
             $stmt = $db->prepare("
                 INSERT INTO payments (
                     user_id, montant, devise, statut, reference_externe, methode, date_paiement
@@ -68,6 +145,7 @@ class PaymentService {
 
             return [
                 'success'     => true,
+                'mode'        => 'simulation',
                 'payment_id'  => $paymentId,
                 'reference'   => $reference,
                 'montant'     => $montant,
@@ -92,12 +170,12 @@ class PaymentService {
      * 
      * Le rôle et l'abonnement ne changent QUE dans cette fonction.
      */
-    public static function confirmerPaiement(string $reference): array {
+    public static function confirmerPaiement(string $reference, ?array $transactionData = null): array {
         $db = get_db();
 
-        // 1. Rechercher le paiement associé à la référence
-        $stmtPay = $db->prepare("SELECT * FROM payments WHERE reference_externe = ?");
-        $stmtPay->execute([$reference]);
+        // 1. Rechercher le paiement associé à la référence ou session_id
+        $stmtPay = $db->prepare("SELECT * FROM payments WHERE reference_externe = ? OR session_id = ?");
+        $stmtPay->execute([$reference, $reference]);
         $payment = $stmtPay->fetch();
 
         if (!$payment) {
@@ -107,7 +185,7 @@ class PaymentService {
             ];
         }
 
-        // Si déjà confirmé (protection contre le double clic / double validation)
+        // Si déjà confirmé (protection contre le double clic / double validation / webhook multiple)
         if ($payment['statut'] === 'reussi' && !empty($payment['subscription_id'])) {
             $stmtSub = $db->prepare("SELECT s.*, p.code as plan_code, p.nom as plan_nom FROM subscriptions s JOIN plans p ON s.plan_id = p.id WHERE s.id = ?");
             $stmtSub->execute([$payment['subscription_id']]);
@@ -118,6 +196,30 @@ class PaymentService {
                 'subscription_id' => $payment['subscription_id'],
                 'subscription'    => $sub
             ];
+        }
+
+        // Pour SasPay en l'absence de webhook direct, revérifier le statut auprès de l'API
+        if ($payment['methode'] === 'saspay' && $payment['statut'] !== 'reussi' && $transactionData === null) {
+            $saspay = new SasPayClient();
+            $verified = false;
+
+            if (!empty($payment['session_id'])) {
+                $statusRes = $saspay->getCheckoutSessionStatus($payment['session_id']);
+                if ($statusRes['success']) {
+                    $sessionStatus = strtoupper($statusRes['data']['status'] ?? '');
+                    if (in_array($sessionStatus, ['SUCCESS', 'PAID', 'COMPLETED'], true)) {
+                        $verified = true;
+                    }
+                }
+            }
+
+            if (!$verified) {
+                return [
+                    'success' => false,
+                    'pending' => true,
+                    'error'   => "Le paiement n'a pas encore été validé par SasPay. Veuillez patienter ou vérifier votre transaction."
+                ];
+            }
         }
 
         $userId = (int)$payment['user_id'];
@@ -291,7 +393,8 @@ function creerPaiement($utilisateur, $plan, string $periodicite): array {
     return PaymentService::creerPaiement($utilisateur, $plan, $periodicite);
 }
 
-function confirmerPaiement(string $reference): array {
-    return PaymentService::confirmerPaiement($reference);
+function confirmerPaiement(string $reference, ?array $transactionData = null): array {
+    return PaymentService::confirmerPaiement($reference, $transactionData);
 }
+
 

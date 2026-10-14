@@ -2,8 +2,14 @@
 /**
  * ONE VISION COMMUNITY — PAGE D'ACCUEIL VITRINE DYNAMIQUE (PHP & SQLITE)
  */
+// Détection automatique des webhooks SasPay configurés sur la racine du domaine
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_SERVER['HTTP_X_WEBHOOK_SIGNATURE'])) {
+    require_once __DIR__ . '/api/webhook.php';
+    exit;
+}
 
 require_once __DIR__ . '/includes/config.php';
+
 require_once __DIR__ . '/includes/db.php';
 require_once __DIR__ . '/includes/auth.php';
 require_once __DIR__ . '/includes/flash.php';

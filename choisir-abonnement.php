@@ -95,6 +95,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             if (!$creation['success']) {
                 $error = $creation['error'] ?? "Erreur lors de l'initialisation du règlement.";
             } else {
+                // Si une URL de checkout est fournie par SasPay, rediriger le client vers le paiement
+                if (!empty($creation['checkout_url'])) {
+                    header('Location: ' . $creation['checkout_url']);
+                    exit;
+                }
+
                 $confirmation = PaymentService::confirmerPaiement($creation['reference']);
 
                 if (!$confirmation['success']) {
@@ -108,6 +114,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     exit;
                 }
             }
+
         }
     }
 }

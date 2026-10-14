@@ -101,7 +101,16 @@ function run_migrations(?PDO $pdo = null): array {
         );
     ");
     $pdo->exec("CREATE INDEX IF NOT EXISTS idx_payments_user ON payments(user_id);");
+    try {
+        $pdo->exec("ALTER TABLE payments ADD COLUMN session_id TEXT DEFAULT NULL");
+        $log[] = "Colonne 'session_id' ajoutée à la table payments.";
+    } catch (Exception $e) {}
+    try {
+        $pdo->exec("ALTER TABLE payments ADD COLUMN checkout_url TEXT DEFAULT NULL");
+        $log[] = "Colonne 'checkout_url' ajoutée à la table payments.";
+    } catch (Exception $e) {}
     $log[] = "Table 'payments' vérifiée/créée.";
+
 
     // 6. Tables Rôles et Permissions
     $pdo->exec("

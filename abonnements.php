@@ -69,6 +69,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         } else {
             $creation = PaymentService::creerPaiement($currentUser, $targetPlan, $periodicite);
             if ($creation['success']) {
+                if (!empty($creation['checkout_url'])) {
+                    header('Location: ' . $creation['checkout_url']);
+                    exit;
+                }
                 $conf = PaymentService::confirmerPaiement($creation['reference']);
                 if ($conf['success']) {
                     $periodLabel = ($periodicite === 'annuel') ? 'annuel' : 'mensuel';
@@ -95,6 +99,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         $creation = PaymentService::creerPaiement($currentUser, $targetPlan, 'annuel');
         if ($creation['success']) {
+            if (!empty($creation['checkout_url'])) {
+                header('Location: ' . $creation['checkout_url']);
+                exit;
+            }
             $conf = PaymentService::confirmerPaiement($creation['reference']);
             if ($conf['success']) {
                 set_flash('success', "Votre abonnement est maintenant annuel ! Vous bénéficiez de 2 mois offerts.");
@@ -112,6 +120,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         
         $creation = PaymentService::creerPaiement($currentUser, $animateurPlan, $periodicite);
         if ($creation['success']) {
+            if (!empty($creation['checkout_url'])) {
+                header('Location: ' . $creation['checkout_url']);
+                exit;
+            }
             $conf = PaymentService::confirmerPaiement($creation['reference']);
             if ($conf['success']) {
                 set_flash('success', "Félicitations ! Votre compte a été promu Animateur. Votre Espace Animateur est désormais débloqué.");
@@ -123,6 +135,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         } else {
             set_flash('error', $creation['error'] ?? "Erreur lors de l'initialisation.");
         }
+
         header('Location: abonnements.php');
         exit;
     }
