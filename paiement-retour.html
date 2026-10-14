@@ -84,9 +84,15 @@
         </div>
       </div>
 
+      <div style="margin-bottom: 1.5rem;">
+        <p id="redirectCountdown" style="font-size:0.92rem; color:#64748b; font-weight:600; margin:0;">
+          Redirection automatique vers votre tableau de bord dans 2 secondes...
+        </p>
+      </div>
+
       <div style="display:flex; flex-direction:column; gap:0.75rem;">
         <a href="dashboard.html" id="btnDashboard" class="btn btn-primary" style="padding:0.9rem 1.5rem; border-radius:12px; font-weight:800; font-size:1rem; text-decoration:none; display:flex; justify-content:center; align-items:center; gap:0.5rem; background:#0f172a; color:#ffffff; box-shadow:0 4px 14px rgba(15,23,42,0.15);">
-          <span>Accéder à mon espace membre</span>
+          <span id="btnDashboardText">Accéder à mon tableau de bord</span>
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"></polyline></svg>
         </a>
 
@@ -105,20 +111,49 @@
       const plan = (urlParams.get('plan') || 'membre').toLowerCase();
       const periodicite = (urlParams.get('periodicite') || 'mensuel').toLowerCase();
 
+      const isAnimateur = (plan === 'animateur');
+      const targetUrl = isAnimateur ? 'espace-animateur.html' : 'dashboard.html';
+      const targetLabel = isAnimateur ? "votre Espace Animateur" : "votre tableau de bord";
+
       document.getElementById('summaryRef').textContent = ref;
       document.getElementById('summaryPeriod').textContent = periodicite === 'annuel' ? 'Annuel (2 mois offerts)' : 'Mensuel';
-      document.getElementById('summaryPlanName').textContent = plan === 'animateur' ? 'Formule Animateur & Expert' : 'Formule Membre Standard';
+      document.getElementById('summaryPlanName').textContent = isAnimateur ? 'Formule Animateur & Expert' : 'Formule Membre Standard';
 
-      // Activation instantanée du compte dans le stockage local pour la navigation fluide
+      // Mise à jour du bouton et du texte de compte à rebours
+      const btnEl = document.getElementById('btnDashboard');
+      const btnTextEl = document.getElementById('btnDashboardText');
+      const countdownEl = document.getElementById('redirectCountdown');
+
+      if (btnEl) {
+        btnEl.href = targetUrl;
+        if (isAnimateur) {
+          btnEl.style.background = 'linear-gradient(135deg, #f97316, #ea580c)';
+        }
+      }
+      if (btnTextEl) {
+        btnTextEl.textContent = isAnimateur ? "Accéder à l'Espace Animateur" : "Accéder à mon tableau de bord";
+      }
+      if (countdownEl) {
+        countdownEl.textContent = `Redirection automatique vers ${targetLabel} dans 2 secondes...`;
+      }
+
+      // Activation instantanée du compte dans le stockage local
       try {
+        localStorage.setItem('ov_has_paid', 'true');
         localStorage.setItem('ov_subscription_status', 'active');
-        localStorage.setItem('ov_subscription_plan', plan);
+        localStorage.setItem('ov_subscription_plan', isAnimateur ? 'animateur' : 'membre');
         localStorage.setItem('ov_subscription_periodicite', periodicite);
         localStorage.setItem('ov_payment_reference', ref);
-        localStorage.setItem('ov_user_role', plan === 'animateur' ? 'animateur' : 'membre');
+        localStorage.setItem('ov_user_role', isAnimateur ? 'animateur' : 'membre');
+        localStorage.setItem('ov_is_creator', isAnimateur ? 'true' : 'false');
       } catch (e) {
         console.warn('LocalStorage non disponible', e);
       }
+
+      // Redirection automatique directe après 2 secondes
+      setTimeout(() => {
+        window.location.href = targetUrl;
+      }, 2000);
     });
   </script>
 </body>

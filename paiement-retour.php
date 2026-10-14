@@ -52,8 +52,11 @@ if (!$payment) {
         $periodLabel = ($confirmation['periodicite'] ?? 'mensuel') === 'annuel' ? 'annuel' : 'mensuel';
         set_flash('success', "Félicitations ! Votre règlement a été confirmé. Votre abonnement {$planNom} ({$periodLabel}) est désormais actif.");
 
-        // Redirection automatique vers le dashboard après 2 secondes
-        $redirectUrl = ($confirmation['new_role'] ?? '') === 'animateur' ? 'espace-animateur.php' : 'dashboard.php';
+        $planCodeTarget = strtolower(trim($_GET['plan'] ?? ($confirmation['plan_code'] ?? '')));
+        $isAnimateur = ($planCodeTarget === 'animateur') || (($confirmation['new_role'] ?? '') === 'animateur') || (($confirmation['plan_code'] ?? '') === 'animateur');
+        $redirectUrl = $isAnimateur ? 'espace-animateur.php' : 'dashboard.php';
+        $redirectLabel = $isAnimateur ? "votre Espace Animateur" : "votre tableau de bord";
+        $btnLabel = $isAnimateur ? "Accéder à l'Espace Animateur →" : "Accéder à mon tableau de bord →";
         header("Refresh: 2; url={$redirectUrl}");
     } else {
         if (!empty($confirmation['pending'])) {
@@ -87,11 +90,16 @@ require_once __DIR__ . '/includes/header.php';
           Bienvenue dans l'aventure <strong>One Vision Community</strong> ! Votre formule <strong><?= htmlspecialchars($planNom) ?></strong> est active.
         </p>
         <p style="font-size: 0.9rem; color: #94a3b8; margin-bottom: 1.5rem;">
-          Redirection automatique vers votre espace membre...
+          Redirection automatique vers <?= htmlspecialchars($redirectLabel) ?> dans 2 secondes...
         </p>
-        <a href="dashboard.php" class="btn btn-primary" style="padding: 0.85rem 2rem; font-weight: 700; border-radius: 12px; display: inline-block;">
-          Accéder à mon tableau de bord →
+        <a href="<?= htmlspecialchars($redirectUrl) ?>" class="btn btn-primary" style="padding: 0.85rem 2rem; font-weight: 700; border-radius: 12px; display: inline-block; <?= $isAnimateur ? 'background: linear-gradient(135deg, #f97316, #ea580c);' : '' ?>">
+          <?= htmlspecialchars($btnLabel) ?>
         </a>
+        <script>
+          setTimeout(function() {
+            window.location.href = "<?= $redirectUrl ?>";
+          }, 2000);
+        </script>
 
       <?php elseif ($status === 'pending'): ?>
         <div style="width: 80px; height: 80px; border-radius: 50%; background: #eff6ff; color: #3b82f6; display: flex; align-items: center; justify-content: center; font-size: 2.2rem; margin: 0 auto 1.5rem auto;">
