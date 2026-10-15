@@ -46,7 +46,7 @@ if (!headers_sent()) {
   <link href="https://fonts.googleapis.com/css2?family=Great+Vibes&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 
   <!-- Stylesheet -->
-  <link rel="stylesheet" href="./css/style.css?v=5">
+  <link rel="stylesheet" href="./css/style.css?v=9">
 </head>
 <body class="<?= htmlspecialchars($bodyClass ?? '') ?>">
 

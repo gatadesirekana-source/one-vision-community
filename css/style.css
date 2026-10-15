@@ -10472,3 +10472,567 @@ input:checked + .slider:before {
 
 
 
+
+/* ==========================================================================
+   ONE VISION COMMUNITY — MODULE UNIVERSEL RESPONSIVE MOBILE & ALIGNEMENT
+   Garantie d'affichage optimal de 320px à 768px+ (iPhone SE, Galaxy, Pixel, etc.)
+   Alignement précis des mots, textes, listes à puces et boutons d'action.
+   ========================================================================== */
+
+/* --------------------------------------------------------------------------
+   1. ALIGNEMENT PARFAIT DES TEXTES, MOTS & PULLS DE CONTENU (GLOBAL)
+   -------------------------------------------------------------------------- */
+html, body {
+  max-width: 100vw;
+  overflow-x: hidden;
+  position: relative;
+}
+
+/* Évite les césures disgracieuses et les débordements de mots longs en français */
+h1, h2, h3, h4, h5, h6,
+.hero-title,
+.section-title,
+.pricing-title,
+.checkout-title,
+.auth-title,
+.card-title,
+.modal-title,
+.onboarding-question-title,
+.onboarding-splash-title {
+  overflow-wrap: break-word !important;
+  word-wrap: break-word !important;
+  word-break: break-word !important;
+  text-wrap: balance !important;
+  hyphens: auto;
+  -webkit-hyphens: auto;
+  letter-spacing: -0.015em;
+}
+
+p, .lead, .hero-subtitle, .section-subtitle, .feature-desc, 
+.testimonial-text, .onboarding-splash-desc, .auth-card p {
+  overflow-wrap: break-word !important;
+  word-break: normal;
+  line-height: 1.55;
+}
+
+/* Alignement parfait des listes à puces et checkmarks (✓) :
+   L'icône reste toujours alignée avec la 1ère ligne de texte même sur plusieurs lignes */
+.pricing-benefits-list li,
+.pricing-card ul li,
+.checkout-card ul li,
+.feature-list li,
+.summary-feature-item {
+  display: flex !important;
+  align-items: flex-start !important;
+  text-align: left !important;
+  gap: 0.6rem !important;
+  line-height: 1.45 !important;
+  margin-bottom: 0.55rem;
+}
+
+.pricing-benefits-list li > span:first-child,
+.pricing-card ul li > span:first-child,
+.checkout-card ul li > span:first-child,
+.pricing-card ul li > svg:first-child {
+  flex-shrink: 0 !important;
+  margin-top: 2px !important;
+  line-height: 1 !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+
+.pricing-benefits-list li > span:last-child,
+.pricing-card ul li > span:last-child,
+.checkout-card ul li > span:last-child {
+  flex: 1 1 auto !important;
+  overflow-wrap: break-word !important;
+}
+
+/* --------------------------------------------------------------------------
+   2. ALIGNEMENT & ERGONOMIE DES BOUTONS (TOUCH TARGETS)
+   -------------------------------------------------------------------------- */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  min-height: 46px;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.btn svg, .btn img {
+  flex-shrink: 0;
+}
+
+/* Grille des formules d'abonnements */
+.plans-comparison-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 1.5rem;
+  align-items: stretch;
+  margin-bottom: 2.25rem;
+}
+
+/* --------------------------------------------------------------------------
+   3. BREAKPOINT TABLETTES & GRANDS MOBILES (max-width: 768px)
+   -------------------------------------------------------------------------- */
+@media (max-width: 768px) {
+  /* Conteneur principal */
+  .container {
+    padding-left: 1.25rem !important;
+    padding-right: 1.25rem !important;
+    width: 100% !important;
+    box-sizing: border-box !important;
+  }
+
+  /* Typographie fluide */
+  h1, .hero-title {
+    font-size: clamp(1.75rem, 6vw, 2.5rem) !important;
+    line-height: 1.2 !important;
+  }
+
+  h2, .section-title {
+    font-size: clamp(1.45rem, 5vw, 1.95rem) !important;
+    line-height: 1.25 !important;
+  }
+
+  h3 {
+    font-size: 1.25rem !important;
+  }
+
+  /* Empêche le zoom automatique forcé sur iOS Safari lors du focus */
+  input[type="text"],
+  input[type="email"],
+  input[type="password"],
+  input[type="tel"],
+  input[type="number"],
+  input[type="search"],
+  select,
+  textarea,
+  .form-input {
+    font-size: 16px !important;
+    min-height: 46px;
+    box-sizing: border-box;
+  }
+
+  /* Cartes d'abonnements en colonne unique fluide */
+  .plans-comparison-grid {
+    grid-template-columns: 1fr !important;
+    gap: 1.35rem !important;
+    margin-bottom: 1.75rem !important;
+  }
+
+  .pricing-card {
+    padding: 1.5rem 1.25rem !important;
+    border-radius: 18px !important;
+    width: 100% !important;
+    box-sizing: border-box !important;
+  }
+
+  .pricing-card .btn {
+    width: 100% !important;
+    min-height: 48px !important;
+    padding: 0.85rem 1.25rem !important;
+    font-size: 0.95rem !important;
+    justify-content: center !important;
+    text-align: center !important;
+  }
+
+  /* Cartes d'authentification (Connexion & Inscription) */
+  .auth-section {
+    padding: 1.5rem 0.75rem !important;
+    min-height: calc(100vh - 120px) !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+  }
+
+  .auth-card {
+    padding: 1.75rem 1.25rem !important;
+    border-radius: 20px !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    box-sizing: border-box !important;
+  }
+
+  .auth-tabs {
+    gap: 0.5rem !important;
+  }
+
+  .auth-tab-btn {
+    padding: 0.6rem 0.75rem !important;
+    font-size: 0.88rem !important;
+    text-align: center !important;
+    justify-content: center !important;
+  }
+
+  .btn-google-auth {
+    width: 100% !important;
+    min-height: 48px !important;
+    justify-content: center !important;
+    font-size: 0.9rem !important;
+  }
+
+  .auth-card .btn-primary {
+    width: 100% !important;
+    min-height: 48px !important;
+  }
+
+  /* Cartes de statut de paiement */
+  .payment-status-card {
+    padding: 2rem 1.25rem !important;
+    border-radius: 20px !important;
+    width: 100% !important;
+    box-sizing: border-box !important;
+  }
+
+  /* Topbar Dashboard Mobile */
+  .dash-topbar {
+    height: 60px !important;
+    padding: 0 1rem !important;
+  }
+
+  .dash-sidebar {
+    top: 60px !important;
+    padding: 0.5rem 0.75rem !important;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+  }
+
+  .dash-sidebar::-webkit-scrollbar {
+    display: none;
+  }
+
+  .dash-nav-item {
+    padding: 0.45rem 0.85rem !important;
+    font-size: 0.82rem !important;
+    min-height: 38px;
+    display: inline-flex;
+    align-items: center;
+  }
+
+  /* Panneau notifications déroulant */
+  .dash-dropdown-panel {
+    position: fixed !important;
+    top: 64px !important;
+    left: 12px !important;
+    right: 12px !important;
+    width: auto !important;
+    max-width: calc(100vw - 24px) !important;
+    box-shadow: 0 15px 40px rgba(0, 0, 0, 0.2) !important;
+    border-radius: 16px !important;
+    z-index: 1000 !important;
+  }
+
+  .dash-user-dropdown-menu {
+    max-width: calc(100vw - 24px) !important;
+    right: 12px !important;
+    border-radius: 16px !important;
+  }
+}
+
+/* --------------------------------------------------------------------------
+   4. BREAKPOINT SMARTPHONES STANDARDS (max-width: 640px)
+   -------------------------------------------------------------------------- */
+@media (max-width: 640px) {
+  /* Sélecteur de période Mensuel / Annuel centré et fluide */
+  .period-toggle-wrapper {
+    display: flex !important;
+    width: 100% !important;
+    max-width: 330px !important;
+    margin-left: auto !important;
+    margin-right: auto !important;
+    box-sizing: border-box !important;
+  }
+
+  .period-btn {
+    flex: 1 1 50% !important;
+    padding: 0.45rem 0.65rem !important;
+    font-size: 0.82rem !important;
+    justify-content: center !important;
+    text-align: center !important;
+  }
+
+  /* Boutons d'action dans le Hero et sections clés */
+  .hero-actions {
+    display: flex !important;
+    flex-direction: column !important;
+    width: 100% !important;
+    gap: 0.75rem !important;
+  }
+
+  .hero-actions .btn {
+    width: 100% !important;
+    min-height: 48px !important;
+    justify-content: center !important;
+    text-align: center !important;
+  }
+
+  /* Groupes de boutons de paiement retour et échec */
+  .payment-status-actions {
+    display: flex !important;
+    flex-direction: column !important;
+    width: 100% !important;
+    gap: 0.75rem !important;
+  }
+
+  .payment-status-actions .btn {
+    width: 100% !important;
+    min-height: 48px !important;
+    justify-content: center !important;
+    text-align: center !important;
+  }
+
+  /* Boutons standards : autorise le wrap propre pour ne pas déborder */
+  .btn {
+    white-space: normal !important;
+    line-height: 1.35 !important;
+    word-break: normal !important;
+  }
+
+  /* Cartes d'onboarding */
+  .onboarding-card {
+    padding: 1.25rem 1rem !important;
+    border-radius: 16px !important;
+    width: 100% !important;
+    box-sizing: border-box !important;
+  }
+
+  .onboarding-nav-bar {
+    gap: 0.65rem !important;
+  }
+
+  .onboarding-nav-btn {
+    min-height: 44px !important;
+    padding: 0.6rem 1.15rem !important;
+    font-size: 0.88rem !important;
+    justify-content: center !important;
+  }
+
+  /* Modale et fenêtres de dialogue */
+  .modal-card {
+    width: calc(100vw - 20px) !important;
+    max-width: 100% !important;
+    padding: 1.35rem 1rem !important;
+    margin: 10px auto !important;
+    box-sizing: border-box !important;
+  }
+}
+
+/* --------------------------------------------------------------------------
+   5. BREAKPOINT PETITS MOBILES (max-width: 480px)
+   -------------------------------------------------------------------------- */
+@media (max-width: 480px) {
+  /* Conteneur resserré pour optimiser l'espace utile */
+  .container {
+    padding-left: 0.95rem !important;
+    padding-right: 0.95rem !important;
+  }
+
+  /* Navigation Header compactée */
+  .header {
+    padding: 0.65rem 0 !important;
+  }
+
+  .nav-wrapper {
+    gap: 0.5rem !important;
+  }
+
+  .logo-text .logo-brand {
+    font-size: 1.02rem !important;
+  }
+
+  .logo-one-script {
+    font-size: 1.5rem !important;
+    margin-right: 0.15rem !important;
+  }
+
+  .logo-text .logo-sub {
+    font-size: 0.64rem !important;
+    letter-spacing: 0.16em !important;
+  }
+
+  .nav-actions .btn {
+    padding: 0.45rem 0.75rem !important;
+    font-size: 0.82rem !important;
+    min-height: 38px !important;
+    gap: 0.35rem !important;
+  }
+
+  /* Hero Section */
+  .hero {
+    padding: 5.5rem 0 2.5rem !important;
+    text-align: center !important;
+  }
+
+  .hero-title {
+    font-size: 1.85rem !important;
+    margin-bottom: 0.85rem !important;
+  }
+
+  .hero-subtitle {
+    font-size: 0.95rem !important;
+    line-height: 1.5 !important;
+    margin-bottom: 1.5rem !important;
+  }
+
+  /* Tarification & Prix géants */
+  .pricing-card {
+    padding: 1.25rem 1rem !important;
+    border-radius: 16px !important;
+  }
+
+  .price-box-monthly span:first-child,
+  .price-box-yearly span:first-child {
+    font-size: 2.05rem !important;
+  }
+
+  /* Cartes d'authentification */
+  .auth-card {
+    padding: 1.35rem 1rem !important;
+    border-radius: 18px !important;
+  }
+
+  .auth-card h1 {
+    font-size: 1.35rem !important;
+  }
+
+  .auth-card p {
+    font-size: 0.84rem !important;
+  }
+
+  /* Cartes de statut de paiement */
+  .payment-status-card {
+    padding: 1.6rem 1rem !important;
+    border-radius: 18px !important;
+  }
+
+  .payment-status-card h1 {
+    font-size: 1.45rem !important;
+  }
+
+  .payment-status-card p {
+    font-size: 0.9rem !important;
+  }
+
+  /* Dashboard Topbar : masque les textes secondaires pour éviter les débordements */
+  .dash-topbar {
+    padding: 0 0.75rem !important;
+    height: 56px !important;
+  }
+
+  .dash-topbar-left {
+    gap: 0.5rem !important;
+  }
+
+  .dash-user-badge {
+    display: none !important;
+  }
+
+  .dash-user-name {
+    font-size: 0.8rem !important;
+    max-width: 90px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .dash-live-indicator {
+    padding: 0.2rem 0.5rem !important;
+    font-size: 0.7rem !important;
+  }
+
+  .dash-live-indicator .live-text-sub {
+    display: none !important;
+  }
+
+  .dash-sidebar {
+    top: 56px !important;
+  }
+
+  /* Onboarding */
+  .onboarding-card {
+    padding: 1.15rem 0.85rem !important;
+  }
+
+  .onboarding-question-title {
+    font-size: 0.98rem !important;
+    line-height: 1.35 !important;
+  }
+
+  .onboarding-option-card {
+    padding: 0.45rem 0.7rem !important;
+    font-size: 0.82rem !important;
+    min-height: 38px !important;
+  }
+
+  /* Footer en colonne centrée */
+  .footer {
+    padding: 2.5rem 0 1.5rem !important;
+    text-align: center !important;
+  }
+
+  .footer-grid {
+    grid-template-columns: 1fr !important;
+    gap: 1.75rem !important;
+    text-align: center !important;
+  }
+
+  .footer-brand p {
+    margin-left: auto !important;
+    margin-right: auto !important;
+    max-width: 290px !important;
+  }
+
+  .footer-links {
+    align-items: center !important;
+  }
+}
+
+/* --------------------------------------------------------------------------
+   6. BREAKPOINT ULTRA-COMPACT (max-width: 360px - iPhone SE 1ère gen, compact)
+   -------------------------------------------------------------------------- */
+@media (max-width: 360px) {
+  .container {
+    padding-left: 0.65rem !important;
+    padding-right: 0.65rem !important;
+  }
+
+  .logo-text .logo-brand {
+    font-size: 0.92rem !important;
+  }
+
+  .logo-one-script {
+    font-size: 1.35rem !important;
+  }
+
+  .logo-text .logo-sub {
+    font-size: 0.58rem !important;
+    letter-spacing: 0.12em !important;
+  }
+
+  .auth-card {
+    padding: 1.15rem 0.75rem !important;
+  }
+
+  .pricing-card {
+    padding: 1.1rem 0.8rem !important;
+  }
+
+  .btn {
+    padding: 0.65rem 0.95rem !important;
+    font-size: 0.88rem !important;
+  }
+
+  .price-box-monthly span:first-child,
+  .price-box-yearly span:first-child {
+    font-size: 1.85rem !important;
+  }
+
+  .onboarding-nav-btn {
+    padding: 0.5rem 0.85rem !important;
+    font-size: 0.82rem !important;
+  }
+}

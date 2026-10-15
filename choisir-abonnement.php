@@ -200,7 +200,7 @@ require_once __DIR__ . '/includes/header.php';
     </div>
 
     <!-- Grille des formules côte à côte -->
-    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1.5rem; align-items: stretch; margin-bottom: 2.25rem;">
+    <div class="plans-comparison-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1.5rem; align-items: stretch; margin-bottom: 2.25rem;">
       
       <?php
       // Définition des blocs de cartes

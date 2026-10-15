@@ -464,7 +464,7 @@ $userPayments = get_user_payments_history($userId);
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Great+Vibes&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 
-  <link rel="stylesheet" href="./css/style.css?v=3">
+  <link rel="stylesheet" href="./css/style.css?v=9">
   <meta name="csrf-token" content="<?= htmlspecialchars(csrf_token()) ?>">
   <script>
     window.IS_LIVE_HOST = <?= $isLiveHost ? 'true' : 'false' ?>;

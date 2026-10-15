@@ -123,7 +123,7 @@ require_once __DIR__ . '/includes/header.php';
 <main class="section" style="min-height: calc(100vh - 200px); display: flex; align-items: center; justify-content: center; padding: 3rem 1rem; background: #f8fafc;">
   <div class="container" style="max-width: 580px; margin: 0 auto; text-align: center;">
 
-    <div style="background: #ffffff; border-radius: 24px; padding: 3rem 2rem; box-shadow: 0 15px 35px rgba(0,0,0,0.06); border: 1px solid #e2e8f0;">
+    <div class="payment-status-card" style="background: #ffffff; border-radius: 24px; padding: 3rem 2rem; box-shadow: 0 15px 35px rgba(0,0,0,0.06); border: 1px solid #e2e8f0;">
 
       <?php if ($status === 'success'): ?>
         <!-- ========================================== -->
@@ -195,7 +195,7 @@ require_once __DIR__ . '/includes/header.php';
           </div>
         </div>
 
-        <div style="display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap;">
+        <div class="payment-status-actions" style="display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap;">
           <a href="<?= htmlspecialchars($retryUrl) ?>" class="btn btn-primary" style="padding: 0.95rem 2rem; font-weight: 800; font-size: 1rem; border-radius: 12px; display: inline-flex; align-items:center; gap:0.5rem; text-decoration:none; background: #0f172a;">
             <span>🔄 Recommencer le paiement</span>
           </a>
