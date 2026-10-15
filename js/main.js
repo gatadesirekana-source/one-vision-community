@@ -741,13 +741,14 @@ function initCheckoutModal() {
 
       // Mode statique HTML
       setTimeout(() => {
-        localStorage.setItem('ov_has_paid', 'true');
         localStorage.setItem('ov_member_name', 'Membre Google');
         localStorage.setItem('ov_member_email', 'membre.google@gmail.com');
+        localStorage.setItem('ov_logged_in', 'true');
         updateMemberUI();
-        showToast("👋 Connexion Google réussie ! Accès à votre Dashboard...");
+        const hasPaid = localStorage.getItem('ov_has_paid') === 'true';
+        showToast("👋 Connexion Google réussie !");
         setTimeout(() => {
-          window.location.href = getAppUrl('dashboard.html');
+          window.location.href = hasPaid ? getAppUrl('dashboard.html') : getAppUrl('choisir-abonnement.html');
         }, 400);
       }, 500);
     });
@@ -825,11 +826,11 @@ function initCheckoutModal() {
         submitBtn.innerHTML = originalText;
         if (memberName) localStorage.setItem('ov_member_name', memberName);
         if (memberEmail) localStorage.setItem('ov_member_email', memberEmail);
-        localStorage.setItem('ov_has_paid', 'true');
+        localStorage.setItem('ov_logged_in', 'true');
         updateMemberUI();
-        showToast("✨ Inscription validée ! Bienvenue dans la communauté.");
+        showToast("✨ Inscription validée ! Veuillez choisir votre formule.");
         setTimeout(() => {
-          window.location.href = getAppUrl('dashboard.html');
+          window.location.href = getAppUrl('choisir-abonnement.html');
         }, 500);
       }, 600);
     });
@@ -901,14 +902,21 @@ function initCheckoutModal() {
         submitBtn.disabled = false;
         submitBtn.innerHTML = originalText;
 
-        // Assure que l'état payé reste mémorisé
-        localStorage.setItem('ov_has_paid', 'true');
+        localStorage.setItem('ov_logged_in', 'true');
         updateMemberUI();
 
-        showToast("👋 Connexion réussie ! Redirection vers votre Dashboard...");
-        setTimeout(() => {
-          window.location.href = getAppUrl('dashboard.html');
-        }, 500);
+        const hasPaid = localStorage.getItem('ov_has_paid') === 'true';
+        if (hasPaid) {
+          showToast("👋 Connexion réussie ! Redirection vers votre Dashboard...");
+          setTimeout(() => {
+            window.location.href = getAppUrl('dashboard.html');
+          }, 500);
+        } else {
+          showToast("👋 Connexion réussie ! Veuillez finaliser votre abonnement.");
+          setTimeout(() => {
+            window.location.href = getAppUrl('choisir-abonnement.html');
+          }, 500);
+        }
         loginForm.reset();
       }, 600);
     });
@@ -2559,7 +2567,6 @@ function initCheckoutPage() {
         if (submitText) submitText.textContent = "Validation bancaire en cours...";
       }
 
-      localStorage.setItem('ov_has_paid', 'true');
       localStorage.setItem('ov_member_name', nameVal);
       localStorage.setItem('ov_member_email', emailVal);
       localStorage.setItem('ov_subscription_plan', currentPlan);
@@ -2591,6 +2598,8 @@ function initCheckoutPage() {
       })
       .then(data => {
         if (data && data.success && data.redirect_url) {
+          localStorage.setItem('ov_has_paid', 'true');
+          localStorage.setItem('ov_subscription_status', 'active');
           if (threeDSProgressFill) threeDSProgressFill.style.width = '100%';
           if (threeDSIconPending) threeDSIconPending.style.display = 'none';
           if (threeDSIconSuccess) threeDSIconSuccess.style.display = 'flex';
@@ -2600,6 +2609,7 @@ function initCheckoutPage() {
             window.location.href = data.redirect_url;
           }, 1100);
         } else if (data && !data.success && data.error) {
+          localStorage.setItem('ov_has_paid', 'false');
           if (threeDSecureModal) threeDSecureModal.style.display = 'none';
           if (submitBtn) submitBtn.disabled = false;
           updateSubmitButtonLabel();
@@ -2612,21 +2622,18 @@ function initCheckoutPage() {
           }
           if (cardInput) cardInput.focus();
         } else {
+          localStorage.setItem('ov_has_paid', 'true');
+          localStorage.setItem('ov_subscription_status', 'active');
           window.location.href = `checkout-success.php?order=${encodeURIComponent((data && data.order_number) ? data.order_number : '')}`;
         }
       })
       .catch((err) => {
         console.warn("Échec checkout.php pour Carte :", err);
-        // Fallback d'adhésion immédiate pour environnement statique / démo
-        if (threeDSProgressFill) threeDSProgressFill.style.width = '100%';
-        if (threeDSIconPending) threeDSIconPending.style.display = 'none';
-        if (threeDSIconSuccess) threeDSIconSuccess.style.display = 'flex';
-        if (threeDSTitle) threeDSTitle.textContent = "Paiement Validé ✓";
-        if (threeDSDesc) threeDSDesc.innerHTML = "Autorisation bancaire validée. Redirection vers votre espace membre...";
-        setTimeout(() => {
-          const ord = 'ORD-' + Date.now();
-          window.location.href = `checkout-success.html?order=${encodeURIComponent(ord)}`;
-        }, 1100);
+        localStorage.setItem('ov_has_paid', 'false');
+        if (threeDSecureModal) threeDSecureModal.style.display = 'none';
+        if (submitBtn) submitBtn.disabled = false;
+        updateSubmitButtonLabel();
+        showError('cardError', cardInput, "Le règlement par carte a échoué. Aucun montant n'a été prélevé.");
       });
       return;
     }
@@ -2638,7 +2645,6 @@ function initCheckoutPage() {
       if (submitBtn) submitBtn.disabled = true;
       if (submitText) submitText.textContent = "Validation de votre adhésion...";
 
-      localStorage.setItem('ov_has_paid', 'true');
       localStorage.setItem('ov_member_name', nameVal);
       localStorage.setItem('ov_member_email', emailVal);
       localStorage.setItem('ov_subscription_plan', currentPlan);
@@ -2682,8 +2688,11 @@ function initCheckoutPage() {
         updateSubmitButtonLabel();
 
         if (data && data.success && data.redirect_url) {
+          localStorage.setItem('ov_has_paid', 'true');
+          localStorage.setItem('ov_subscription_status', 'active');
           window.location.href = data.redirect_url;
         } else if (data && !data.success && data.error) {
+          localStorage.setItem('ov_has_paid', 'false');
           const globalErr = document.getElementById('checkoutGlobalError');
           const globalErrText = document.getElementById('checkoutGlobalErrorText');
           if (globalErr && globalErrText) {
@@ -2691,18 +2700,24 @@ function initCheckoutPage() {
             globalErr.style.display = 'flex';
           }
         } else {
+          localStorage.setItem('ov_has_paid', 'true');
+          localStorage.setItem('ov_subscription_status', 'active');
           const ord = (data && data.order_number) ? data.order_number : ('ORD-' + Date.now());
           window.location.href = `checkout-success.php?order=${encodeURIComponent(ord)}`;
         }
       })
       .catch((err) => {
         console.warn("Échec checkout.php pour Mobile Money :", err);
-        // Fallback démo / statique
         isMomoLoading = false;
         if (submitBtn) submitBtn.disabled = false;
         updateSubmitButtonLabel();
-        const ord = 'ORD-' + Date.now();
-        window.location.href = `checkout-success.html?order=${encodeURIComponent(ord)}`;
+        localStorage.setItem('ov_has_paid', 'false');
+        const globalErr = document.getElementById('checkoutGlobalError');
+        const globalErrText = document.getElementById('checkoutGlobalErrorText');
+        if (globalErr && globalErrText) {
+          globalErrText.textContent = "Le règlement Mobile Money a échoué. Aucun montant n'a été débité.";
+          globalErr.style.display = 'flex';
+        }
       });
       return;
     }

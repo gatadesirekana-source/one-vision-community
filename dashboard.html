@@ -13,6 +13,18 @@
   <link href="https://fonts.googleapis.com/css2?family=Great+Vibes&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 
   <link rel="stylesheet" href="./css/style.css?v=3">
+  <script>
+    (function() {
+      // Contrôle d'accès strict : aucun accès au dashboard si le paiement n'a pas été reçu
+      var hasPaid = localStorage.getItem('ov_has_paid');
+      var subStatus = localStorage.getItem('ov_subscription_status');
+      var isDemo = window.location.search.indexOf('demo=') !== -1;
+      var role = localStorage.getItem('ov_user_role');
+      if (!isDemo && role !== 'admin' && role !== 'proprietaire' && hasPaid !== 'true' && subStatus !== 'active') {
+        window.location.replace('choisir-abonnement.html');
+      }
+    })();
+  </script>
 </head>
 <body class="dashboard-body">
 
@@ -2509,8 +2521,17 @@
     }
 
     document.addEventListener('DOMContentLoaded', () => {
-      const status = localStorage.getItem('ov_subscription_status') || 'active';
+      const hasPaid = localStorage.getItem('ov_has_paid') === 'true';
+      const status = localStorage.getItem('ov_subscription_status');
       const plan = localStorage.getItem('ov_subscription_plan') || 'membre';
+      const isDemo = window.location.search.indexOf('demo=') !== -1;
+      const role = localStorage.getItem('ov_user_role');
+
+      if (!isDemo && role !== 'admin' && role !== 'proprietaire' && !hasPaid && status !== 'active') {
+        window.location.replace('choisir-abonnement.html');
+        return;
+      }
+
       if (status === 'expired' || status === 'inactive') {
         setDashboardPlanMode('expired');
       } else if (plan === 'animateur' || localStorage.getItem('ov_is_creator') === 'true') {

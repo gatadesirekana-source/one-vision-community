@@ -5,8 +5,8 @@
  * Traite le retour du client après la validation de son paiement sur la passerelle SasPay.
  * Interroge en temps réel l'API SasPay pour vérifier si le paiement a été bel et bien reçu.
  * Affiche clairement :
- * - "Paiement Confirmé !" avec le bouton "Continuer vers le dashboard" si réussi.
- * - "Paiement échoué" avec le bouton "Recommencer le paiement" si non reçu ou refusé.
+ * - "Paiement validé avec succès" avec le bouton "Continuer vers le dashboard" si reçu.
+ * - "Paiement échoué" avec le bouton "Recommencer le paiement" si non reçu ou annulé.
  */
 
 require_once __DIR__ . '/includes/config.php';
@@ -97,7 +97,7 @@ if (!$payment && empty($reference)) {
             $status = 'success';
             $planNom = $confirmation['plan_nom'] ?? $planNom;
             $periodLabel = ($confirmation['periodicite'] ?? $periodTarget) === 'annuel' ? 'annuel' : 'mensuel';
-            set_flash('success', "Félicitations ! Votre règlement a été bel et bien reçu et validé par SasPay. Votre abonnement {$planNom} ({$periodLabel}) est actif.");
+            set_flash('success', "Félicitations ! Votre règlement a été bien reçu et validé par SasPay. Votre abonnement {$planNom} ({$periodLabel}) est actif.");
 
             $planCodeFinal = strtolower(trim($_GET['plan'] ?? ($confirmation['plan_code'] ?? $planCodeTarget)));
             $isAnimateur = ($planCodeFinal === 'animateur') || (($confirmation['new_role'] ?? '') === 'animateur');
@@ -109,14 +109,13 @@ if (!$payment && empty($reference)) {
             $message = $confirmation['error'] ?? "Nous n'avons pas reçu le paiement. Le règlement a échoué auprès de SasPay.";
         } else {
             // En cas de statut encore PENDING alors que l'utilisateur est revenu sur le site
-            // Signifie que l'utilisateur a quitté la page de paiement sans valider
             $status = 'failed';
             $message = "Nous n'avons pas reçu la validation de votre paiement. Si vous avez annulé ou si la transaction n'a pas abouti, vous pouvez recommencer en toute sécurité.";
         }
     }
 }
 
-$pageTitle = ($status === 'success') ? "Paiement Confirmé — One Vision Community" : "Paiement Échoué — One Vision Community";
+$pageTitle = ($status === 'success') ? "Paiement validé avec succès — One Vision Community" : "Paiement échoué — One Vision Community";
 $hideHeaderNav = true;
 require_once __DIR__ . '/includes/header.php';
 ?>
@@ -134,10 +133,10 @@ require_once __DIR__ . '/includes/header.php';
           ✓
         </div>
         <h1 style="font-size: 1.85rem; font-weight: 800; color: #0f172a; margin: 0 0 0.5rem 0;">
-          Paiement Confirmé !
+          Paiement validé avec succès !
         </h1>
-        <p style="font-size: 1.05rem; color: #15803d; font-weight: 600; margin: 0 0 1rem 0;">
-          ✓ Votre règlement a été bel et bien reçu et validé par SasPay.
+        <p style="font-size: 1.05rem; color: #15803d; font-weight: 700; margin: 0 0 1rem 0;">
+          ✓ Votre paiement a été bel et bien reçu et validé par SasPay.
         </p>
         <p style="font-size: 0.98rem; color: #475569; line-height: 1.6; margin-bottom: 2rem;">
           Bienvenue dans l'aventure <strong>One Vision Community</strong> ! Votre formule <strong><?= htmlspecialchars($planNom) ?></strong> est désormais active.
@@ -149,8 +148,8 @@ require_once __DIR__ . '/includes/header.php';
             <strong style="color:#0f172a;"><?= htmlspecialchars($planNom) ?></strong>
           </div>
           <div style="display:flex; justify-content:space-between; margin-bottom:0.5rem;">
-            <span style="color:#64748b;">Statut transaction :</span>
-            <strong style="color:#16a34a;">● Validée par SasPay</strong>
+            <span style="color:#64748b;">Statut SasPay :</span>
+            <strong style="color:#16a34a;">● Paiement bien reçu & validé</strong>
           </div>
           <div style="display:flex; justify-content:space-between;">
             <span style="color:#64748b;">Référence :</span>
@@ -158,17 +157,11 @@ require_once __DIR__ . '/includes/header.php';
           </div>
         </div>
 
-        <p style="font-size: 0.9rem; color: #94a3b8; margin-bottom: 1.5rem;">
-          Redirection automatique vers <?= htmlspecialchars($redirectLabel) ?> dans 3 secondes...
-        </p>
-        <a href="<?= htmlspecialchars($redirectUrl) ?>" class="btn btn-primary" style="padding: 0.95rem 2.2rem; font-weight: 800; font-size: 1rem; border-radius: 12px; display: inline-flex; align-items:center; gap:0.5rem; text-decoration:none; <?= $isAnimateur ? 'background: linear-gradient(135deg, #f97316, #ea580c);' : '' ?>">
-          <span><?= htmlspecialchars($btnLabel) ?></span>
-        </a>
-        <script>
-          setTimeout(function() {
-            window.location.href = "<?= $redirectUrl ?>";
-          }, 3000);
-        </script>
+        <div style="display:flex; flex-direction:column; gap:0.75rem; align-items:center;">
+          <a href="<?= htmlspecialchars($redirectUrl) ?>" id="btnContinueDashboard" class="btn btn-primary" style="padding: 1rem 2.5rem; font-weight: 800; font-size: 1.05rem; border-radius: 12px; display: inline-flex; align-items:center; gap:0.5rem; text-decoration:none; <?= $isAnimateur ? 'background: linear-gradient(135deg, #f97316, #ea580c);' : '' ?>">
+            <span><?= htmlspecialchars($btnLabel) ?></span>
+          </a>
+        </div>
 
       <?php else: ?>
         <!-- ========================================== -->
@@ -180,14 +173,14 @@ require_once __DIR__ . '/includes/header.php';
         <h1 style="font-size: 1.85rem; font-weight: 800; color: #991b1b; margin: 0 0 0.65rem 0;">
           Paiement échoué
         </h1>
-        <p style="font-size: 1.05rem; color: #b91c1c; font-weight: 600; margin: 0 0 1rem 0;">
+        <p style="font-size: 1.05rem; color: #b91c1c; font-weight: 700; margin: 0 0 1rem 0;">
           Nous n'avons pas reçu le paiement.
         </p>
         <p style="font-size: 0.98rem; color: #475569; line-height: 1.6; margin-bottom: 1.75rem;">
           <?= htmlspecialchars($message) ?>
           <br>
           <span style="font-size: 0.88rem; color: #64748b;">
-            Aucun montant n'a été prélevé sur votre compte. Vous pouvez relancer la transaction dès maintenant.
+            Aucun montant n'a été prélevé sur votre compte. L'accès au dashboard reste verrouillé tant que le paiement n'est pas validé.
           </span>
         </p>
 
@@ -198,7 +191,7 @@ require_once __DIR__ . '/includes/header.php';
           </div>
           <div style="display:flex; justify-content:space-between;">
             <span style="color:#9a3412;">Agrégateur SasPay :</span>
-            <strong style="color:#dc2626;">Règlement non finalisé</strong>
+            <strong style="color:#dc2626;">Règlement non reçu / échoué</strong>
           </div>
         </div>
 
@@ -216,5 +209,31 @@ require_once __DIR__ . '/includes/header.php';
 
   </div>
 </main>
+
+<script>
+  // Synchronisation du localStorage client avec l'état vérifié par le serveur
+  try {
+    <?php if ($status === 'success'): ?>
+      localStorage.setItem('ov_has_paid', 'true');
+      localStorage.setItem('ov_subscription_status', 'active');
+      localStorage.setItem('ov_subscription_plan', <?= json_encode($isAnimateur ? 'animateur' : 'membre') ?>);
+      localStorage.setItem('ov_user_role', <?= json_encode($isAnimateur ? 'animateur' : 'membre') ?>);
+      localStorage.setItem('ov_is_creator', <?= json_encode($isAnimateur ? 'true' : 'false') ?>);
+    <?php else: ?>
+      localStorage.setItem('ov_has_paid', 'false');
+    <?php endif; ?>
+  } catch(e) {}
+
+  // Si cette page est ouverte dans une fenêtre popup ou un sous-onglet de checkout
+  // Elle communique avec la fenêtre principale et se referme automatiquement
+  if (window.opener && !window.opener.closed) {
+    try {
+      window.opener.location.href = window.location.href;
+      window.close();
+    } catch (e) {
+      // Ignorer si politique cross-origin stricte
+    }
+  }
+</script>
 
 <?php require_once __DIR__ . '/includes/footer.php'; ?>
