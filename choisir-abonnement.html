@@ -393,6 +393,12 @@
         if (alertBox) alertBox.style.display = 'block';
       }
 
+      // Preselection périodicité (ex: suite à un recommencer le paiement)
+      const prePeriod = (urlParams.get('periodicite') || '').toLowerCase();
+      if (prePeriod === 'annuel') {
+        switchPeriod('annuel');
+      }
+
       // Recommandation si l'utilisateur a choisi d'animer des lives dans Q8
       const wantsToAnimate = localStorage.getItem('ov_user_wants_to_animate') === 'true';
       if (wantsToAnimate) {

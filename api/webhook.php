@@ -142,6 +142,9 @@ switch ($event) {
         } elseif ($reference) {
             $stmt = $db->prepare("UPDATE payments SET statut = 'echoue' WHERE (reference_externe = ? OR session_id = ?) AND statut = 'en_attente'");
             $stmt->execute([$reference, $reference]);
+        } elseif (!empty($data['id'])) {
+            $stmt = $db->prepare("UPDATE payments SET statut = 'echoue' WHERE (session_id = ? OR reference_externe = ?) AND statut = 'en_attente'");
+            $stmt->execute([$data['id'], $data['id']]);
         }
 
         SasPayClient::logWebhookEvent("Transaction marked as failed/cancelled", ['event' => $event, 'data' => $data]);

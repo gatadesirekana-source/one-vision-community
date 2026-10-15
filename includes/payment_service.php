@@ -68,11 +68,23 @@ class PaymentService {
                 $paymentId = (int)$db->lastInsertId();
 
                 $saspay = new SasPayClient();
-                $customerName = trim(($utilisateur['prenom'] ?? '') . ' ' . ($utilisateur['nom'] ?? ''));
+                $customerName = trim($utilisateur['full_name'] ?? '');
+                if (empty($customerName)) {
+                    $customerName = trim(($utilisateur['prenom'] ?? '') . ' ' . ($utilisateur['nom'] ?? ''));
+                }
                 if (empty($customerName)) {
                     $customerName = $utilisateur['email'] ?? 'Membre One Vision';
                 }
                 $periodLabel = ($periodicite === 'annuel') ? 'Annuel' : 'Mensuel';
+
+                $returnUrl = rtrim(APP_URL, '/') . '/paiement-retour.php?ref=' . urlencode($reference) . '&plan=' . urlencode($plan['code']) . '&periodicite=' . urlencode($periodicite);
+
+                // Sauvegarde en session pour fiabiliser le retour même si des paramètres URL sont perdus
+                if (session_status() === PHP_SESSION_ACTIVE) {
+                    $_SESSION['last_payment_ref'] = $reference;
+                    $_SESSION['last_payment_plan'] = $plan['code'];
+                    $_SESSION['last_payment_period'] = $periodicite;
+                }
 
                 $sessionResult = $saspay->createCheckoutSession([
                     'amount'         => $montant,
@@ -81,7 +93,7 @@ class PaymentService {
                     'customer_email' => $utilisateur['email'],
                     'customer_name'  => $customerName,
                     'customer_phone' => $utilisateur['telephone'] ?? '',
-                    'return_url'     => rtrim(APP_URL, '/') . '/paiement-retour.php?ref=' . urlencode($reference),
+                    'return_url'     => $returnUrl,
                     'metadata'       => [
                         'payment_id'  => $paymentId,
                         'reference'   => $reference,
@@ -198,26 +210,67 @@ class PaymentService {
             ];
         }
 
+        // Si déjà marqué échoué ou annulé
+        if ($payment['statut'] === 'echoue') {
+            return [
+                'success' => false,
+                'failed'  => true,
+                'status'  => 'echoue',
+                'error'   => "Nous n'avons pas reçu le paiement. Le règlement a échoué ou a été refusé par l'opérateur."
+            ];
+        }
+
         // Pour SasPay en l'absence de webhook direct, revérifier le statut auprès de l'API
         if ($payment['methode'] === 'saspay' && $payment['statut'] !== 'reussi' && $transactionData === null) {
             $saspay = new SasPayClient();
             $verified = false;
+            $failed = false;
+            $statusReason = '';
 
-            if (!empty($payment['session_id'])) {
+            // Mode test / simulation si déclenché explicitement (ex: test en local ou suite de tests)
+            if (isset($_GET['test_status']) && in_array(strtolower($_GET['test_status']), ['success', 'failed'], true)) {
+                if (strtolower($_GET['test_status']) === 'success') {
+                    $verified = true;
+                } else {
+                    $failed = true;
+                    $statusReason = "Test de paiement échoué simulé avec succès.";
+                }
+            } elseif (!empty($payment['session_id'])) {
                 $statusRes = $saspay->getCheckoutSessionStatus($payment['session_id']);
                 if ($statusRes['success']) {
                     $sessionStatus = strtoupper($statusRes['data']['status'] ?? '');
-                    if (in_array($sessionStatus, ['SUCCESS', 'PAID', 'COMPLETED'], true)) {
+                    $txnStatus = strtoupper($statusRes['data']['transaction_status'] ?? '');
+
+                    if (in_array($sessionStatus, ['SUCCESS', 'PAID', 'COMPLETED'], true) || in_array($txnStatus, ['SUCCESS', 'PAID'], true)) {
                         $verified = true;
+                    } elseif (in_array($sessionStatus, ['FAILED', 'CANCELLED', 'EXPIRED', 'REJECTED'], true) || in_array($txnStatus, ['FAILED', 'CANCELLED'], true)) {
+                        $failed = true;
+                        $statusReason = ($sessionStatus === 'CANCELLED' || $txnStatus === 'CANCELLED')
+                            ? "La transaction a été annulée."
+                            : "Le règlement a été refusé ou a échoué auprès de l'opérateur SasPay.";
                     }
                 }
+            }
+
+            if ($failed) {
+                // Marquer le paiement comme échoué en base de données
+                $stmtFail = $db->prepare("UPDATE payments SET statut = 'echoue' WHERE id = ?");
+                $stmtFail->execute([(int)$payment['id']]);
+
+                return [
+                    'success' => false,
+                    'failed'  => true,
+                    'status'  => 'echoue',
+                    'error'   => $statusReason ?: "Nous n'avons pas reçu le paiement. Le règlement a échoué auprès de SasPay."
+                ];
             }
 
             if (!$verified) {
                 return [
                     'success' => false,
                     'pending' => true,
-                    'error'   => "Le paiement n'a pas encore été validé par SasPay. Veuillez patienter ou vérifier votre transaction."
+                    'status'  => 'en_attente',
+                    'error'   => "Nous n'avons pas encore reçu la confirmation de SasPay. Le règlement est en attente."
                 ];
             }
         }

@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="fr" data-theme="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Paiement Échoué — One Vision Community</title>
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎯</text></svg>">
+  
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Great+Vibes&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="./css/style.css?v=8">
+</head>
+<body class="checkout-body" style="background:#f8fafc; min-height:100vh; display:flex; flex-direction:column;">
+
+  <header style="padding: 1rem; border-bottom: 1px solid rgba(15, 23, 42, 0.06); background: #ffffff;">
+    <div class="container" style="max-width: 860px; margin: 0 auto; display:flex; justify-content:space-between; align-items:center;">
+      <a href="index.html" class="logo" style="text-decoration:none;">
+        <div class="logo-text">
+          <span class="logo-brand"><span class="logo-one-script">One</span> Vision</span>
+          <span class="logo-sub">Community</span>
+        </div>
+      </a>
+      <span style="font-size:0.85rem; font-weight:700; color:#dc2626; display:flex; align-items:center; gap:0.4rem;">
+        ✕ Règlement Non Finalisé
+      </span>
+    </div>
+  </header>
+
+  <main style="flex:1; display:flex; align-items:center; justify-content:center; padding: 2.5rem 1rem;">
+    <div style="background:#ffffff; border:1px solid #e2e8f0; border-radius:24px; padding:2.5rem 2rem; max-width:540px; width:100%; box-shadow:0 12px 35px rgba(0,0,0,0.06); text-align:center;">
+      
+      <div style="width: 76px; height: 76px; border-radius: 50%; background: #fef2f2; color: #ef4444; display: inline-flex; align-items: center; justify-content: center; font-size: 2.4rem; margin: 0 auto 1.5rem auto; box-shadow: 0 0 0 10px #fff1f2;">
+        ✕
+      </div>
+
+      <h1 style="font-size:1.85rem; font-weight:800; color:#991b1b; margin:0 0 0.5rem 0; letter-spacing:-0.02em;">
+        Paiement échoué
+      </h1>
+
+      <p style="font-size:1.05rem; color:#b91c1c; font-weight:700; margin:0 0 1rem 0;">
+        Nous n'avons pas reçu le paiement.
+      </p>
+
+      <p style="font-size:0.95rem; color:#475569; line-height:1.55; margin:0 0 1.75rem 0;">
+        Le règlement a été interrompu, annulé ou n'a pas pu être validé par l'opérateur de paiement SasPay. Aucun montant n'a été prélevé sur votre compte.
+      </p>
+
+      <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:14px; padding:1.25rem; text-align:left; margin-bottom:1.75rem; font-size:0.88rem;">
+        <div style="display:flex; justify-content:space-between; margin-bottom:0.5rem;">
+          <span style="color:#64748b;">Formule sélectionnée :</span>
+          <strong id="summaryPlanName" style="color:#0f172a;">Formule Membre</strong>
+        </div>
+        <div style="display:flex; justify-content:space-between; margin-bottom:0.5rem;">
+          <span style="color:#64748b;">Statut passerelle :</span>
+          <span style="font-weight:700; color:#dc2626;">Règlement non reçu</span>
+        </div>
+        <div style="display:flex; justify-content:space-between; border-top:1px dashed #cbd5e1; padding-top:0.6rem; margin-top:0.4rem;">
+          <span style="color:#64748b;">Débit bancaire / Mobile :</span>
+          <strong style="color:#16a34a;">0,00 € (Aucun débit)</strong>
+        </div>
+      </div>
+
+      <div style="display:flex; flex-direction:column; gap:0.75rem;">
+        <a href="choisir-abonnement.html" id="btnRetryPayment" class="btn btn-primary" style="padding:0.9rem 1.5rem; border-radius:12px; font-weight:800; font-size:1rem; text-decoration:none; display:flex; justify-content:center; align-items:center; gap:0.5rem; background:#0f172a; color:#ffffff; box-shadow:0 4px 14px rgba(15,23,42,0.15);">
+          <span>🔄 Recommencer le paiement</span>
+        </a>
+
+        <a href="support.html" style="color:#64748b; font-size:0.85rem; font-weight:600; text-decoration:none; padding:0.4rem;">
+          Besoin d'aide ou assistance technique ?
+        </a>
+      </div>
+
+    </div>
+  </main>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      const urlParams = new URLSearchParams(window.location.search);
+      const plan = (urlParams.get('plan') || 'membre').toLowerCase();
+      const periodicite = (urlParams.get('periodicite') || 'mensuel').toLowerCase();
+
+      const planNameEl = document.getElementById('summaryPlanName');
+      if (planNameEl) {
+        planNameEl.textContent = (plan === 'animateur') ? 'Formule Animateur & Expert' : 'Formule Membre Standard';
+      }
+
+      const retryBtn = document.getElementById('btnRetryPayment');
+      if (retryBtn) {
+        retryBtn.href = `choisir-abonnement.html?plan=${encodeURIComponent(plan)}&periodicite=${encodeURIComponent(periodicite)}`;
+      }
+    });
+  </script>
+</body>
+</html>

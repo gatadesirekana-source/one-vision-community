@@ -463,6 +463,14 @@ function switchPeriod(mode) {
     periodInputs.forEach(el => el.value = 'mensuel');
   }
 }
+
+document.addEventListener('DOMContentLoaded', function() {
+  const urlParams = new URLSearchParams(window.location.search);
+  const period = (urlParams.get('periodicite') || '').toLowerCase();
+  if (period === 'annuel') {
+    switchPeriod('annuel');
+  }
+});
 </script>
 
   <!-- JavaScript -->

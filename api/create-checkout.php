@@ -66,12 +66,17 @@ $montant = PaymentService::calculerMontantFormule($plan, $periodicite);
 $devise = $plan['devise'] ?? 'EUR';
 $reference = 'PAY-SAS-' . date('YmdHis') . '-' . strtoupper(bin2hex(random_bytes(4)));
 
+$customerName = trim($user['full_name'] ?? (($user['prenom'] ?? '') . ' ' . ($user['nom'] ?? '')));
+if (empty($customerName)) {
+    $customerName = $user['email'] ?? 'Client One Vision';
+}
+
 $sessionResult = $saspay->createCheckoutSession([
     'amount'         => $montant,
     'currency'       => $devise,
     'description'    => "One Vision Community — {$plan['nom']} (" . ucfirst($periodicite) . ")",
     'customer_email' => $user['email'],
-    'customer_name'  => trim(($user['prenom'] ?? '') . ' ' . ($user['nom'] ?? '')),
+    'customer_name'  => $customerName,
     'customer_phone' => $user['telephone'] ?? '',
     'return_url'     => rtrim(APP_URL, '/') . '/paiement-retour.php?ref=' . urlencode($reference) . '&plan=' . urlencode($planCode) . '&periodicite=' . urlencode($periodicite),
     'metadata'       => [
@@ -87,6 +92,29 @@ if (!$sessionResult['success']) {
     http_response_code(500);
     echo json_encode(['success' => false, 'error' => $sessionResult['error'] ?? "Erreur lors de l'appel SasPay"]);
     exit;
+}
+
+// Enregistrement en base de données du paiement en attente
+$stmtPay = $db->prepare("
+    INSERT INTO payments (
+        user_id, montant, devise, statut, reference_externe, session_id, checkout_url, methode, date_paiement
+    ) VALUES (
+        ?, ?, ?, 'en_attente', ?, ?, ?, 'saspay', datetime('now')
+    )
+");
+$stmtPay->execute([
+    $user['id'] ?: null,
+    $montant,
+    $devise,
+    $reference,
+    $sessionResult['session_id'],
+    $sessionResult['checkout_url']
+]);
+
+if (session_status() === PHP_SESSION_ACTIVE) {
+    $_SESSION['last_payment_ref'] = $reference;
+    $_SESSION['last_payment_plan'] = $planCode;
+    $_SESSION['last_payment_period'] = $periodicite;
 }
 
 echo json_encode([
