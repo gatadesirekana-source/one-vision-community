@@ -464,7 +464,7 @@ $userPayments = get_user_payments_history($userId);
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Great+Vibes&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 
-  <link rel="stylesheet" href="./css/style.css?v=9">
+  <link rel="stylesheet" href="./css/style.css?v=10">
   <meta name="csrf-token" content="<?= htmlspecialchars(csrf_token()) ?>">
   <script>
     window.IS_LIVE_HOST = <?= $isLiveHost ? 'true' : 'false' ?>;
@@ -2134,7 +2134,7 @@ $userPayments = get_user_payments_history($userId);
           <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 1rem; margin-bottom: 1.25rem;">
             <div>
               <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.35rem;">
-                <span style="font-size: 1.25rem;">💳</span>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#2563eb" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"></rect><line x1="1" y1="10" x2="23" y2="10"></line></svg>
                 <h3 class="settings-card-title" style="margin: 0; font-size: 1.15rem; font-weight: 800; color: #0f172a;">Abonnement & Cotisations</h3>
               </div>
               <p class="settings-card-desc" style="margin: 0; color: #64748b; font-size: 0.88rem;">
@@ -2159,16 +2159,18 @@ $userPayments = get_user_payments_history($userId);
             </div>
             <div>
               <?php if ($isOwnerUser || $isAdminUser): ?>
-                <span style="background: #fef3c7; color: #92400e; font-weight: 700; font-size: 0.8rem; padding: 0.3rem 0.75rem; border-radius: 20px;">
-                  👑 Accès Illimité Admin
+                <span style="background: #fef3c7; color: #92400e; font-weight: 700; font-size: 0.8rem; padding: 0.3rem 0.75rem; border-radius: 20px; display:inline-flex; align-items:center; gap:0.35rem;">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M2 4l3 12h14l3-12-5 7-5-7-5 7-5-7z"></path></svg>
+                  <span>Accès Illimité Admin</span>
                 </span>
               <?php elseif ($activeSub): ?>
                 <span style="background: #dcfce7; color: #15803d; font-weight: 700; font-size: 0.8rem; padding: 0.3rem 0.75rem; border-radius: 20px;">
                   ● Actif (Échéance : <?= date('d/m/Y', strtotime($activeSub['date_fin'])) ?>)
                 </span>
               <?php else: ?>
-                <span style="background: #fee2e2; color: #991b1b; font-weight: 700; font-size: 0.8rem; padding: 0.3rem 0.75rem; border-radius: 20px;">
-                  ⚠️ Inactif
+                <span style="background: #fee2e2; color: #991b1b; font-weight: 700; font-size: 0.8rem; padding: 0.3rem 0.75rem; border-radius: 20px; display:inline-flex; align-items:center; gap:0.35rem;">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
+                  <span>Inactif</span>
                 </span>
               <?php endif; ?>
             </div>
@@ -2190,12 +2192,14 @@ $userPayments = get_user_payments_history($userId);
 
           <!-- Boutons d'actions rapides -->
           <div style="display: flex; gap: 0.75rem; flex-wrap: wrap; align-items: center;">
-            <button type="button" class="btn btn-secondary btn-sm" onclick="switchToTab('tab-compte')">
-              💳 Voir le détail & mes factures
+            <button type="button" class="btn btn-secondary btn-sm" onclick="switchToTab('tab-compte')" style="display:inline-flex; align-items:center; gap:0.4rem;">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"></rect><line x1="1" y1="10" x2="23" y2="10"></line></svg>
+              <span>Voir le détail & mes factures</span>
             </button>
             <?php if ($activeSub && $activeSub['plan_code'] === 'membre'): ?>
-              <button type="button" class="btn btn-primary btn-sm" onclick="switchToTab('tab-compte')" style="background: linear-gradient(135deg, #f97316, #ea580c); border: none;">
-                🚀 Évoluer vers Animateur (24 €/mois)
+              <button type="button" class="btn btn-primary btn-sm" onclick="switchToTab('tab-compte')" style="background: linear-gradient(135deg, #f97316, #ea580c); border: none; display:inline-flex; align-items:center; gap:0.4rem;">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4.5 16.5c-1.5 1.26-2 5-2 5s3.74-.5 5-2c.71-.84.7-2.13-.09-2.91a2.18 2.18 0 0 0-2.91-.09z"></path><path d="M12 15l-3-3a22 22 0 0 1 2-3.95A12.88 12.88 0 0 1 22 2c0 2.72-.78 7.5-6 11a22.35 22.35 0 0 1-4 2z"></path></svg>
+                <span>Évoluer vers Animateur (24 €/mois)</span>
               </button>
             <?php endif; ?>
           </div>
@@ -3253,7 +3257,7 @@ $userPayments = get_user_payments_history($userId);
     </a>
   </div>
 
-  <script src="./js/main.js?v=4"></script>
+  <script src="./js/main.js?v=10"></script>
   <script>
     
     function setUpgradePeriod(mode) {

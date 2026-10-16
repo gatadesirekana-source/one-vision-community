@@ -474,6 +474,6 @@ document.addEventListener('DOMContentLoaded', function() {
 </script>
 
   <!-- JavaScript -->
-  <script src="./js/main.js?v=4"></script>
+  <script src="./js/main.js?v=10"></script>
 </body>
 </html>

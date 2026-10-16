@@ -18,7 +18,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Great+Vibes&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 
   <!-- Stylesheet -->
-  <link rel="stylesheet" href="./css/style.css?v=3">
+  <link rel="stylesheet" href="./css/style.css?v=10">
 </head>
 <body>
 
@@ -422,9 +422,22 @@
           <button class="tab-btn" data-tab="replays">Replays populaires</button>
         </div>
 
-        <!-- Grille de fiches de live injectée par JS -->
-        <div class="lives-grid" id="livesGrid">
-          <!-- Rempli dynamiquement par initLiveScheduleTabs() -->
+        <!-- Contrôles Slider Mobile (Flèches & Points) -->
+        <div class="lives-slider-controls">
+          <button type="button" class="lives-slider-arrow prev" id="livesPrevBtn" aria-label="Session précédente">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"></polyline></svg>
+          </button>
+          <div class="lives-slider-dots" id="livesSliderDots"></div>
+          <button type="button" class="lives-slider-arrow next" id="livesNextBtn" aria-label="Session suivante">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"></polyline></svg>
+          </button>
+        </div>
+
+        <!-- Grille / Slider de fiches de live injectée par JS -->
+        <div class="lives-slider-wrapper" id="livesSliderWrapper">
+          <div class="lives-grid" id="livesGrid">
+            <!-- Rempli dynamiquement par initLiveScheduleTabs() -->
+          </div>
         </div>
       </div>
     </div>
@@ -779,6 +792,6 @@
   </footer>
 
   <!-- JavaScript -->
-  <script src="./js/main.js?v=3"></script>
+  <script src="./js/main.js?v=10"></script>
 </body>
 </html>

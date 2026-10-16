@@ -260,6 +260,15 @@ function initLiveScheduleTabs() {
   const container = document.getElementById('livesGrid');
   if (!tabs.length || !container) return;
 
+  const prevBtn = document.getElementById('livesPrevBtn');
+  const nextBtn = document.getElementById('livesNextBtn');
+  const dotsContainer = document.getElementById('livesSliderDots');
+  const wrapper = document.getElementById('livesSliderWrapper') || container.parentElement;
+
+  let currentLiveSlide = 0;
+  let liveAutoplayTimer = null;
+  const liveAutoplayDelay = 3800;
+
   const getCustomLives = () => {
     try {
       const stored = localStorage.getItem('ov_community_custom_lives');
@@ -281,6 +290,131 @@ function initLiveScheduleTabs() {
   };
 
   const newLiveId = getParam('new_live');
+
+  const getLiveCards = () => container.querySelectorAll('.live-card');
+
+  function updateLiveSlider() {
+    const cards = getLiveCards();
+    if (!cards.length) return;
+    if (window.innerWidth > 768) {
+      container.style.transform = 'none';
+      return;
+    }
+    if (currentLiveSlide >= cards.length) currentLiveSlide = 0;
+    if (currentLiveSlide < 0) currentLiveSlide = cards.length - 1;
+
+    container.style.transform = `translateX(-${currentLiveSlide * 100}%)`;
+
+    if (dotsContainer) {
+      const dots = dotsContainer.querySelectorAll('.lives-slider-dot');
+      dots.forEach((dot, idx) => {
+        dot.classList.toggle('active', idx === currentLiveSlide);
+      });
+    }
+  }
+
+  function renderLiveDots() {
+    if (!dotsContainer) return;
+    dotsContainer.innerHTML = '';
+    const cards = getLiveCards();
+    cards.forEach((_, idx) => {
+      const dot = document.createElement('button');
+      dot.type = 'button';
+      dot.className = `lives-slider-dot ${idx === currentLiveSlide ? 'active' : ''}`;
+      dot.setAttribute('aria-label', `Voir session ${idx + 1}`);
+      dot.addEventListener('click', (e) => {
+        e.preventDefault();
+        currentLiveSlide = idx;
+        updateLiveSlider();
+        resetLiveAutoplay();
+      });
+      dotsContainer.appendChild(dot);
+    });
+  }
+
+  function nextLiveSlide() {
+    const cards = getLiveCards();
+    if (cards.length <= 1) return;
+    currentLiveSlide = (currentLiveSlide + 1) % cards.length;
+    updateLiveSlider();
+  }
+
+  function prevLiveSlide() {
+    const cards = getLiveCards();
+    if (cards.length <= 1) return;
+    currentLiveSlide = (currentLiveSlide - 1 + cards.length) % cards.length;
+    updateLiveSlider();
+  }
+
+  function startLiveAutoplay() {
+    stopLiveAutoplay();
+    if (window.innerWidth <= 768) {
+      liveAutoplayTimer = setInterval(nextLiveSlide, liveAutoplayDelay);
+    }
+  }
+
+  function stopLiveAutoplay() {
+    if (liveAutoplayTimer) {
+      clearInterval(liveAutoplayTimer);
+      liveAutoplayTimer = null;
+    }
+  }
+
+  function resetLiveAutoplay() {
+    stopLiveAutoplay();
+    startLiveAutoplay();
+  }
+
+  if (prevBtn && !prevBtn.dataset.bound) {
+    prevBtn.dataset.bound = 'true';
+    prevBtn.addEventListener('click', (e) => {
+      e.preventDefault();
+      prevLiveSlide();
+      resetLiveAutoplay();
+    });
+  }
+  if (nextBtn && !nextBtn.dataset.bound) {
+    nextBtn.dataset.bound = 'true';
+    nextBtn.addEventListener('click', (e) => {
+      e.preventDefault();
+      nextLiveSlide();
+      resetLiveAutoplay();
+    });
+  }
+
+  // Touch swipe support on wrapper
+  if (wrapper && !wrapper.dataset.swipeBound) {
+    wrapper.dataset.swipeBound = 'true';
+    let touchStartX = 0;
+    let touchEndX = 0;
+    wrapper.addEventListener('touchstart', (e) => {
+      touchStartX = e.changedTouches[0].screenX;
+      stopLiveAutoplay();
+    }, { passive: true });
+    wrapper.addEventListener('touchend', (e) => {
+      touchEndX = e.changedTouches[0].screenX;
+      const diff = touchEndX - touchStartX;
+      if (Math.abs(diff) > 40) {
+        if (diff < 0) {
+          nextLiveSlide();
+        } else {
+          prevLiveSlide();
+        }
+      }
+      startLiveAutoplay();
+    }, { passive: true });
+  }
+
+  // Handle window resize for lives slider
+  window.addEventListener('resize', () => {
+    if (window.innerWidth > 768) {
+      stopLiveAutoplay();
+      container.style.transform = 'none';
+    } else {
+      updateLiveSlider();
+      startLiveAutoplay();
+    }
+  });
 
   const renderLives = (category) => {
     const customLives = getCustomLives().filter(item => (item.category || 'current') === category);
@@ -324,6 +458,12 @@ function initLiveScheduleTabs() {
         </article>
       `;
     }).join('');
+
+    // Réinitialise le slider mobile pour le nouvel onglet
+    currentLiveSlide = 0;
+    renderLiveDots();
+    updateLiveSlider();
+    startLiveAutoplay();
 
     // Si une session vient d'être créée, défilement fluide vers la carte avec focus
     if (newLiveId) {
@@ -6213,7 +6353,7 @@ function initTestimonialsCarousel() {
 
   let currentIndex = 0;
   let autoplayTimer = null;
-  const autoplayDelay = 4500;
+  const autoplayDelay = 3800;
 
   function getCardsPerView() {
     if (window.innerWidth <= 768) return 1;
@@ -6251,7 +6391,7 @@ function initTestimonialsCarousel() {
 
     const firstCard = cards[0];
     const cardRect = firstCard.getBoundingClientRect();
-    const gap = 24; // 1.5rem = 24px
+    const gap = window.innerWidth <= 768 ? 16 : 24;
     const step = cardRect.width + gap;
 
     track.style.transform = `translateX(-${currentIndex * step}px)`;
@@ -6315,8 +6455,27 @@ function initTestimonialsCarousel() {
   // Pause on mouse hover or touch interaction
   carousel.addEventListener('mouseenter', stopAutoplay);
   carousel.addEventListener('mouseleave', startAutoplay);
-  carousel.addEventListener('touchstart', stopAutoplay, { passive: true });
-  carousel.addEventListener('touchend', startAutoplay, { passive: true });
+
+  // Touch swipe support on testimonials track
+  let touchStartX = 0;
+  let touchEndX = 0;
+  carousel.addEventListener('touchstart', (e) => {
+    touchStartX = e.changedTouches[0].screenX;
+    stopAutoplay();
+  }, { passive: true });
+
+  carousel.addEventListener('touchend', (e) => {
+    touchEndX = e.changedTouches[0].screenX;
+    const diff = touchEndX - touchStartX;
+    if (Math.abs(diff) > 40) {
+      if (diff < 0) {
+        nextSlide();
+      } else {
+        prevSlide();
+      }
+    }
+    startAutoplay();
+  }, { passive: true });
 
   // Handle resize
   let resizeTimeout;

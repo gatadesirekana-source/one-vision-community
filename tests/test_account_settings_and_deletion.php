@@ -28,7 +28,7 @@ echo "====================================================================\n\n";
 $db = get_db();
 
 // 1. Création utilisateur test
-$email = 'profile.test.' . time() . '@test.com';
+$email = 'profile.test.' . time() . '@onevisioncommunity.fr';
 $pwd = 'AncienMotDePasse123!';
 $reg = register_user('Jean Testeur', $email, $pwd, [
     'role' => 'membre',

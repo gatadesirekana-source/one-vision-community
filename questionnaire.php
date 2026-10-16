@@ -224,7 +224,7 @@ $pageDescription = "Répondez à quelques questions pour personnaliser votre exp
   <link href="https://fonts.googleapis.com/css2?family=Great+Vibes&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   
   <!-- Feuilles de style -->
-  <link rel="stylesheet" href="./css/style.css?v=9">
+  <link rel="stylesheet" href="./css/style.css?v=10">
 </head>
 <body class="onboarding-page-body">
 

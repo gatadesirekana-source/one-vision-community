@@ -63,6 +63,6 @@
   </footer>
 
   <!-- Scripts JavaScript -->
-  <script src="./js/main.js?v=5"></script>
+  <script src="./js/main.js?v=10"></script>
 </body>
 </html>
