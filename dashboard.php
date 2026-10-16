@@ -464,7 +464,7 @@ $userPayments = get_user_payments_history($userId);
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Great+Vibes&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 
-  <link rel="stylesheet" href="./css/style.css?v=10">
+  <link rel="stylesheet" href="./css/style.css?v=11">
   <meta name="csrf-token" content="<?= htmlspecialchars(csrf_token()) ?>">
   <script>
     window.IS_LIVE_HOST = <?= $isLiveHost ? 'true' : 'false' ?>;
@@ -702,10 +702,13 @@ $userPayments = get_user_payments_history($userId);
 
         <!-- Menu déroulant du profil -->
         <div class="dash-user-dropdown-menu" id="dashUserDropdownMenu" style="display:none;">
-          <div class="user-dropdown-header">
-            <strong id="dropdownUserTitle"><?= htmlspecialchars($currentUser['full_name']) ?></strong>
-            <span class="badge-role-admin"><?= $isOwnerUser ? '👑 Propriétaire' : ($isAdminDelegue ? '🛡️ Admin Délégué' : ($isAnimateur ? '🌟 Animateur One Vision' : '💼 Membre One Vision')) ?></span>
-            <span class="user-dropdown-email" id="dropdownUserEmail"><?= htmlspecialchars($currentUser['email']) ?></span>
+          <div class="user-dropdown-header" style="display: flex; gap: 0.7rem; align-items: center;">
+            <img src="<?= htmlspecialchars($currentUser['avatar'] ?? './img/avatar-maxime.jpg') ?>" alt="Photo de profil" style="width: 44px; height: 44px; border-radius: 50%; object-fit: cover; border: 2px solid #2563eb; flex-shrink: 0;" onerror="this.src='./img/avatar-maxime.jpg'">
+            <div>
+              <strong id="dropdownUserTitle" style="display: block; font-size: 0.95rem; font-weight: 800; color: #0f172a; margin-bottom: 2px;"><?= htmlspecialchars($currentUser['full_name']) ?></strong>
+              <span class="badge-role-admin" style="display: inline-block; margin-bottom: 3px;"><?= $isOwnerUser ? '👑 Propriétaire' : ($isAdminDelegue ? '🛡️ Admin Délégué' : ($isAnimateur ? '🌟 Animateur One Vision' : '💼 Membre One Vision')) ?></span>
+              <span class="user-dropdown-email" id="dropdownUserEmail" style="display: block; font-size: 0.78rem; color: #64748b; word-break: break-all;"><?= htmlspecialchars($currentUser['email']) ?></span>
+            </div>
           </div>
           <div class="user-dropdown-divider"></div>
           
@@ -1086,6 +1089,14 @@ $userPayments = get_user_payments_history($userId);
             </div>
           </div>
 
+          <!-- Bouton Dépliant Chat Mobile (Visible uniquement sur mobile) -->
+          <div class="mobile-live-chat-toggle-wrap">
+            <button type="button" class="btn btn-secondary btn-mobile-chat-toggle" id="btnToggleMobileChat" aria-expanded="false">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
+              <span id="mobileChatBtnText">💬 Ouvrir le Chat du Live (142 messages)</span>
+            </button>
+          </div>
+
           <!-- Chat Interactif en Direct -->
           <div class="dash-chat-wrapper">
             <div class="dash-chat-header">
@@ -1093,11 +1104,14 @@ $userPayments = get_user_payments_history($userId);
                 <span>Discussion en direct</span>
                 <span class="chat-online-badge" id="liveChatCount">● 142 actifs</span>
               </div>
-              <?php if ($isLiveHost): ?>
-                <span class="badge-chat-admin-pill" title="Vous administrez la session en tant qu'Animateur">👑 Hôte / Animateur</span>
-              <?php else: ?>
-                <span class="badge-chat-admin-pill" style="background:#f1f5f9; color:#475569;" title="Participant à la session">🎧 Participant</span>
-              <?php endif; ?>
+              <div style="display:flex; align-items:center; gap:0.4rem;">
+                <?php if ($isLiveHost): ?>
+                  <span class="badge-chat-admin-pill" title="Vous administrez la session en tant qu'Animateur">👑 Hôte / Animateur</span>
+                <?php else: ?>
+                  <span class="badge-chat-admin-pill" style="background:#f1f5f9; color:#475569;" title="Participant à la session">🎧 Participant</span>
+                <?php endif; ?>
+                <button type="button" class="btn-close-mobile-chat" id="btnCloseMobileChat" title="Fermer le chat" style="display:none; background:none; border:none; color:#64748b; font-size:1.1rem; cursor:pointer; padding:2px 6px;">✕</button>
+              </div>
             </div>
 
             <!-- Message Épinglé en Direct par l'Animateur -->
@@ -3257,7 +3271,7 @@ $userPayments = get_user_payments_history($userId);
     </a>
   </div>
 
-  <script src="./js/main.js?v=10"></script>
+  <script src="./js/main.js?v=11"></script>
   <script>
     
     function setUpgradePeriod(mode) {

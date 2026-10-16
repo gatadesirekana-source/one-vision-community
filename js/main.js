@@ -3955,6 +3955,51 @@ Document généré pour ${memberName} • One Vision Community © Tous droits r�
   const chatForm = document.getElementById('liveChatForm');
   const chatInput = document.getElementById('liveChatInput');
 
+  // Bascule du Chat en direct sur Mobile
+  const btnToggleMobileChat = document.getElementById('btnToggleMobileChat');
+  const btnCloseMobileChat = document.getElementById('btnCloseMobileChat');
+  const dashChatWrapper = document.querySelector('.dash-chat-wrapper');
+  const mobileChatBtnText = document.getElementById('mobileChatBtnText');
+
+  function setMobileChatState(open) {
+    if (!dashChatWrapper) return;
+    if (open) {
+      dashChatWrapper.classList.add('mobile-chat-expanded');
+      if (btnToggleMobileChat) {
+        btnToggleMobileChat.classList.add('active');
+        btnToggleMobileChat.setAttribute('aria-expanded', 'true');
+      }
+      if (mobileChatBtnText) {
+        mobileChatBtnText.textContent = '✕ Masquer le Chat du Live';
+      }
+      if (btnCloseMobileChat) btnCloseMobileChat.style.display = 'block';
+      if (chatMessages) chatMessages.scrollTop = chatMessages.scrollHeight;
+    } else {
+      dashChatWrapper.classList.remove('mobile-chat-expanded');
+      if (btnToggleMobileChat) {
+        btnToggleMobileChat.classList.remove('active');
+        btnToggleMobileChat.setAttribute('aria-expanded', 'false');
+      }
+      if (mobileChatBtnText) {
+        mobileChatBtnText.textContent = '💬 Ouvrir le Chat du Live (142 messages)';
+      }
+      if (btnCloseMobileChat) btnCloseMobileChat.style.display = 'none';
+    }
+  }
+
+  if (btnToggleMobileChat) {
+    btnToggleMobileChat.addEventListener('click', () => {
+      const isExpanded = dashChatWrapper && dashChatWrapper.classList.contains('mobile-chat-expanded');
+      setMobileChatState(!isExpanded);
+    });
+  }
+
+  if (btnCloseMobileChat) {
+    btnCloseMobileChat.addEventListener('click', () => {
+      setMobileChatState(false);
+    });
+  }
+
   // Gestion du bandeau de message épinglé
   const liveChatPinnedMessage = document.getElementById('liveChatPinnedMessage');
   const liveChatPinnedAuthor = document.getElementById('liveChatPinnedAuthor');

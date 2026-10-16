@@ -12,7 +12,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Great+Vibes&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 
-  <link rel="stylesheet" href="./css/style.css?v=3">
+  <link rel="stylesheet" href="./css/style.css?v=11">
   <script>
     (function() {
       // Contrôle d'accès strict : aucun accès au dashboard si le paiement n'a pas été reçu
@@ -122,10 +122,13 @@
 
         <!-- Menu déroulant du profil -->
         <div class="dash-user-dropdown-menu" id="dashUserDropdownMenu" style="display:none;">
-          <div class="user-dropdown-header">
-            <strong id="dropdownUserTitle">Gatadesirekana</strong>
-            <span class="badge-role-admin" id="dropdownRoleBadge">🌟 Animateur One Vision</span>
-            <span class="user-dropdown-email" id="dropdownUserEmail">gatadesirekana@gmail.com</span>
+          <div class="user-dropdown-header" style="display: flex; gap: 0.7rem; align-items: center;">
+            <img src="./img/avatar-maxime.jpg" alt="Photo de profil" style="width: 44px; height: 44px; border-radius: 50%; object-fit: cover; border: 2px solid #2563eb; flex-shrink: 0;">
+            <div>
+              <strong id="dropdownUserTitle" style="display: block; font-size: 0.95rem; font-weight: 800; color: #0f172a; margin-bottom: 2px;">Gatadesirekana</strong>
+              <span class="badge-role-admin" id="dropdownRoleBadge" style="display: inline-block; margin-bottom: 3px;">🌟 Animateur One Vision</span>
+              <span class="user-dropdown-email" id="dropdownUserEmail" style="display: block; font-size: 0.78rem; color: #64748b; word-break: break-all;">gatadesirekana@gmail.com</span>
+            </div>
           </div>
           <div class="user-dropdown-divider"></div>
           
@@ -483,6 +486,14 @@
             </div>
           </div>
 
+          <!-- Bouton Dépliant Chat Mobile (Visible uniquement sur mobile) -->
+          <div class="mobile-live-chat-toggle-wrap">
+            <button type="button" class="btn btn-secondary btn-mobile-chat-toggle" id="btnToggleMobileChat" aria-expanded="false">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
+              <span id="mobileChatBtnText">💬 Ouvrir le Chat du Live (142 messages)</span>
+            </button>
+          </div>
+
           <!-- Chat Interactif en Direct -->
           <div class="dash-chat-wrapper">
             <div class="dash-chat-header">
@@ -490,7 +501,10 @@
                 <span>Discussion en direct</span>
                 <span class="chat-online-badge" id="liveChatCount">● 142 actifs</span>
               </div>
-              <span class="badge-chat-admin-pill" title="Vous postez avec le statut Administrateur">👑 Administrateur</span>
+              <div style="display:flex; align-items:center; gap:0.4rem;">
+                <span class="badge-chat-admin-pill" title="Vous postez avec le statut Administrateur">👑 Administrateur</span>
+                <button type="button" class="btn-close-mobile-chat" id="btnCloseMobileChat" title="Fermer le chat" style="display:none; background:none; border:none; color:#64748b; font-size:1.1rem; cursor:pointer; padding:2px 6px;">✕</button>
+              </div>
             </div>
 
             <div class="dash-chat-messages" id="liveChatMessages">
@@ -2434,7 +2448,7 @@
     </a>
   </div>
 
-  <script src="./js/main.js?v=4"></script>
+  <script src="./js/main.js?v=11"></script>
   <script>
     function setDashboardPlanMode(mode) {
       const badge = document.getElementById('dashUserBadge');
